@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   menuContainer: {
     position: 'absolute',
     left: 0,
-    top: getSpacing(40),
+    top: 0,
     bottom: 0,
     width: screenWidth * 0.8,
     maxWidth: 320,
@@ -195,7 +195,9 @@ const styles = StyleSheet.create({
   menuHeader: {
     width: 320,
     height: 143,
-    padding: getSpacing(20),
+    paddingTop: getSpacing(50),
+    paddingHorizontal: getSpacing(20),
+    paddingBottom: getSpacing(20),
     backgroundColor: '#083569',
   },
   logoContainer: {
