@@ -7,7 +7,8 @@ import {
   Modal, 
   Animated,
   Dimensions,
-  ScrollView
+  ScrollView,
+  Image
 } from 'react-native';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
 
@@ -57,88 +58,44 @@ const SideMenu = ({
 
   const menuItems = [
     {
-      id: 'resume',
-      title: 'سيرة ذاتية',
-      subtitle: 'RESUME',
-      icon: '📖',
-    },
-    {
-      id: 'bookmarks',
-      title: 'العلامات المرجعية',
-      subtitle: 'BOOKMARKS',
-      icon: '🔖',
-    },
-    {
-      id: 'favourites',
-      title: 'المفضلة',
-      subtitle: 'FAVOURITES',
-      icon: '⭐',
-    },
-    {
-      id: 'surah_index',
-      title: 'فهرس السور',
-      subtitle: 'SURAH INDEX',
-      icon: '📋',
-    },
-    {
-      id: 'juz_index',
-      title: 'فهرس الأجزاء / الفقرات',
-      subtitle: 'JUZ/PARA INDEX',
-      icon: '📚',
-    },
-    {
-      id: 'go_to_page',
-      title: 'انتقل إلى الصفحة',
-      subtitle: 'GO TO PAGE',
-      icon: '📄',
-    },
-    {
       id: 'change_reading_mode',
       title: 'Change reading Mode',
-      subtitle: 'READING MODE',
-      icon: '⭐',
+      icon: require('../assets/icons/menu_icon/Book.png'),
     },
     {
       id: 'backup_restore',
       title: 'Backup & Restore',
-      subtitle: 'BACKUP & RESTORE',
-      icon: '☁️',
+      icon: require('../assets/icons/menu_icon/Cloud Backup.png'),
     },
     {
       id: 'our_apps',
       title: 'Our Apps',
-      subtitle: 'OUR APPS',
-      icon: '📱',
+      icon: require('../assets/icons/menu_icon/Apps.png'),
     },
     {
       id: 'visit_website',
       title: 'Visit Website',
-      subtitle: 'VISIT WEBSITE',
-      icon: '🌐',
+      icon: require('../assets/icons/menu_icon/Earth.png'),
     },
     {
       id: 'contact_us',
       title: 'Contact Us',
-      subtitle: 'CONTACT US',
-      icon: '👤',
+      icon: require('../assets/icons/menu_icon/Person Support.png'),
     },
     {
       id: 'share_app',
       title: 'Share this App',
-      subtitle: 'SHARE APP',
-      icon: '📤',
+      icon: require('../assets/icons/menu_icon/Share.png'),
     },
     {
       id: 'rate_app',
       title: 'Rate this App',
-      subtitle: 'RATE APP',
-      icon: '⭐',
+      icon: require('../assets/icons/menu_icon/Star Emphasis.png'),
     },
     {
       id: 'faqs',
       title: 'FAQ\'s',
-      subtitle: 'FAQ\'s',
-      icon: '❓',
+      icon: require('../assets/icons/menu_icon/Chat Bubbles Question.png'),
     },
   ];
 
@@ -164,7 +121,6 @@ const SideMenu = ({
           style={[
             styles.menuContainer,
             { 
-              backgroundColor,
               transform: [{ translateX: slideAnim }],
               opacity: fadeAnim
             }
@@ -174,17 +130,12 @@ const SideMenu = ({
             {/* Menu Header */}
             <View style={styles.menuHeader}>
               <View style={styles.logoContainer}>
-                <View style={styles.mosqueIcon}>
-                  <Text style={styles.mosqueEmoji}>🕌</Text>
-                </View>
-                <View style={styles.titleContainer}>
-                  <Text style={[styles.menuTitle, { color: textColor }]}>
-                    القرآن الكريم
-                  </Text>
-                  <Text style={[styles.menuSubtitle, { color: textColor }]}>
-                    Al-Quran Al-Kareem
-                  </Text>
-                </View>
+                <Image 
+                  source={require('../assets/icons/menu_icon/side_menu_top_icon.png')}
+                  style={styles.mosqueIcon}
+                  resizeMode="contain"
+                />
+               
               </View>
             </View>
 
@@ -198,26 +149,19 @@ const SideMenu = ({
                   activeOpacity={0.7}
                 >
                   <View style={styles.menuItemContent}>
-                    <Text style={styles.menuItemIcon}>{item.icon}</Text>
-                    <View style={styles.menuItemText}>
-                      <Text style={[styles.menuItemTitle, { color: textColor }]}>
-                        {item.title}
-                      </Text>
-                      <Text style={[styles.menuItemSubtitle, { color: textColor }]}>
-                        {item.subtitle}
-                      </Text>
-                    </View>
+                    <Image 
+                      source={item.icon}
+                      style={styles.menuItemIcon}
+                      resizeMode="contain"
+                    />
+                    <Text style={styles.menuItemTitle}>
+                      {item.title}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))}
             </View>
 
-            {/* Footer Message */}
-            <View style={styles.menuFooter}>
-              <Text style={[styles.footerText, { color: textColor }]}>
-                Screen par maujood Qur'an ki aayaat ko baghair wuzu chhoona durust nahin hai.
-              </Text>
-            </View>
           </ScrollView>
         </Animated.View>
       </View>
@@ -240,88 +184,62 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: screenWidth * 0.8,
     maxWidth: 320,
+    backgroundColor: '#DBECFF',
   },
   menuContent: {
     flex: 1,
     paddingTop: getSpacing(60), // Account for status bar
   },
   menuHeader: {
+    width: 200.62200927734375,
+    height: 56,
     padding: getSpacing(20),
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
-    marginBottom: getSpacing(20),
-    backgroundColor: '#1a237e',
+    backgroundColor: '#083569',
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   mosqueIcon: {
-    width: getSpacing(50),
-    height: getSpacing(50),
-    borderRadius: getSpacing(25),
-    backgroundColor: '#FFD700',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: getSpacing(40),
+    height: getSpacing(40),
     marginRight: getSpacing(15),
-  },
-  mosqueEmoji: {
-    fontSize: getFontSize(24),
   },
   titleContainer: {
     flex: 1,
   },
   menuTitle: {
-    fontSize: getFontSize(20),
+    fontSize: getFontSize(18),
     fontWeight: 'bold',
-    marginBottom: getSpacing(2),
     color: '#FFD700',
-  },
-  menuSubtitle: {
-    fontSize: getFontSize(12),
-    opacity: 0.9,
-    color: '#FFD700',
+    fontFamily: 'Philosopher',
   },
   menuItems: {
-    paddingHorizontal: getSpacing(10),
+    paddingHorizontal: getSpacing(15),
+    paddingTop: getSpacing(20),
   },
   menuItem: {
-    marginBottom: getSpacing(10),
+    marginBottom: getSpacing(8),
     borderRadius: getSpacing(8),
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
   },
   menuItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: getSpacing(15),
+    paddingVertical: getSpacing(12),
+    paddingHorizontal: getSpacing(15),
   },
   menuItemIcon: {
-    fontSize: getFontSize(24),
+    width: getSpacing(24),
+    height: getSpacing(24),
     marginRight: getSpacing(15),
-  },
-  menuItemText: {
-    flex: 1,
+    tintColor: '#083569',
   },
   menuItemTitle: {
     fontSize: getFontSize(16),
     fontWeight: '600',
-    marginBottom: getSpacing(2),
-  },
-  menuItemSubtitle: {
-    fontSize: getFontSize(12),
-    opacity: 0.8,
-  },
-  menuFooter: {
-    padding: getSpacing(20),
-    marginTop: getSpacing(20),
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  footerText: {
-    fontSize: getFontSize(12),
-    textAlign: 'center',
-    lineHeight: getFontSize(16),
-    opacity: 0.8,
+    color: '#083569',
+    flex: 1,
   },
 });
 
