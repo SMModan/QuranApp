@@ -250,25 +250,24 @@ const HomeScreen = ({ navigation }) => {
                       <View style={styles.goToPageInputField}>
                         <TextInput
                           style={styles.goToPageTextInput}
-                          placeholder="Enter page number"
                           placeholderTextColor="#999"
                           keyboardType="numeric"
                           maxLength={3}
                           value={pageNumber}
                           onChangeText={setPageNumber}
                         />
+                        <TouchableOpacity
+                          style={styles.goToPageButton}
+                          onPress={handleGoToPage}
+                          activeOpacity={0.8}
+                        >
+                          <Image
+                            source={require('../assets/icons/ic_home_goto_page_right_side_icon.png')}
+                            style={styles.goToPageButtonIcon}
+                            resizeMode="contain"
+                          />
+                        </TouchableOpacity>
                       </View>
-                      <TouchableOpacity
-                        style={styles.goToPageButton}
-                        onPress={handleGoToPage}
-                        activeOpacity={0.8}
-                      >
-                        <Image
-                          source={require('../assets/icons/ic_home_goto_page_right_side_icon.png')}
-                          style={styles.goToPageButtonIcon}
-                          resizeMode="contain"
-                        />
-                      </TouchableOpacity>
                     </View>
                   )}
                   
@@ -405,31 +404,35 @@ const styles = StyleSheet.create({
   },
   // Go to Page simple input styles
   goToPageInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginTop: getSpacing(10),
   },
   goToPageInputField: {
-    width: getSpacing(100),
-    height: getSpacing(40),
+    width: getSpacing(120),
+    height: getSpacing(45),
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#D0D0D0',
-    borderRadius: getSpacing(20),
-    paddingHorizontal: getSpacing(15),
-    paddingVertical: getSpacing(12),
-    marginRight: getSpacing(10),
+    borderRadius: getSpacing(22),
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: getSpacing(12),
+    paddingTop: getSpacing(8),
+    paddingBottom: getSpacing(8),
+    paddingRight: getSpacing(6),
+    position: 'relative',
   },
   goToPageTextInput: {
-    fontSize: getFontSize(16),
+    flex: 1,
+    fontSize: getFontSize(14),
     color: '#083569',
-    textAlign: 'center',
+    textAlign: 'left',
+    paddingRight: getSpacing(10),
   },
   goToPageButton: {
     backgroundColor: '#083569',
-    borderRadius: getSpacing(20),
-    width: getSpacing(40),
-    height: getSpacing(40),
+    borderRadius: getSpacing(18),
+    width: getSpacing(36),
+    height: getSpacing(36),
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -442,8 +445,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   goToPageButtonIcon: {
-    width: getSpacing(20),
-    height: getSpacing(20),
+    width: getSpacing(18),
+    height: getSpacing(18),
   },
 });
 
