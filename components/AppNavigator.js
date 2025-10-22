@@ -6,7 +6,7 @@ import AllSurahsScreen from '../screens/AllSurahsScreen';
 import FAQsScreen from '../screens/FAQsScreen';
 import ReadingModeScreen from '../screens/ReadingModeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import QuranReaderWebView from '../screens/QuranReaderWebView';
+import QuranReaderScreen from '../screens/QuranReaderScreen';
 import GoToPageScreen from '../screens/GoToPageScreen';
 
 const AppNavigator = () => {
@@ -36,7 +36,7 @@ const AppNavigator = () => {
       case 'settings':
         return <SettingsScreen navigation={navigation} />;
       case 'quran-reader':
-        return <QuranReaderWebView navigation={navigation} />;
+        return <QuranReaderScreen navigation={navigation} />;
       case 'go-to-page':
         console.log('Rendering GoToPageScreen');
         return <GoToPageScreen navigation={navigation} />;

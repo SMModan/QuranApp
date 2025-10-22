@@ -9,16 +9,15 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo/vector-icons": "^14.0.0",
     "expo": "~54.0.12",
+    "expo-font": "~12.0.10",
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
-    "expo-font": "~12.0.10",
-    "@expo/vector-icons": "^14.0.0",
-    "react-native-pdf": "^6.7.3",
-    "react-native-webview": "^13.6.4",
-    "react-native-gesture-handler": "^2.14.0",
     "react": "19.1.0",
-    "react-native": "0.81.4"
+    "react-native": "0.81.4",
+    "react-native-gesture-handler": "^2.14.0",
+    "react-native-webview": "^13.6.4"
   },
   "private": true
 }

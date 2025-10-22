@@ -1,28 +1,25 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   StatusBar, 
-  Dimensions, 
   TouchableOpacity,
   SafeAreaView,
   Platform,
-  Alert
+  ScrollView,
+  Dimensions
 } from 'react-native';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-const QuranReaderScreen = ({ navigation, route }) => {
+const SimpleQuranReader = ({ navigation, route }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages] = useState(10); // Fixed total pages for demo
   const [isFullScreen, setIsFullScreen] = useState(true);
   const [showControls, setShowControls] = useState(false);
 
-  // Get chapter and verse info from route params with validation
+  // Get chapter and verse info from route params
   const chapterName = route?.params?.chapterName || 'البقرة';
   const verseNumber = route?.params?.verseNumber || '٢';
   const pageNumber = route?.params?.pageNumber || '6';
@@ -30,11 +27,37 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const juzNumber = route?.params?.juzNumber || 'الجزء';
   const manzilNumber = route?.params?.manzilNumber || 'منزل ١';
   
-  // Validate navigation object
-  const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
+  // Sample Quran verses for display
+  const sampleVerses = [
+    {
+      number: 1,
+      arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+      translation: "In the name of Allah, the Entirely Merciful, the Especially Merciful."
+    },
+    {
+      number: 2,
+      arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+      translation: "Praise be to Allah, Lord of the worlds."
+    },
+    {
+      number: 3,
+      arabic: "الرَّحْمَٰنِ الرَّحِيمِ",
+      translation: "The Entirely Merciful, the Especially Merciful."
+    },
+    {
+      number: 4,
+      arabic: "مَالِكِ يَوْمِ الدِّينِ",
+      translation: "Sovereign of the Day of Recompense."
+    },
+    {
+      number: 5,
+      arabic: "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
+      translation: "It is You we worship and You we ask for help."
+    }
+  ];
 
   useEffect(() => {
-    // Set status bar style for full screen
+    // Set status bar style
     if (Platform.OS === 'android') {
       StatusBar.setBarStyle('light-content', true);
       StatusBar.setBackgroundColor('#8B7355', true);
@@ -43,12 +66,19 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
     
     return () => {
-      // Cleanup status bar on unmount
       if (Platform.OS === 'android') {
         StatusBar.setBackgroundColor('transparent', true);
       }
     };
   }, []);
+
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+  };
+
+  const toggleControls = () => {
+    setShowControls(!showControls);
+  };
 
   const goToNextPage = () => {
     if (currentPage < 10) { // Assuming 10 pages for demo
@@ -62,44 +92,16 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
-  const toggleFullScreen = () => {
-    setIsFullScreen(!isFullScreen);
-  };
-
-  const toggleControls = () => {
-    setShowControls(!showControls);
-  };
-
-  const handleError = (error) => {
-    console.log('Error:', error);
-  };
-
-  // Simplified gesture handler
-  const panGesture = Gesture.Pan()
-    .minDistance(20)
-    .onEnd((event) => {
-      const { translationX, translationY } = event;
-      const swipeThreshold = 50;
-      const horizontalSwipe = Math.abs(translationX) > Math.abs(translationY);
-      
-      if (horizontalSwipe && Math.abs(translationX) > swipeThreshold) {
-        if (translationX > 0) {
-          goToPreviousPage();
-        } else {
-          goToNextPage();
-        }
-      }
-    });
+  const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar 
-          barStyle="light-content" 
-          backgroundColor="#8B7355" 
-          translucent={false}
-        />
-      
+    <SafeAreaView style={styles.container}>
+      <StatusBar 
+        barStyle="light-content" 
+        backgroundColor="#8B7355" 
+        translucent={false}
+      />
+    
       {/* Header Section */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -118,53 +120,29 @@ const QuranReaderScreen = ({ navigation, route }) => {
       {/* Decorative Border */}
       <View style={styles.decorativeBorder} />
 
-      {/* Quran Reader with Swipe Gestures */}
-      <View style={styles.pdfContainer}>
-        <GestureDetector gesture={panGesture}>
-          <View style={styles.quranContent}>
-            <View style={styles.decorativeBorderLeft} />
-            <View style={styles.decorativeBorderRight} />
-            
-            <View style={styles.versesContainer}>
-              <View style={styles.verseContainer}>
+      {/* Quran Content */}
+      <ScrollView 
+        style={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+        onPress={() => toggleControls()}
+      >
+        <View style={styles.quranPage}>
+          <View style={styles.decorativeBorderLeft} />
+          <View style={styles.decorativeBorderRight} />
+          
+          <View style={styles.versesContainer}>
+            {sampleVerses.map((verse, index) => (
+              <View key={index} style={styles.verseContainer}>
                 <View style={styles.verseNumberContainer}>
-                  <Text style={styles.verseNumber}>1</Text>
+                  <Text style={styles.verseNumber}>{verse.number}</Text>
                 </View>
-                <Text style={styles.arabicText}>
-                  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-                </Text>
-                <Text style={styles.translationText}>
-                  In the name of Allah, the Entirely Merciful, the Especially Merciful.
-                </Text>
+                <Text style={styles.arabicText}>{verse.arabic}</Text>
+                <Text style={styles.translationText}>{verse.translation}</Text>
               </View>
-              
-              <View style={styles.verseContainer}>
-                <View style={styles.verseNumberContainer}>
-                  <Text style={styles.verseNumber}>2</Text>
-                </View>
-                <Text style={styles.arabicText}>
-                  الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ
-                </Text>
-                <Text style={styles.translationText}>
-                  Praise be to Allah, Lord of the worlds.
-                </Text>
-              </View>
-              
-              <View style={styles.verseContainer}>
-                <View style={styles.verseNumberContainer}>
-                  <Text style={styles.verseNumber}>3</Text>
-                </View>
-                <Text style={styles.arabicText}>
-                  الرَّحْمَٰنِ الرَّحِيمِ
-                </Text>
-                <Text style={styles.translationText}>
-                  The Entirely Merciful, the Especially Merciful.
-                </Text>
-              </View>
-            </View>
+            ))}
           </View>
-        </GestureDetector>
-      </View>
+        </View>
+      </ScrollView>
 
       {/* Decorative Border */}
       <View style={styles.decorativeBorder} />
@@ -198,13 +176,13 @@ const QuranReaderScreen = ({ navigation, route }) => {
           </TouchableOpacity>
           
           <Text style={styles.pageIndicator}>
-            {currentPage} / {totalPages}
+            {currentPage} / 10
           </Text>
           
           <TouchableOpacity 
             style={styles.controlButton}
             onPress={goToNextPage}
-            disabled={currentPage >= totalPages}
+            disabled={currentPage >= 10}
           >
             <Text style={styles.controlText}>→</Text>
           </TouchableOpacity>
@@ -219,8 +197,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
       >
         <Text style={styles.backButtonText}>←</Text>
       </TouchableOpacity>
-      </SafeAreaView>
-    </GestureHandlerRootView>
+    </SafeAreaView>
   );
 };
 
@@ -233,7 +210,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#8B7355', // Olive green background
+    backgroundColor: '#8B7355',
     paddingHorizontal: getSpacing(20),
     paddingVertical: getSpacing(15),
     paddingTop: Platform.OS === 'ios' ? getSpacing(10) : getSpacing(15),
@@ -268,109 +245,14 @@ const styles = StyleSheet.create({
   },
   decorativeBorder: {
     height: 2,
-    backgroundColor: '#A68B5B', // Light green/gold border
+    backgroundColor: '#A68B5B',
     marginHorizontal: getSpacing(10),
   },
-  pdfContainer: {
+  contentContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  pdf: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: getSpacing(20),
-    paddingVertical: getSpacing(10),
-    borderTopWidth: 1,
-    borderTopColor: '#A68B5B',
-  },
-  footerLeft: {
-    flex: 1,
-  },
-  footerRight: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  manzilText: {
-    color: '#333333',
-    fontSize: getFontSize(14),
-    fontWeight: '600',
-  },
-  bookIcon: {
-    width: getSpacing(40),
-    height: getSpacing(40),
-    borderRadius: getSpacing(20),
-    backgroundColor: '#D2B48C', // Light brown/beige
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  bookIconText: {
-    fontSize: getFontSize(20),
-  },
-  controls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#8B7355',
-    paddingHorizontal: getSpacing(20),
-    paddingVertical: getSpacing(15),
-  },
-  controlButton: {
-    width: getSpacing(50),
-    height: getSpacing(50),
-    borderRadius: getSpacing(25),
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  controlText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(20),
-    fontWeight: 'bold',
-  },
-  pageIndicator: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(16),
-    fontWeight: '600',
-  },
-  backButton: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? getSpacing(50) : getSpacing(30),
-    left: getSpacing(20),
-    width: getSpacing(40),
-    height: getSpacing(40),
-    borderRadius: getSpacing(20),
-    backgroundColor: 'rgba(139, 115, 85, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(18),
-    fontWeight: 'bold',
-  },
-  quranContent: {
+  quranPage: {
     flex: 1,
     backgroundColor: '#FFFFFF',
     margin: getSpacing(10),
@@ -435,6 +317,97 @@ const styles = StyleSheet.create({
     color: '#666666',
     fontStyle: 'italic',
   },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: getSpacing(20),
+    paddingVertical: getSpacing(10),
+    borderTopWidth: 1,
+    borderTopColor: '#A68B5B',
+  },
+  footerLeft: {
+    flex: 1,
+  },
+  footerRight: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  manzilText: {
+    color: '#333333',
+    fontSize: getFontSize(14),
+    fontWeight: '600',
+  },
+  bookIcon: {
+    width: getSpacing(40),
+    height: getSpacing(40),
+    borderRadius: getSpacing(20),
+    backgroundColor: '#D2B48C',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  bookIconText: {
+    fontSize: getFontSize(20),
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#8B7355',
+    paddingHorizontal: getSpacing(20),
+    paddingVertical: getSpacing(15),
+  },
+  controlButton: {
+    width: getSpacing(50),
+    height: getSpacing(50),
+    borderRadius: getSpacing(25),
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  controlText: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(20),
+    fontWeight: 'bold',
+  },
+  pageIndicator: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(16),
+    fontWeight: '600',
+  },
+  backButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? getSpacing(50) : getSpacing(30),
+    left: getSpacing(20),
+    width: getSpacing(40),
+    height: getSpacing(40),
+    borderRadius: getSpacing(20),
+    backgroundColor: 'rgba(139, 115, 85, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(18),
+    fontWeight: 'bold',
+  },
 });
 
-export default QuranReaderScreen;
+export default SimpleQuranReader;
