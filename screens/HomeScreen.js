@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ImageBackground, Image, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ImageBackground, Image, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
 import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
@@ -71,6 +71,11 @@ const HomeScreen = ({ navigation }) => {
     setIsMenuVisible(false);
   };
 
+  const isPageNumberValid = () => {
+    const page = parseInt(pageNumber);
+    return pageNumber.trim() !== '' && !isNaN(page) && page >= 1 && page <= 134;
+  };
+
   const handleGoToPage = () => {
     const page = parseInt(pageNumber);
     
@@ -79,8 +84,8 @@ const HomeScreen = ({ navigation }) => {
       return;
     }
     
-    if (isNaN(page) || page < 1 || page > 604) {
-      Alert.alert('خطأ', 'رقم الصفحة يجب أن يكون بين 1 و 604');
+    if (isNaN(page) || page < 1 || page > 134) {
+      Alert.alert('خطأ', 'رقم الصفحة يجب أن يكون بين 1 و 134');
       return;
     }
     
@@ -189,7 +194,12 @@ const HomeScreen = ({ navigation }) => {
         backgroundColor="#083569"
       />
       
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView 
+        style={styles.content}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <ScrollView showsVerticalScrollIndicator={false}>
         <Animated.View 
           style={[
             styles.mainContent,
@@ -248,22 +258,42 @@ const HomeScreen = ({ navigation }) => {
                   {item.id === 'go_to_page' && (
                     <View style={styles.goToPageInputContainer}>
                       <View style={styles.goToPageInputField}>
-                        <TextInput
-                          style={styles.goToPageTextInput}
-                          placeholderTextColor="#999"
-                          keyboardType="numeric"
-                          maxLength={3}
-                          value={pageNumber}
-                          onChangeText={setPageNumber}
-                        />
+                        <View style={{flex: 1, justifyContent: 'center'}}>
+                          <TextInput
+                            style={[
+                              styles.goToPageTextInput,
+                              {
+                                paddingVertical: 6, 
+                                textAlignVertical: 'center', 
+                                minHeight: 40,
+                                textAlign: 'center',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                              }
+                            ]}
+                            keyboardType="numeric"
+                            maxLength={3}
+                            value={pageNumber}
+                            onChangeText={setPageNumber}
+                            underlineColorAndroid="transparent"
+                            textAlign="center"
+                          />
+                        </View>
                         <TouchableOpacity
-                          style={styles.goToPageButton}
+                          style={[
+                            styles.goToPageButton,
+                            !isPageNumberValid() && styles.goToPageButtonDisabled
+                          ]}
                           onPress={handleGoToPage}
-                          activeOpacity={0.8}
+                          activeOpacity={isPageNumberValid() ? 0.8 : 1}
+                          disabled={!isPageNumberValid()}
                         >
                           <Image
                             source={require('../assets/icons/ic_home_goto_page_right_side_icon.png')}
-                            style={styles.goToPageButtonIcon}
+                            style={[
+                              styles.goToPageButtonIcon,
+                              !isPageNumberValid() && styles.goToPageButtonIconDisabled
+                            ]}
                             resizeMode="contain"
                           />
                         </TouchableOpacity>
@@ -288,7 +318,8 @@ const HomeScreen = ({ navigation }) => {
             </ResponsiveText>
           </View>
         </Animated.View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <SideMenu
         visible={isMenuVisible}
@@ -408,25 +439,34 @@ const styles = StyleSheet.create({
   },
   goToPageInputField: {
     width: getSpacing(120),
-    height: getSpacing(45),
+    height: getSpacing(55),
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#D0D0D0',
-    borderRadius: getSpacing(22),
+    borderRadius: getSpacing(27),
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: getSpacing(12),
-    paddingTop: getSpacing(8),
-    paddingBottom: getSpacing(8),
-    paddingRight: getSpacing(6),
+    paddingTop: getSpacing(12),
+    paddingBottom: getSpacing(12),
+    paddingRight: getSpacing(8),
     position: 'relative',
   },
   goToPageTextInput: {
     flex: 1,
-    fontSize: getFontSize(14),
-    color: '#083569',
-    textAlign: 'left',
-    paddingRight: getSpacing(10),
+    fontSize: getFontSize(20),
+    color: '#000000',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    paddingHorizontal: getSpacing(4),
+    paddingVertical: getSpacing(6),
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    outline: 'none',
+    lineHeight: getFontSize(24),
+    minHeight: getSpacing(40),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   goToPageButton: {
     backgroundColor: '#083569',
@@ -447,6 +487,13 @@ const styles = StyleSheet.create({
   goToPageButtonIcon: {
     width: getSpacing(18),
     height: getSpacing(18),
+  },
+  goToPageButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+    opacity: 0.5,
+  },
+  goToPageButtonIconDisabled: {
+    opacity: 0.5,
   },
 });
 
