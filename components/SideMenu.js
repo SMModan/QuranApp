@@ -172,7 +172,7 @@ const SideMenu = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'transparent',
   },
   backdrop: {
     flex: 1,
@@ -195,7 +195,6 @@ const styles = StyleSheet.create({
   menuHeader: {
     width: 320,
     height: 143,
-    paddingTop: getSpacing(50),
     paddingHorizontal: getSpacing(20),
     paddingBottom: getSpacing(20),
     backgroundColor: '#083569',
