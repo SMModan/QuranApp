@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   menuContainer: {
     position: 'absolute',
     left: 0,
-    top: 0,
+    top: getSpacing(40),
     bottom: 0,
     width: screenWidth * 0.8,
     maxWidth: 320,
