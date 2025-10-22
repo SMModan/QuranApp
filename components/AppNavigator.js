@@ -7,6 +7,7 @@ import FAQsScreen from '../screens/FAQsScreen';
 import ReadingModeScreen from '../screens/ReadingModeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import QuranReaderWebView from '../screens/QuranReaderWebView';
+import GoToPageScreen from '../screens/GoToPageScreen';
 
 const AppNavigator = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -36,6 +37,8 @@ const AppNavigator = () => {
         return <SettingsScreen navigation={navigation} />;
       case 'quran-reader':
         return <QuranReaderWebView navigation={navigation} />;
+      case 'go-to-page':
+        return <GoToPageScreen navigation={navigation} />;
       default:
         return <HomeScreen navigation={navigation} />;
     }

@@ -57,7 +57,7 @@ const HomeScreen = () => {
       title: 'انتقل إلى الصفحة',
       subtitle: 'GO TO PAGE',
       icon: '📄',
-      iconImage: require('../assets/icons/ic_home_go_to_page.png'),
+      iconImage: require('../assets/icons/ic_home_goto_page_right_side_icon.png'),
       description: 'Navigate to specific page',
     }
   ];
@@ -102,7 +102,9 @@ const HomeScreen = () => {
         break;
       case 'go_to_page':
         // Navigate to go to page screen
-        console.log('Navigate to go to page');
+        if (navigation) {
+          navigation.navigate('go-to-page');
+        }
         break;
       case 'change_reading_mode':
         // Navigate to reading mode screen
@@ -315,8 +317,8 @@ const styles = StyleSheet.create({
     fontSize: getFontSize(24),
   },
   iconImage: {
-    width: getSpacing(30),
-    height: getSpacing(30),
+    width: getSpacing(40),
+    height: getSpacing(40),
   },
   cardText: {
     flex: 1,
