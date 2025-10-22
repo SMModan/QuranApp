@@ -135,7 +135,7 @@ const SideMenu = ({
                   style={styles.mosqueIcon}
                   resizeMode="contain"
                 />
-               
+             
               </View>
             </View>
 
@@ -188,28 +188,29 @@ const styles = StyleSheet.create({
   },
   menuContent: {
     flex: 1,
-    paddingTop: getSpacing(60), // Account for status bar
   },
   menuHeader: {
-    width: 200.62200927734375,
-    height: 56,
+    width: 320,
+    height: 143,
     padding: getSpacing(20),
     backgroundColor: '#083569',
   },
   logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   mosqueIcon: {
-    width: getSpacing(40),
-    height: getSpacing(40),
+    width: 200,
+    height: 200,
     marginRight: getSpacing(15),
+    marginBottom: getSpacing(30),
   },
   titleContainer: {
     flex: 1,
   },
   menuTitle: {
-    fontSize: getFontSize(18),
+    fontSize: getFontSize(20),
     fontWeight: 'bold',
     color: '#FFD700',
     fontFamily: 'Philosopher',
