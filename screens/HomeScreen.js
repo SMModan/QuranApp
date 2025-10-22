@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ImageBackground } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
 import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
@@ -156,7 +156,11 @@ const HomeScreen = () => {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <ImageBackground 
+      source={require('../assets/home_item_bg.png')} 
+      style={styles.container}
+      resizeMode="cover"
+    >
       <CommonHeader 
         title="القرآن الكريم"
         onMenuPress={handleMenuPress}
@@ -178,14 +182,14 @@ const HomeScreen = () => {
             <ResponsiveText
               size="title"
               weight="bold"
-              color="#1a237e"
+              color="#FFFFFF"
               style={styles.welcomeTitle}
             >
               Welcome to the Holy Quran
             </ResponsiveText>
             <ResponsiveText
               size="medium"
-              color="#666666"
+              color="#E0E0E0"
               style={styles.welcomeSubtitle}
             >
               Choose an option to continue
@@ -247,7 +251,7 @@ const HomeScreen = () => {
           <View style={styles.footerSection}>
             <ResponsiveText
               size="small"
-              color="#666666"
+              color="#E0E0E0"
               style={styles.footerText}
             >
               Screen par maujood Qur'an ki aayaat ko baghair wuzu chhoona durust nahin hai.
@@ -261,14 +265,14 @@ const HomeScreen = () => {
         onClose={handleMenuClose}
         onMenuItemPress={handleMenuItemPress}
       />
-    </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f8ff', // Light blue background
+    backgroundColor: '#1a237e', // Dark blue background as fallback
   },
   content: {
     flex: 1,
@@ -294,19 +298,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: getSpacing(10),
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)', // Semi-transparent white
     borderRadius: getSpacing(12),
     marginBottom: getSpacing(15),
-    elevation: 2,
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    borderWidth: 2,
+    borderColor: '#1a237e',
   },
   cardContent: {
     flexDirection: 'row',
