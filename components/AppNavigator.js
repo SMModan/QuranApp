@@ -38,6 +38,7 @@ const AppNavigator = () => {
       case 'quran-reader':
         return <QuranReaderWebView navigation={navigation} />;
       case 'go-to-page':
+        console.log('Rendering GoToPageScreen');
         return <GoToPageScreen navigation={navigation} />;
       default:
         return <HomeScreen navigation={navigation} />;

@@ -102,6 +102,7 @@ const HomeScreen = () => {
         break;
       case 'go_to_page':
         // Navigate to go to page screen
+        console.log('Navigating to go-to-page screen');
         if (navigation) {
           navigation.navigate('go-to-page');
         }
