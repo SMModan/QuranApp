@@ -258,27 +258,24 @@ const HomeScreen = ({ navigation }) => {
                   {item.id === 'go_to_page' && (
                     <View style={styles.goToPageInputContainer}>
                       <View style={styles.goToPageInputField}>
-                        <View style={{flex: 1, justifyContent: 'center'}}>
-                          <TextInput
-                            style={[
-                              styles.goToPageTextInput,
-                              {
-                                paddingVertical: 6, 
-                                textAlignVertical: 'center', 
-                                minHeight: 40,
-                                textAlign: 'center',
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                              }
-                            ]}
-                            keyboardType="numeric"
-                            maxLength={3}
-                            value={pageNumber}
-                            onChangeText={setPageNumber}
-                            underlineColorAndroid="transparent"
-                            textAlign="center"
-                          />
-                        </View>
+                        <TextInput
+                          style={[
+                            styles.goToPageTextInput,
+                            {
+                              flex: 1,
+                              textAlign: 'center',
+                              textAlignVertical: 'center',
+                              paddingVertical: 0,
+                              marginVertical: 0,
+                              height: '100%'
+                            }
+                          ]}
+                          keyboardType="numeric"
+                          maxLength={3}
+                          value={pageNumber}
+                          onChangeText={setPageNumber}
+                          underlineColorAndroid="transparent"
+                        />
                         <TouchableOpacity
                           style={[
                             styles.goToPageButton,
