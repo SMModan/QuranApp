@@ -156,11 +156,7 @@ const HomeScreen = () => {
   }, []);
 
   return (
-    <ImageBackground 
-      source={require('../assets/home_item_bg.png')} 
-      style={styles.container}
-      resizeMode="cover"
-    >
+    <View style={styles.container}>
       <CommonHeader 
         title="القرآن الكريم"
         onMenuPress={handleMenuPress}
@@ -205,7 +201,12 @@ const HomeScreen = () => {
                 onPress={() => handleCardPress(item.id)}
                 activeOpacity={0.8}
               >
-                <View style={styles.cardContent}>
+                <ImageBackground 
+                  source={require('../assets/home_item_bg.png')} 
+                  style={styles.cardBackground}
+                  resizeMode="stretch"
+                >
+                  <View style={styles.cardContent}>
                   <View style={styles.cardIcon}>
                     <Text style={styles.iconText}>{item.icon}</Text>
                   </View>
@@ -221,14 +222,14 @@ const HomeScreen = () => {
                     </ResponsiveText>
                     <ResponsiveText
                       size="medium"
-                      color="#666666"
+                      color="#1a237e"
                       style={styles.cardSubtitle}
                     >
                       {item.subtitle}
                     </ResponsiveText>
                     <ResponsiveText
                       size="small"
-                      color="#999999"
+                      color="#666666"
                       style={styles.cardDescription}
                     >
                       {item.description}
@@ -242,7 +243,8 @@ const HomeScreen = () => {
                       </View>
                     </View>
                   )}
-                </View>
+                  </View>
+                </ImageBackground>
               </TouchableOpacity>
             ))}
           </View>
@@ -265,14 +267,14 @@ const HomeScreen = () => {
         onClose={handleMenuClose}
         onMenuItemPress={handleMenuItemPress}
       />
-    </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a237e', // Dark blue background as fallback
+    backgroundColor: '#1a237e', // Dark blue background
   },
   content: {
     flex: 1,
@@ -298,8 +300,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: getSpacing(10),
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)', // Semi-transparent white
-    borderRadius: getSpacing(12),
     marginBottom: getSpacing(15),
     elevation: 4,
     shadowColor: '#000',
@@ -309,8 +309,10 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    borderWidth: 2,
-    borderColor: '#1a237e',
+  },
+  cardBackground: {
+    borderRadius: getSpacing(12),
+    overflow: 'hidden',
   },
   cardContent: {
     flexDirection: 'row',
