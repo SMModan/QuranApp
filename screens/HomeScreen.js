@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ImageBackground } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ImageBackground, Image } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
 import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
@@ -31,6 +31,7 @@ const HomeScreen = () => {
       title: 'المفضلة',
       subtitle: 'FAVOURITES',
       icon: '⭐',
+      iconImage: require('../assets/icons/ic_home_favourites.png'),
       description: 'Your favorite verses',
     },
     {
@@ -161,6 +162,7 @@ const HomeScreen = () => {
         title="القرآن الكريم"
         onMenuPress={handleMenuPress}
         showMenu={true}
+        backgroundColor="#083569"
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -190,7 +192,15 @@ const HomeScreen = () => {
                 >
                   <View style={styles.cardContent}>
                   <View style={styles.cardIcon}>
-                    <Text style={styles.iconText}>{item.icon}</Text>
+                    {item.iconImage ? (
+                      <Image 
+                        source={item.iconImage} 
+                        style={styles.iconImage}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <Text style={styles.iconText}>{item.icon}</Text>
+                    )}
                   </View>
                   
                   <View style={styles.cardText}>
@@ -198,14 +208,14 @@ const HomeScreen = () => {
                       size="large"
                       weight="600"
                       color="#1a237e"
-                      style={styles.cardTitle}
+                      style={[styles.cardTitle, { fontSize: 16 }]}
                     >
                       {item.title}
                     </ResponsiveText>
                     <ResponsiveText
                       size="medium"
                       color="#1a237e"
-                      style={styles.cardSubtitle}
+                      style={[styles.cardSubtitle, { fontSize: 18 }]}
                     >
                       {item.subtitle}
                     </ResponsiveText>
@@ -228,7 +238,7 @@ const HomeScreen = () => {
           <View style={styles.footerSection}>
             <ResponsiveText
               size="small"
-              color="#E0E0E0"
+              color="#083569"
               style={styles.footerText}
             >
               Screen par maujood Qur'an ki aayaat ko baghair wuzu chhoona durust nahin hai.
@@ -249,7 +259,7 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a237e', // Dark blue background
+    backgroundColor: '#DBECFF', // Light blue background
   },
   content: {
     flex: 1,
@@ -305,6 +315,10 @@ const styles = StyleSheet.create({
   },
   iconText: {
     fontSize: getFontSize(24),
+  },
+  iconImage: {
+    width: getSpacing(30),
+    height: getSpacing(30),
   },
   cardText: {
     flex: 1,
