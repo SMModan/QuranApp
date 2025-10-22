@@ -15,8 +15,6 @@ import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
 
 const GoToPageScreen = ({ navigation }) => {
   const [pageNumber, setPageNumber] = useState('');
-  
-  console.log('GoToPageScreen rendered');
 
   const handleGoToPage = () => {
     const page = parseInt(pageNumber);
@@ -51,47 +49,58 @@ const GoToPageScreen = ({ navigation }) => {
         backgroundColor="#083569"
       />
       
-      <View style={styles.content}>
-        <Text style={{ fontSize: 24, color: '#083569', textAlign: 'center', marginTop: 50 }}>
-          Go To Page Screen is Working!
-        </Text>
-        
-        {/* Go To Page Component - Matching the design */}
-        <View style={styles.goToPageContainer}>
-          <View style={styles.goToPageInner}>
-            {/* Left side - Document icon */}
-            <Image
-              source={require('../assets/icons/ic_home_go_to_page.png')}
-              style={styles.documentIcon}
-              resizeMode="contain"
-            />
-            
-            {/* Center - Text labels */}
-            <View style={styles.textLabelsContainer}>
-              <Text style={styles.arabicLabel}>انتقل إلى الصفحة</Text>
-              <Text style={styles.englishLabel}>GO TO PAGE</Text>
+      <KeyboardAvoidingView 
+        style={styles.content}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* Main Go To Page Component - Exact design match */}
+        <View style={styles.goToPageCard}>
+          {/* Left side - Document icon */}
+          <Image
+            source={require('../assets/icons/ic_home_go_to_page.png')}
+            style={styles.documentIcon}
+            resizeMode="contain"
+          />
+          
+          {/* Center - Text labels */}
+          <View style={styles.textSection}>
+            <Text style={styles.arabicText}>انتقل إلى الصفحة</Text>
+            <Text style={styles.englishText}>GO TO PAGE</Text>
+          </View>
+          
+          {/* Right side - Input field with icon and arrow button */}
+          <View style={styles.inputSection}>
+            {/* Input field with icon and placeholder text */}
+            <View style={styles.inputContainer}>
+              <Image
+                source={require('../assets/icons/ic_goto_page_input.png')}
+                style={styles.inputIcon}
+                resizeMode="contain"
+              />
+              <View style={styles.placeholderContainer}>
+                <Text style={styles.placeholderArabic}>أدخل رقم الصفحة</Text>
+                <Text style={styles.placeholderEnglish}>ENTER PAGE NUMBER</Text>
+              </View>
+              <TextInput
+                style={styles.pageInput}
+                value={pageNumber}
+                onChangeText={setPageNumber}
+                placeholder=""
+                keyboardType="numeric"
+                maxLength={3}
+                autoFocus={true}
+              />
             </View>
             
-            {/* Input field */}
-            <TextInput
-              style={styles.pageInput}
-              value={pageNumber}
-              onChangeText={setPageNumber}
-              placeholder=""
-              keyboardType="numeric"
-              maxLength={3}
-              autoFocus={true}
-            />
-            
-            {/* Right side - Go button */}
+            {/* Arrow button */}
             <TouchableOpacity
-              style={styles.goButton}
+              style={styles.arrowButton}
               onPress={handleGoToPage}
               activeOpacity={0.8}
             >
               <Image
                 source={require('../assets/icons/ic_home_goto_page_right_side_icon.png')}
-                style={styles.goButtonIcon}
+                style={styles.arrowIcon}
                 resizeMode="contain"
               />
             </TouchableOpacity>
@@ -104,7 +113,7 @@ const GoToPageScreen = ({ navigation }) => {
             Screen par maujood Qur'an ki aayaat ko baghair wuzu chhoona durust nahin hai.
           </Text>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </View>
   );
 };
@@ -120,67 +129,102 @@ const styles = StyleSheet.create({
     paddingTop: getSpacing(40),
     alignItems: 'center',
   },
-  // Go To Page Container - Matching the ornate design
-  goToPageContainer: {
-    width: '100%',
-    maxWidth: getSpacing(400),
-    marginBottom: getSpacing(40),
-  },
-  goToPageInner: {
-    backgroundColor: '#F0F8FF',
+  // Main card container - matching the ornate design
+  goToPageCard: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 3,
     borderColor: '#083569',
-    borderRadius: getSpacing(15),
+    borderRadius: getSpacing(20),
     paddingHorizontal: getSpacing(20),
-    paddingVertical: getSpacing(15),
+    paddingVertical: getSpacing(20),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: getSpacing(400),
+    marginBottom: getSpacing(40),
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 10,
   },
   documentIcon: {
-    width: getSpacing(30),
-    height: getSpacing(30),
+    width: getSpacing(35),
+    height: getSpacing(35),
     marginRight: getSpacing(15),
   },
-  textLabelsContainer: {
+  textSection: {
     flex: 1,
     marginRight: getSpacing(15),
   },
-  arabicLabel: {
-    fontSize: getFontSize(16),
+  arabicText: {
+    fontSize: getFontSize(18),
     color: '#083569',
     fontWeight: 'bold',
     textAlign: 'right',
     marginBottom: getSpacing(2),
   },
-  englishLabel: {
-    fontSize: getFontSize(12),
+  englishText: {
+    fontSize: getFontSize(14),
     color: '#083569',
     fontWeight: '600',
     textAlign: 'right',
   },
-  pageInput: {
+  inputSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#B0C4DE',
-    borderRadius: getSpacing(8),
-    paddingHorizontal: getSpacing(12),
-    paddingVertical: getSpacing(8),
+    borderColor: '#D0D0D0',
+    borderRadius: getSpacing(25), // Pill-shaped border radius
+    paddingHorizontal: getSpacing(15),
+    paddingVertical: getSpacing(12),
+    marginRight: getSpacing(10),
+    minWidth: getSpacing(150),
+    position: 'relative',
+  },
+  inputIcon: {
+    width: getSpacing(24),
+    height: getSpacing(24),
+    marginRight: getSpacing(10),
+  },
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    marginRight: getSpacing(10),
+  },
+  placeholderArabic: {
+    fontSize: getFontSize(14),
+    color: '#999999',
+    textAlign: 'right',
+    marginBottom: getSpacing(2),
+  },
+  placeholderEnglish: {
+    fontSize: getFontSize(12),
+    color: '#999999',
+    textAlign: 'right',
+  },
+  pageInput: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     fontSize: getFontSize(16),
     color: '#083569',
     textAlign: 'center',
-    width: getSpacing(80),
-    marginRight: getSpacing(15),
+    backgroundColor: 'transparent',
+    paddingHorizontal: getSpacing(15),
   },
-  goButton: {
+  arrowButton: {
     backgroundColor: '#083569',
     borderRadius: getSpacing(20),
     width: getSpacing(40),
@@ -196,7 +240,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  goButtonIcon: {
+  arrowIcon: {
     width: getSpacing(20),
     height: getSpacing(20),
   },

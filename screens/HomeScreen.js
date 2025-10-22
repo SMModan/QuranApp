@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ImageBackground, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ImageBackground, Image, TextInput, Alert } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
 import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
 import ResponsiveText from '../components/ResponsiveText';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }) => {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [pageNumber, setPageNumber] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
 
@@ -57,7 +58,7 @@ const HomeScreen = () => {
       title: 'انتقل إلى الصفحة',
       subtitle: 'GO TO PAGE',
       icon: '📄',
-      iconImage: require('../assets/icons/ic_home_goto_page_right_side_icon.png'),
+      iconImage: require('../assets/icons/ic_home_go_to_page.png'),
       description: 'Navigate to specific page',
     }
   ];
@@ -68,6 +69,28 @@ const HomeScreen = () => {
 
   const handleMenuClose = () => {
     setIsMenuVisible(false);
+  };
+
+  const handleGoToPage = () => {
+    const page = parseInt(pageNumber);
+    
+    if (!pageNumber.trim()) {
+      Alert.alert('خطأ', 'يرجى إدخال رقم الصفحة');
+      return;
+    }
+    
+    if (isNaN(page) || page < 1 || page > 604) {
+      Alert.alert('خطأ', 'رقم الصفحة يجب أن يكون بين 1 و 604');
+      return;
+    }
+    
+    // Navigate to QuranReaderScreen with the specified page
+    if (navigation) {
+      navigation.navigate('quran-reader', { 
+        page: page,
+        title: `الصفحة ${page}`
+      });
+    }
   };
 
   const handleMenuItemPress = (itemId) => {
@@ -223,12 +246,32 @@ const HomeScreen = () => {
                   </View>
 
                   {item.id === 'go_to_page' && (
-                    <View style={styles.actionButton}>
-                      <View style={styles.arrowButton}>
-                        <Text style={styles.arrowText}>→</Text>
+                    <View style={styles.goToPageInputContainer}>
+                      <View style={styles.goToPageInputField}>
+                        <TextInput
+                          style={styles.goToPageTextInput}
+                          placeholder="Enter page number"
+                          placeholderTextColor="#999"
+                          keyboardType="numeric"
+                          maxLength={3}
+                          value={pageNumber}
+                          onChangeText={setPageNumber}
+                        />
                       </View>
+                      <TouchableOpacity
+                        style={styles.goToPageButton}
+                        onPress={handleGoToPage}
+                        activeOpacity={0.8}
+                      >
+                        <Image
+                          source={require('../assets/icons/ic_home_goto_page_right_side_icon.png')}
+                          style={styles.goToPageButtonIcon}
+                          resizeMode="contain"
+                        />
+                      </TouchableOpacity>
                     </View>
                   )}
+                  
                   </View>
                 </ImageBackground>
               </TouchableOpacity>
@@ -359,6 +402,48 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: getFontSize(18),
     fontStyle: 'italic',
+  },
+  // Go to Page simple input styles
+  goToPageInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: getSpacing(10),
+  },
+  goToPageInputField: {
+    width: getSpacing(100),
+    height: getSpacing(40),
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D0D0D0',
+    borderRadius: getSpacing(20),
+    paddingHorizontal: getSpacing(15),
+    paddingVertical: getSpacing(12),
+    marginRight: getSpacing(10),
+  },
+  goToPageTextInput: {
+    fontSize: getFontSize(16),
+    color: '#083569',
+    textAlign: 'center',
+  },
+  goToPageButton: {
+    backgroundColor: '#083569',
+    borderRadius: getSpacing(20),
+    width: getSpacing(40),
+    height: getSpacing(40),
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  goToPageButtonIcon: {
+    width: getSpacing(20),
+    height: getSpacing(20),
   },
 });
 
