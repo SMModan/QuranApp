@@ -68,7 +68,12 @@ const AllParasScreen = ({ navigation }) => {
     >
       <View style={styles.paraContent}>
         <View style={styles.paraNumber}>
-          <ResponsiveText size="large" weight="bold" color="#333333">
+          <ResponsiveText 
+            size="large" 
+            weight="bold" 
+            color="#333333"
+            style={styles.paraNumberText}
+          >
             {item.id}
           </ResponsiveText>
         </View>
@@ -150,6 +155,11 @@ const styles = StyleSheet.create({
   },
   englishText: {
     textAlign: 'right',
+  },
+  paraNumberText: {
+    fontFamily: 'Philosopher',
+    fontWeight: '700',
+    fontSize: 18,
   },
 });
 
