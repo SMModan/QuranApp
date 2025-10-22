@@ -1,20 +1,26 @@
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform } from 'react-native';
+import CustomSplashScreen from './components/CustomSplashScreen';
+import useCachedResources from './hooks/useCachedResources';
+import AppNavigator from './components/AppNavigator';
 
 export default function App() {
+  const isLoadingComplete = useCachedResources();
+
+  if (!isLoadingComplete) {
+    return <CustomSplashScreen />;
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <>
+      <AppNavigator />
+      <StatusBar 
+        style="light" 
+        backgroundColor="#1a237e"
+        translucent={true}
+        hidden={true}
+      />
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
