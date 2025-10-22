@@ -17,6 +17,7 @@ const HomeScreen = () => {
       title: 'سيرة ذاتية',
       subtitle: 'RESUME',
       icon: '📖',
+      iconImage: require('../assets/icons/ic_home_item_resume.png'),
       description: 'Biography and life story',
     },
     {
@@ -24,6 +25,7 @@ const HomeScreen = () => {
       title: 'العلامات المرجعية',
       subtitle: 'BOOKMARKS',
       icon: '🔖',
+      iconImage: require('../assets/icons/ic_home_item_bookmark.png'),
       description: 'Your saved bookmarks',
     },
     {
@@ -39,6 +41,7 @@ const HomeScreen = () => {
       title: 'فهرس السور',
       subtitle: 'SURAH INDEX',
       icon: '📋',
+      iconImage: require('../assets/icons/ic_home_surah_index.png'),
       description: 'Browse all Surahs',
     },
     {
@@ -46,6 +49,7 @@ const HomeScreen = () => {
       title: 'فهرس الأجزاء / الفقرات',
       subtitle: 'JUZ/PARA INDEX',
       icon: '📚',
+      iconImage: require('../assets/icons/home_juz_para_index.png'),
       description: 'Browse by Juz/Para',
     },
     {
@@ -53,15 +57,9 @@ const HomeScreen = () => {
       title: 'انتقل إلى الصفحة',
       subtitle: 'GO TO PAGE',
       icon: '📄',
+      iconImage: require('../assets/icons/ic_home_go_to_page.png'),
       description: 'Navigate to specific page',
-    },
-    {
-      id: 'faqs',
-      title: 'الأسئلة الشائعة',
-      subtitle: 'FAQ\'s',
-      icon: '❓',
-      description: 'Frequently asked questions',
-    },
+    }
   ];
 
   const handleMenuPress = () => {
