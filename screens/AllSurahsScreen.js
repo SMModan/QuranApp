@@ -41,7 +41,7 @@ const AllSurahsScreen = ({ navigation }) => {
     { id: '30', arabic: 'عَمَّ', english: 'Amma', isFavorite: false },
   ];
 
-  const handleMenuPress = () => {
+  const handleBackPress = () => {
     if (navigation && navigation.goBack) {
       navigation.goBack();
     }
@@ -179,8 +179,9 @@ const AllSurahsScreen = ({ navigation }) => {
     <View style={styles.container}>
       <CommonHeader 
         title="All Surahs"
-        onMenuPress={handleMenuPress}
-        showMenu={true}
+        onBackPress={handleBackPress}
+        showBackButton={true}
+        showMenu={false}
       />
       
       <View style={styles.content}>

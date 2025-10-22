@@ -38,8 +38,8 @@ const AllParasScreen = ({ navigation }) => {
     { id: '30', arabic: 'عَمَّ', english: 'Amma' },
   ];
 
-  const handleMenuPress = () => {
-    // Handle menu press - could open side menu or go back
+  const handleBackPress = () => {
+    // Handle back press - go back to previous screen
     if (navigation && navigation.goBack) {
       navigation.goBack();
     }
@@ -103,8 +103,9 @@ const AllParasScreen = ({ navigation }) => {
     <View style={styles.container}>
       <CommonHeader 
         title="All Para's"
-        onMenuPress={handleMenuPress}
-        showMenu={true}
+        onBackPress={handleBackPress}
+        showBackButton={true}
+        showMenu={false}
       />
       
       <View style={styles.content}>

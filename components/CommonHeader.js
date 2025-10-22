@@ -6,6 +6,8 @@ const CommonHeader = ({
   title = "القرآن الكريم", 
   onMenuPress, 
   showMenu = true,
+  showBackButton = false,
+  onBackPress,
   backgroundColor = '#1a237e',
   textColor = '#FFFFFF'
 }) => {
@@ -19,8 +21,8 @@ const CommonHeader = ({
       />
       
       <View style={styles.headerContent}>
-        {/* Left side - Menu button */}
-        {showMenu && (
+        {/* Left side - Menu button or Back button */}
+        {showMenu && !showBackButton && (
           <TouchableOpacity 
             style={styles.menuButton} 
             onPress={onMenuPress}
@@ -31,6 +33,16 @@ const CommonHeader = ({
               <View style={[styles.hamburgerLine, { backgroundColor: textColor }]} />
               <View style={[styles.hamburgerLine, styles.hamburgerLineShort, { backgroundColor: textColor }]} />
             </View>
+          </TouchableOpacity>
+        )}
+        
+        {showBackButton && (
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={onBackPress}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.backIcon, { color: textColor }]}>←</Text>
           </TouchableOpacity>
         )}
         
@@ -92,17 +104,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: getSpacing(10),
   },
   title: {
-    fontSize: getFontSize(20),
-    fontWeight: 'bold',
+    fontFamily: 'Philosopher',
+    fontSize: 18,
+    fontWeight: '700',
     textAlign: 'center',
     // Adjust font size for tablets
     ...(screenData.isTablet && {
-      fontSize: getFontSize(24),
+      fontSize: 20,
     }),
   },
   rightContainer: {
     width: getSpacing(40), // Same width as menu button for balance
     alignItems: 'flex-end',
+  },
+  backButton: {
+    padding: getSpacing(8),
+    borderRadius: getSpacing(4),
+  },
+  backIcon: {
+    fontSize: getFontSize(24),
+    fontWeight: 'bold',
   },
 });
 
