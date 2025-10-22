@@ -173,24 +173,6 @@ const HomeScreen = () => {
             }
           ]}
         >
-          {/* Welcome Message */}
-          <View style={styles.welcomeSection}>
-            <ResponsiveText
-              size="title"
-              weight="bold"
-              color="#FFFFFF"
-              style={styles.welcomeTitle}
-            >
-              Welcome to the Holy Quran
-            </ResponsiveText>
-            <ResponsiveText
-              size="medium"
-              color="#E0E0E0"
-              style={styles.welcomeSubtitle}
-            >
-              Choose an option to continue
-            </ResponsiveText>
-          </View>
 
           {/* Menu Cards */}
           <View style={styles.cardsContainer}>
@@ -202,7 +184,7 @@ const HomeScreen = () => {
                 activeOpacity={0.8}
               >
                 <ImageBackground 
-                  source={require('../assets/home_item_bg.png')} 
+                  source={require('../assets/icons/home_item_bg.png')} 
                   style={styles.cardBackground}
                   resizeMode="stretch"
                 >
@@ -226,13 +208,6 @@ const HomeScreen = () => {
                       style={styles.cardSubtitle}
                     >
                       {item.subtitle}
-                    </ResponsiveText>
-                    <ResponsiveText
-                      size="small"
-                      color="#666666"
-                      style={styles.cardDescription}
-                    >
-                      {item.description}
                     </ResponsiveText>
                   </View>
 
