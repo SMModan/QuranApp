@@ -7,10 +7,9 @@ import {
   Dimensions, 
   TouchableOpacity,
   SafeAreaView,
-  Platform,
-  PanGestureHandler,
-  State
+  Platform
 } from 'react-native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Pdf from 'react-native-pdf';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';

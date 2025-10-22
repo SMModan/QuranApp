@@ -8,10 +8,9 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Platform,
-  Alert,
-  PanGestureHandler,
-  State
+  Alert
 } from 'react-native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { WebView } from 'react-native-webview';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
