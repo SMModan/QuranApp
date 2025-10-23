@@ -54,7 +54,8 @@
         "backgroundColor": "#1a237e",
         "tabletImage": "./assets/splash-3x.png"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.QuranAppExpo"
     },
     "web": {
       "favicon": "./assets/favicon.png"

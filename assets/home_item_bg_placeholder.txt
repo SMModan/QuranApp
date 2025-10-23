@@ -1,1 +1,0 @@
-Please add your home_item_bg.png file to the assets folder

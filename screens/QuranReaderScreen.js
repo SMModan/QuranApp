@@ -6,21 +6,25 @@ import {
   StatusBar, 
   Dimensions, 
   TouchableOpacity,
-  SafeAreaView,
   Platform,
   Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Pdf from 'react-native-pdf';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const QuranReaderScreen = ({ navigation, route }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages] = useState(10); // Fixed total pages for demo
+  const [totalPages, setTotalPages] = useState(604); // Total pages in Quran
   const [isFullScreen, setIsFullScreen] = useState(true);
   const [showControls, setShowControls] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const pdfRef = useRef(null);
 
   // Get chapter and verse info from route params with validation
   const chapterName = route?.params?.chapterName || 'البقرة';
@@ -51,7 +55,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
   }, []);
 
   const goToNextPage = () => {
-    if (currentPage < 10) { // Assuming 10 pages for demo
+    if (currentPage < totalPages) {
       setCurrentPage(prev => prev + 1);
     }
   };
@@ -71,13 +75,29 @@ const QuranReaderScreen = ({ navigation, route }) => {
   };
 
   const handleError = (error) => {
-    console.log('Error:', error);
+    console.log('PDF Error:', error);
+    setHasError(true);
+    setIsLoading(false);
+    Alert.alert('Error', 'Failed to load Quran PDF. Please check if the file exists.');
   };
 
-  // Simplified gesture handler
+  const handleLoadComplete = (numberOfPages) => {
+    setTotalPages(numberOfPages);
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  const handlePageChanged = (page, numberOfPages) => {
+    setCurrentPage(page);
+    setTotalPages(numberOfPages);
+  };
+
+  // Swipe gesture handlers for PDF navigation
   const panGesture = Gesture.Pan()
     .minDistance(20)
     .onEnd((event) => {
+      if (hasError || isLoading) return;
+      
       const { translationX, translationY } = event;
       const swipeThreshold = 50;
       const horizontalSwipe = Math.abs(translationX) > Math.abs(translationY);
@@ -118,52 +138,55 @@ const QuranReaderScreen = ({ navigation, route }) => {
       {/* Decorative Border */}
       <View style={styles.decorativeBorder} />
 
-      {/* Quran Reader with Swipe Gestures */}
+      {/* PDF Reader with Swipe Gestures */}
       <View style={styles.pdfContainer}>
-        <GestureDetector gesture={panGesture}>
-          <View style={styles.quranContent}>
-            <View style={styles.decorativeBorderLeft} />
-            <View style={styles.decorativeBorderRight} />
-            
-            <View style={styles.versesContainer}>
-              <View style={styles.verseContainer}>
-                <View style={styles.verseNumberContainer}>
-                  <Text style={styles.verseNumber}>1</Text>
-                </View>
-                <Text style={styles.arabicText}>
-                  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-                </Text>
-                <Text style={styles.translationText}>
-                  In the name of Allah, the Entirely Merciful, the Especially Merciful.
-                </Text>
-              </View>
-              
-              <View style={styles.verseContainer}>
-                <View style={styles.verseNumberContainer}>
-                  <Text style={styles.verseNumber}>2</Text>
-                </View>
-                <Text style={styles.arabicText}>
-                  الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ
-                </Text>
-                <Text style={styles.translationText}>
-                  Praise be to Allah, Lord of the worlds.
-                </Text>
-              </View>
-              
-              <View style={styles.verseContainer}>
-                <View style={styles.verseNumberContainer}>
-                  <Text style={styles.verseNumber}>3</Text>
-                </View>
-                <Text style={styles.arabicText}>
-                  الرَّحْمَٰنِ الرَّحِيمِ
-                </Text>
-                <Text style={styles.translationText}>
-                  The Entirely Merciful, the Especially Merciful.
-                </Text>
-              </View>
-            </View>
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading Quran...</Text>
           </View>
-        </GestureDetector>
+        )}
+        
+        {hasError && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Failed to load PDF</Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={() => {
+                setHasError(false);
+                setIsLoading(true);
+              }}
+            >
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        
+        {!hasError && (
+          <GestureDetector gesture={panGesture}>
+            <Pdf
+              ref={pdfRef}
+              source={require('../assets/quran_sharif.pdf')}
+              style={styles.pdf}
+              page={currentPage}
+              scale={1.0}
+              minScale={0.5}
+              maxScale={3.0}
+              horizontal={false}
+              spacing={0}
+              password=""
+              onLoadComplete={handleLoadComplete}
+              onPageChanged={handlePageChanged}
+              onError={handleError}
+              onPress={() => toggleControls()}
+              enablePaging={true}
+              enableRTL={true}
+              enableAntialiasing={true}
+              enableAnnotationRendering={true}
+              fitPolicy={0}
+              singlePage={false}
+            />
+          </GestureDetector>
+        )}
       </View>
 
       {/* Decorative Border */}
@@ -279,6 +302,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  loadingText: {
+    fontSize: getFontSize(16),
+    color: '#8B7355',
+    fontWeight: '600',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: getSpacing(20),
+  },
+  errorText: {
+    fontSize: getFontSize(16),
+    color: '#FF6B6B',
+    fontWeight: '600',
+    marginBottom: getSpacing(20),
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#8B7355',
+    paddingHorizontal: getSpacing(20),
+    paddingVertical: getSpacing(10),
+    borderRadius: getSpacing(5),
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(14),
+    fontWeight: '600',
+  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -369,71 +428,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: getFontSize(18),
     fontWeight: 'bold',
-  },
-  quranContent: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    margin: getSpacing(10),
-    borderWidth: 2,
-    borderColor: '#A68B5B',
-    position: 'relative',
-    minHeight: screenHeight * 0.6,
-  },
-  decorativeBorderLeft: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    width: 8,
-    height: '100%',
-    backgroundColor: '#A68B5B',
-  },
-  decorativeBorderRight: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    width: 8,
-    height: '100%',
-    backgroundColor: '#A68B5B',
-  },
-  versesContainer: {
-    padding: getSpacing(20),
-    paddingLeft: getSpacing(30),
-    paddingRight: getSpacing(30),
-  },
-  verseContainer: {
-    marginBottom: getSpacing(20),
-  },
-  verseNumberContainer: {
-    alignSelf: 'flex-start',
-    marginBottom: getSpacing(10),
-  },
-  verseNumber: {
-    backgroundColor: '#90EE90',
-    borderWidth: 2,
-    borderColor: '#228B22',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    textAlign: 'center',
-    lineHeight: 26,
-    fontSize: getFontSize(12),
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-  arabicText: {
-    fontSize: getFontSize(20),
-    lineHeight: getFontSize(35),
-    textAlign: 'right',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'Arial' : 'sans-serif',
-    marginBottom: getSpacing(10),
-  },
-  translationText: {
-    fontSize: getFontSize(14),
-    lineHeight: getFontSize(20),
-    textAlign: 'left',
-    color: '#666666',
-    fontStyle: 'italic',
   },
 });
 
