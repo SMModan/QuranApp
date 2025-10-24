@@ -223,12 +223,6 @@ const AllSurahsScreen = ({ navigation }) => {
         activeOpacity={0.7}
       >
         <View style={styles.surahContent}>
-          <View style={styles.surahNumber}>
-            <ResponsiveText size="large" weight="bold" color="#333333">
-              {item.id}
-            </ResponsiveText>
-          </View>
-          
           <TouchableOpacity
             style={styles.starButton}
             onPress={() => toggleFavorite(item)}
@@ -291,6 +285,12 @@ const AllSurahsScreen = ({ navigation }) => {
               {item.english}
             </ResponsiveText>
           </View>
+          
+          <View style={styles.surahNumber}>
+            <ResponsiveText size="large" weight="bold" color="#FFFFFF" style={styles.numberBadge}>
+              {item.id}
+            </ResponsiveText>
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -309,7 +309,7 @@ const AllSurahsScreen = ({ navigation }) => {
         <FlatList
           data={surahsData}
           renderItem={renderSurahItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => `surah-${item.id}-${index}`}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
         />
@@ -348,9 +348,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   surahNumber: {
-    width: getSpacing(50),
     alignItems: 'center',
-    marginRight: getSpacing(12),
+    justifyContent: 'center',
+  },
+  numberBadge: {
+    backgroundColor: '#1976D2',
+    borderRadius: getSpacing(20),
+    width: getSpacing(40),
+    height: getSpacing(40),
+    textAlign: 'center',
+    lineHeight: getSpacing(40),
+    fontSize: getFontSize(16),
+    fontWeight: 'bold',
   },
   starButton: {
     width: getSpacing(40),
@@ -366,7 +375,8 @@ const styles = StyleSheet.create({
   },
   surahText: {
     flex: 1,
-    marginLeft: getSpacing(15),
+    marginLeft: getSpacing(12),
+    marginRight: getSpacing(12),
   },
   arabicText: {
     marginBottom: getSpacing(4),
@@ -385,7 +395,7 @@ const styles = StyleSheet.create({
   },
   pageText: {
     textAlign: 'center',
-    marginLeft: getSpacing(16),
+    marginLeft: getSpacing(8),
     marginRight: getSpacing(12),
     fontSize: getFontSize(12),
     color: '#1976D2',

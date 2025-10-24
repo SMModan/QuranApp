@@ -6,6 +6,8 @@ import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
 import { saveFavorite, isFavorite } from '../utils/FavoritesStorage';
 
 const AllParasScreen = ({ navigation }) => {
+  const [favorites, setFavorites] = useState(new Set());
+  
   const parasData = [
     { id: '01', arabic: 'الم', english: 'Alif Lam Meem', pageNumber: 2 },
     { id: '02', arabic: 'سَيَقُولُ', english: 'Sayaqool', pageNumber: 3 },
@@ -54,6 +56,21 @@ const AllParasScreen = ({ navigation }) => {
     };
   }, []);
 
+  useEffect(() => {
+    // Load existing favorites
+    const loadFavorites = async () => {
+      const favoriteSet = new Set();
+      for (const para of parasData) {
+        const isFav = await isFavorite(para.id, 'para');
+        if (isFav) {
+          favoriteSet.add(para.id);
+        }
+      }
+      setFavorites(favoriteSet);
+    };
+    loadFavorites();
+  }, []);
+
   const handleParaPress = (para) => {
     // Navigate to Quran reader with the specific para
     const navigationParams = { 
@@ -64,7 +81,7 @@ const AllParasScreen = ({ navigation }) => {
     navigation.navigate('quran-reader', navigationParams);
   };
 
-  const handleFavoritePress = async (para, setFavoriteStatus) => {
+  const handleFavoritePress = async (para) => {
     try {
       const result = await saveFavorite({
         type: 'para',
@@ -75,7 +92,7 @@ const AllParasScreen = ({ navigation }) => {
       });
 
       if (result.success) {
-        setFavoriteStatus(true);
+        setFavorites(prev => new Set([...prev, para.id]));
         Alert.alert('Success', result.message);
       } else {
         Alert.alert('Info', result.message);
@@ -87,15 +104,7 @@ const AllParasScreen = ({ navigation }) => {
   };
 
   const renderParaItem = ({ item }) => {
-    const [favoriteStatus, setFavoriteStatus] = useState(false);
-    
-    useEffect(() => {
-      const checkFavorite = async () => {
-        const isFav = await isFavorite(item.id, 'para');
-        setFavoriteStatus(isFav);
-      };
-      checkFavorite();
-    }, [item.id]);
+    const isFavorite = favorites.has(item.id);
     
     return (
       <TouchableOpacity
@@ -104,13 +113,9 @@ const AllParasScreen = ({ navigation }) => {
         activeOpacity={0.7}
       >
         <View style={styles.paraContent}>
-          <View style={styles.paraNumber}>
-            <Text style={styles.paraId}>{item.id}</Text>
-          </View>
-          
           <TouchableOpacity
             style={styles.starButton}
-            onPress={() => handleFavoritePress(item, setFavoriteStatus)}
+            onPress={() => handleFavoritePress(item)}
             activeOpacity={0.7}
           >
             <View style={{
@@ -124,7 +129,7 @@ const AllParasScreen = ({ navigation }) => {
                 lineHeight: 28,
                 textAlign: 'center',
               }}>
-                {favoriteStatus ? '⭐' : '☆'}
+                {isFavorite ? '⭐' : '☆'}
               </Text>
             </View>
           </TouchableOpacity>
@@ -134,6 +139,10 @@ const AllParasScreen = ({ navigation }) => {
           <View style={styles.paraText}>
             <Text style={styles.arabicText}>{item.arabic}</Text>
             <Text style={styles.englishText}>{item.english}</Text>
+          </View>
+          
+          <View style={styles.paraNumber}>
+            <Text style={styles.numberBadge}>{item.id}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -153,7 +162,7 @@ const AllParasScreen = ({ navigation }) => {
         <FlatList
           data={parasData}
           renderItem={renderParaItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => `para-${item.id}-${index}`}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
         />
@@ -192,9 +201,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   paraNumber: {
-    width: getSpacing(50),
     alignItems: 'center',
-    marginRight: getSpacing(12),
+    justifyContent: 'center',
+  },
+  numberBadge: {
+    backgroundColor: '#1976D2',
+    borderRadius: getSpacing(20),
+    width: getSpacing(40),
+    height: getSpacing(40),
+    textAlign: 'center',
+    lineHeight: getSpacing(40),
+    fontSize: getFontSize(16),
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   starButton: {
     width: getSpacing(40),
@@ -203,7 +222,8 @@ const styles = StyleSheet.create({
   },
   paraText: {
     flex: 1,
-    marginLeft: getSpacing(15),
+    marginLeft: getSpacing(12),
+    marginRight: getSpacing(12),
   },
   paraId: {
     fontSize: getFontSize(16),
@@ -234,7 +254,7 @@ const styles = StyleSheet.create({
     borderRadius: getSpacing(16),
     fontWeight: '500',
     textAlign: 'center',
-    marginLeft: getSpacing(16),
+    marginLeft: getSpacing(8),
     marginRight: getSpacing(12),
   },
 });
