@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Image, StyleSheet, StatusBar, Platform } from 'react-native';
+import { View, Image, StyleSheet, StatusBar, Platform, Dimensions } from 'react-native';
 import { getImageDimensions, screenData, getSpacing } from '../utils/ResponsiveDesign';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const CustomSplashScreen = () => {
   // Get responsive image dimensions
@@ -15,7 +17,7 @@ const CustomSplashScreen = () => {
         hidden={true}
       />
       <Image 
-        source={require('../assets/splash.png')} 
+        source={require('../assets/splash-icon.png')} 
         style={[
           styles.splashImage,
           {
@@ -35,9 +37,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a237e',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: getSpacing(20),
-    paddingVertical: getSpacing(40),
-    paddingTop: Platform.OS === 'ios' ? getSpacing(60) : getSpacing(40),
+    width: screenWidth,
+    height: screenHeight,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   splashImage: {
     // Dimensions will be set dynamically based on screen size

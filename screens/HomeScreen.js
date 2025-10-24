@@ -114,7 +114,9 @@ const HomeScreen = ({ navigation }) => {
         break;
       case 'favourites':
         // Navigate to favourites screen
-        console.log('Navigate to favourites');
+        if (navigation) {
+          navigation.navigate('favorites');
+        }
         break;
       case 'surah_index':
         // Navigate to surah index

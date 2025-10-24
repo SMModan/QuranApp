@@ -8,6 +8,7 @@ import ReadingModeScreen from '../screens/ReadingModeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import QuranReaderScreen from '../screens/QuranReaderScreen';
 import GoToPageScreen from '../screens/GoToPageScreen';
+import FavoritesScreen from '../screens/FavoritesScreen';
 
 const AppNavigator = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -40,6 +41,8 @@ const AppNavigator = () => {
       case 'go-to-page':
         console.log('Rendering GoToPageScreen');
         return <GoToPageScreen navigation={navigation} />;
+      case 'favorites':
+        return <FavoritesScreen navigation={navigation} />;
       default:
         return <HomeScreen navigation={navigation} />;
     }

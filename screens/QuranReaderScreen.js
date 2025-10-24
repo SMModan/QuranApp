@@ -24,20 +24,63 @@ const getPdfSource = () => {
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const QuranReaderScreen = ({ navigation, route }) => {
-  const [currentPage, setCurrentPage] = useState(1);
+  // Get initial page from route params, default to 1
+  const initialPage = route?.params?.pageNumber || route?.params?.page || 1;
+  
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(0); // Will be set when PDF loads
   const [isFullScreen, setIsFullScreen] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [pdfSource, setPdfSource] = useState(null);
+  const [pdfKey, setPdfKey] = useState(0); // Force re-render key
   const pdfRef = useRef(null);
+
+  // Update currentPage when route params change
+  useEffect(() => {
+    const newPage = route?.params?.pageNumber || route?.params?.page || 1;
+    console.log('=== ROUTE PARAMS CHANGED ===');
+    console.log('Route params changed, updating page to:', newPage);
+    console.log('Previous currentPage:', currentPage);
+    console.log('New page from route?.params?.pageNumber:', route?.params?.pageNumber);
+    console.log('New page from route?.params?.page:', route?.params?.page);
+    console.log('Final newPage:', newPage);
+    setCurrentPage(newPage);
+    setPdfKey(prev => prev + 1); // Force PDF re-render
+  }, [route?.params?.pageNumber, route?.params?.page]);
+
+  // Navigate to specific page when currentPage changes and PDF is loaded
+  useEffect(() => {
+    console.log('=== PAGE NAVIGATION EFFECT ===');
+    console.log('pdfRef.current exists:', !!pdfRef.current);
+    console.log('isLoading:', isLoading);
+    console.log('hasError:', hasError);
+    console.log('currentPage:', currentPage);
+    console.log('currentPage > 1:', currentPage > 1);
+    
+    if (pdfRef.current && !isLoading && !hasError && currentPage > 1) {
+      console.log('✅ PDF is loaded, navigating to page:', currentPage);
+      navigateToPage(currentPage);
+    } else {
+      console.log('❌ Cannot navigate - conditions not met');
+    }
+  }, [currentPage, isLoading, hasError]);
 
   
   // Validate navigation object
   const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
 
   useEffect(() => {
+    // Log the initial page being loaded
+    console.log('=== QURAN READER SCREEN INITIALIZATION ===');
+    console.log('QuranReaderScreen: Starting at page', initialPage);
+    console.log('Route params:', route?.params);
+    console.log('pageNumber from route:', route?.params?.pageNumber);
+    console.log('page from route:', route?.params?.page);
+    console.log('Final initialPage:', initialPage);
+    console.log('Current currentPage state:', currentPage);
+    
     // Hide status bar for full screen
     StatusBar.setHidden(true, 'none');
     StatusBar.setTranslucent(true);
@@ -69,6 +112,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const initializePdfSource = async () => {
     try {
       console.log('Starting PDF initialization...');
+      console.log('Target page for initialization:', currentPage);
       setIsLoading(true);
       setHasError(false);
       
@@ -109,13 +153,52 @@ const QuranReaderScreen = ({ navigation, route }) => {
     Alert.alert('Error', 'Failed to load Quran PDF. Please check if the file exists.');
   };
 
+  const navigateToPage = (pageNumber) => {
+    console.log('=== NAVIGATE TO PAGE FUNCTION ===');
+    console.log('Attempting to navigate to page:', pageNumber);
+    console.log('pdfRef.current exists:', !!pdfRef.current);
+    
+    if (pdfRef.current && pageNumber > 1) {
+      try {
+        console.log('🚀 Calling setPage with:', pageNumber);
+        pdfRef.current.setPage(pageNumber);
+        
+        // Try again after a short delay
+        setTimeout(() => {
+          console.log('🔄 Retry setPage with:', pageNumber);
+          pdfRef.current.setPage(pageNumber);
+        }, 500);
+        
+        // Try one more time after longer delay
+        setTimeout(() => {
+          console.log('🔄 Final retry setPage with:', pageNumber);
+          pdfRef.current.setPage(pageNumber);
+        }, 1000);
+      } catch (error) {
+        console.log('❌ Error calling setPage:', error);
+      }
+    } else {
+      console.log('❌ Cannot navigate - pdfRef not available or page <= 1');
+    }
+  };
+
   const handleLoadComplete = (numberOfPages) => {
+    console.log('=== PDF LOAD COMPLETE ===');
     console.log('PDF loaded successfully! Pages:', numberOfPages);
     console.log('Setting totalPages to:', numberOfPages);
     console.log('Setting isLoading to false and hasError to false');
+    console.log('Current page at load complete:', currentPage);
     setTotalPages(numberOfPages);
     setIsLoading(false);
     setHasError(false);
+    
+    // Navigate to the specific page after PDF loads
+    if (currentPage > 1) {
+      console.log('🎯 PDF loaded, navigating to page:', currentPage);
+      navigateToPage(currentPage);
+    } else {
+      console.log('❌ Cannot navigate from handleLoadComplete - page <= 1');
+    }
   };
 
   const handlePageChanged = (page, numberOfPages) => {
@@ -174,9 +257,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
         
         {!hasError && pdfSource && (
             <Pdf
+              key={`pdf-${pdfKey}-${currentPage}`}
               ref={pdfRef}
               source={pdfSource}
               style={styles.pdf}
+              page={currentPage}
               scale={1.0}
               minScale={1.0}
               maxScale={3.0}

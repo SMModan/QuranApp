@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, BackHandler, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, BackHandler, StatusBar, Alert } from 'react-native';
 import ResponsiveText from '../components/ResponsiveText';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
+import { saveFavorite } from '../utils/FavoritesStorage';
 
 const AllParasScreen = ({ navigation }) => {
   const parasData = [
@@ -53,12 +54,41 @@ const AllParasScreen = ({ navigation }) => {
   }, []);
 
   const handleParaPress = (para) => {
+    console.log('=== PARA PRESSED ===');
+    console.log(`Para ${para.id} pressed: ${para.arabic} - Page ${para.pageNumber}`);
+    console.log('Full para object:', para);
+    console.log('pageNumber being sent:', para.pageNumber);
+    console.log('Type of pageNumber:', typeof para.pageNumber);
+    
     // Navigate to Quran reader with the specific para
-    navigation.navigate('quran-reader', { 
+    const navigationParams = { 
       pageNumber: para.pageNumber,
       paraId: para.id,
       paraName: para.arabic
-    });
+    };
+    console.log('Navigation params being sent:', navigationParams);
+    navigation.navigate('quran-reader', navigationParams);
+  };
+
+  const handleFavoritePress = async (para) => {
+    try {
+      const result = await saveFavorite({
+        type: 'para',
+        id: para.id,
+        arabic: para.arabic,
+        english: para.english,
+        pageNumber: para.pageNumber
+      });
+
+      if (result.success) {
+        Alert.alert('Success', result.message);
+      } else {
+        Alert.alert('Info', result.message);
+      }
+    } catch (error) {
+      console.error('Error saving favorite:', error);
+      Alert.alert('Error', 'Failed to save favorite');
+    }
   };
 
   const renderParaItem = ({ item }) => (
@@ -70,7 +100,16 @@ const AllParasScreen = ({ navigation }) => {
       <View style={styles.paraContent}>
         <View style={styles.paraHeader}>
           <Text style={styles.paraId}>{item.id}</Text>
-          <Text style={styles.pageText}>Page {item.pageNumber}</Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.pageText}>Page {item.pageNumber}</Text>
+            <TouchableOpacity
+              style={styles.favoriteButton}
+              onPress={() => handleFavoritePress(item)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.favoriteIcon}>⭐</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={styles.arabicText}>{item.arabic}</Text>
         <Text style={styles.englishText}>{item.english}</Text>
@@ -159,6 +198,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  favoriteButton: {
+    marginLeft: 10,
+    padding: 5,
+  },
+  favoriteIcon: {
+    fontSize: 20,
   },
   paraId: {
     fontSize: 16,

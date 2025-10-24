@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Animated } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Animated, Alert } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
+import { saveFavorite, isFavorite } from '../utils/FavoritesStorage';
 
 const AllSurahsScreen = ({ navigation }) => {
   const [favorites, setFavorites] = useState(new Set(['07'])); // Item 07 is favorited by default
@@ -132,68 +133,89 @@ const AllSurahsScreen = ({ navigation }) => {
   };
 
   const handleSurahPress = (surah) => {
+    console.log('=== SURAH PRESSED ===');
     console.log(`Surah ${surah.id} pressed: ${surah.arabic} - Page ${surah.pageNumber}`);
+    console.log('Full surah object:', surah);
+    console.log('pageNumber being sent:', surah.pageNumber);
+    console.log('Type of pageNumber:', typeof surah.pageNumber);
+    
     // Navigate to Quran reader with surah info
     if (navigation) {
-      navigation.navigate('quran-reader', {
+      const navigationParams = {
         chapterName: surah.arabic,
         verseNumber: surah.id,
         pageNumber: surah.pageNumber,
         sectionNumber: '1',
         juzNumber: 'الجزء'
-      });
+      };
+      console.log('Navigation params being sent:', navigationParams);
+      navigation.navigate('quran-reader', navigationParams);
     }
   };
 
-  const toggleFavorite = (surahId) => {
-    // Create animation if it doesn't exist
-    if (!starAnimations.current[surahId]) {
-      starAnimations.current[surahId] = {
-        scale: new Animated.Value(1),
-        rotate: new Animated.Value(0),
-      };
-    }
-    
-    const anim = starAnimations.current[surahId];
-    const isCurrentlyFavorite = favorites.has(surahId);
-    
-    // Animate star interaction
-    Animated.sequence([
-      Animated.parallel([
-        Animated.timing(anim.scale, {
-          toValue: 1.3,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(anim.rotate, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.parallel([
-        Animated.timing(anim.scale, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(anim.rotate, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]),
-    ]).start();
-    
-    setFavorites(prev => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(surahId)) {
-        newFavorites.delete(surahId);
-      } else {
-        newFavorites.add(surahId);
+  const toggleFavorite = async (surah) => {
+    try {
+      // Create animation if it doesn't exist
+      if (!starAnimations.current[surah.id]) {
+        starAnimations.current[surah.id] = {
+          scale: new Animated.Value(1),
+          rotate: new Animated.Value(0),
+        };
       }
-      return newFavorites;
-    });
+      
+      const anim = starAnimations.current[surah.id];
+      
+      // Animate star interaction
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(anim.scale, {
+            toValue: 1.3,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim.rotate, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(anim.scale, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim.rotate, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
+
+      const result = await saveFavorite({
+        type: 'surah',
+        id: surah.id,
+        arabic: surah.arabic,
+        english: surah.english,
+        pageNumber: surah.pageNumber
+      });
+
+      if (result.success) {
+        // Update local state
+        setFavorites(prev => {
+          const newFavorites = new Set(prev);
+          newFavorites.add(surah.id);
+          return newFavorites;
+        });
+        Alert.alert('Success', result.message);
+      } else {
+        Alert.alert('Info', result.message);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      Alert.alert('Error', 'Failed to save favorite');
+    }
   };
 
   const renderSurahItem = ({ item }) => {
@@ -214,7 +236,7 @@ const AllSurahsScreen = ({ navigation }) => {
           
           <TouchableOpacity
             style={styles.starButton}
-            onPress={() => toggleFavorite(item.id)}
+            onPress={() => toggleFavorite(item)}
             activeOpacity={0.7}
           >
             <Animated.Text 

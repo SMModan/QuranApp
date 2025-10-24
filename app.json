@@ -15,7 +15,7 @@
     },
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#1a237e",
       "tabletImage": "./assets/splash-3x.png"
     },
@@ -32,7 +32,7 @@
       },
       "splash": {
         "image": "./assets/splash.png",
-        "resizeMode": "contain",
+        "resizeMode": "cover",
         "backgroundColor": "#1a237e",
         "tabletImage": "./assets/splash-3x.png"
       }
@@ -50,12 +50,13 @@
       },
       "splash": {
         "image": "./assets/splash.png",
-        "resizeMode": "contain",
+        "resizeMode": "cover",
         "backgroundColor": "#1a237e",
         "tabletImage": "./assets/splash-3x.png"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.QuranAppExpo"
+      "package": "com.anonymous.QuranAppExpo",
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./assets/favicon.png"
