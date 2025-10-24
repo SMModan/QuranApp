@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   favoriteIcon: {
-    fontSize: 20,
+    fontSize: 24,
   },
   paraId: {
     fontSize: 16,

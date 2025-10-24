@@ -249,7 +249,20 @@ const AllSurahsScreen = ({ navigation }) => {
                 }
               ]}
             >
-              {isFavorite ? '⭐' : '☆'}
+               <View style={{
+                 width: 30,
+                 height: 30,
+                 justifyContent: 'center',
+                 alignItems: 'center',
+               }}>
+                 <Text style={{
+                   fontSize: 24,
+                   lineHeight: 28,
+                   textAlign: 'center',
+                 }}>
+                   {isFavorite ? '⭐' : '☆'}
+                 </Text>
+               </View>
             </Animated.Text>
           </TouchableOpacity>
           
@@ -330,12 +343,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   starButton: {
-    width: getSpacing(30),
+    width: getSpacing(40),
     alignItems: 'center',
     marginLeft: getSpacing(10),
   },
   starIcon: {
-    fontSize: getFontSize(20),
+    fontSize: getFontSize(32),
     color: '#CCCCCC',
   },
   starFilled: {

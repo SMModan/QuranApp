@@ -3,7 +3,6 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  StatusBar, 
   Dimensions, 
   TouchableOpacity,
   Platform,
@@ -60,10 +59,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
 
   useEffect(() => {
-    // Hide status bar for full screen
-    StatusBar.setHidden(true, 'none');
-    StatusBar.setTranslucent(true);
-    
     // Initialize PDF source
     initializePdfSource();
     
@@ -75,9 +70,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }, 10000);
     
     return () => {
-      // Restore status bar on unmount
-      StatusBar.setHidden(false, 'none');
-      StatusBar.setTranslucent(false);
       clearTimeout(loadingTimeout);
     };
   }, []);
@@ -168,10 +160,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-        <StatusBar 
-          hidden={true}
-          translucent={true}
-        />
       
 
       {/* PDF Reader with Swipe Gestures */}
