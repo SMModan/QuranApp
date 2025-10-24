@@ -38,12 +38,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
 
   useEffect(() => {
-    // Set status bar style for full screen
+    // Hide status bar for full screen
     if (Platform.OS === 'android') {
-      StatusBar.setBarStyle('light-content', true);
-      StatusBar.setBackgroundColor('#8B7355', true);
+      StatusBar.setHidden(true, 'fade');
     } else {
-      StatusBar.setBarStyle('light-content', true);
+      StatusBar.setHidden(true, 'fade');
     }
     
     // Initialize PDF source
@@ -58,9 +57,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }, 10000);
     
     return () => {
-      // Cleanup status bar on unmount
+      // Restore status bar on unmount
       if (Platform.OS === 'android') {
-        StatusBar.setBackgroundColor('transparent', true);
+        StatusBar.setHidden(false, 'fade');
+      } else {
+        StatusBar.setHidden(false, 'fade');
       }
       clearTimeout(loadingTimeout);
     };
@@ -138,9 +139,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.container}>
         <StatusBar 
-          barStyle="light-content" 
-          backgroundColor="#8B7355" 
-          translucent={false}
+          hidden={true}
+          translucent={true}
         />
       
 
