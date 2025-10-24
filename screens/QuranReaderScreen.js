@@ -184,7 +184,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
               source={pdfSource}
               style={styles.pdf}
               scale={1.0}
-              minScale={0.5}
+              minScale={1.0}
               maxScale={3.0}
               horizontal={false}
               spacing={0}
@@ -197,13 +197,17 @@ const QuranReaderScreen = ({ navigation, route }) => {
               enableRTL={false}
               enableAntialiasing={true}
               enableAnnotationRendering={true}
-              fitPolicy={1}
+              fitPolicy={0}
               singlePage={false}
               trustAllCerts={false}
               enableDebug={true}
               enableDoubleTapZoom={true}
               enableFling={true}
-              activityIndicator={<Text style={styles.loadingText}>Loading Quran...</Text>}
+              activityIndicator={
+                <View style={styles.loaderContainer}>
+                  <Text style={styles.loadingText}>Loading Quran...</Text>
+                </View>
+              }
             />
         )}
       </View>
@@ -250,6 +254,12 @@ const styles = StyleSheet.create({
     color: '#8B7355',
     fontWeight: '600',
     marginBottom: getSpacing(10),
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
   forceLoadButton: {
     backgroundColor: '#8B7355',
