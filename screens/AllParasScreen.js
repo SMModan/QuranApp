@@ -1,63 +1,64 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
-import CommonHeader from '../components/CommonHeader';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, BackHandler, StatusBar } from 'react-native';
 import ResponsiveText from '../components/ResponsiveText';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
 
 const AllParasScreen = ({ navigation }) => {
   const parasData = [
-    { id: '01', arabic: 'الم', english: 'Alif Lam Meem' },
-    { id: '02', arabic: 'سَيَقُولُ', english: 'Sayaqool' },
-    { id: '03', arabic: 'تِلْكَ الرُّسُلُ', english: 'Tilka ar-Rusul' },
-    { id: '04', arabic: 'لَنْ تَنَالُوا', english: 'Lantanalu' },
-    { id: '05', arabic: 'وَالْمُحْصَنَاتُ', english: 'Wal-Mohsanat' },
-    { id: '06', arabic: 'لَا يُحِبُّ اللَّهُ', english: 'La Yuhibbullah' },
-    { id: '07', arabic: 'وَإِذَا سَمِعُوا', english: 'Wa Iza Samiu' },
-    { id: '08', arabic: 'وَلَوْ أَنَّنَا', english: 'Wa Lau Annana' },
-    { id: '09', arabic: 'قَدْ أَفْلَحَ', english: 'Qad Aflaha' },
-    { id: '10', arabic: 'وَمَا أَدْرَاكَ', english: 'Wa Ma Adraka' },
-    { id: '11', arabic: 'يَعْتَذِرُونَ', english: 'Ya\'taridun' },
-    { id: '12', arabic: 'وَمَا مِنْ دَابَّةٍ', english: 'Wa Ma Min Dabbatin' },
-    { id: '13', arabic: 'وَمَا أُبَرِّئُ', english: 'Wa Ma Ubarri\'u' },
-    { id: '14', arabic: 'رُبَمَا', english: 'Rubama' },
-    { id: '15', arabic: 'سُبْحَانَ', english: 'Subhana' },
-    { id: '16', arabic: 'قَالَ', english: 'Qala' },
-    { id: '17', arabic: 'اقْتَرَبَ', english: 'Iqtaraba' },
-    { id: '18', arabic: 'قَدْ أَفْلَحَ', english: 'Qad Aflaha' },
-    { id: '19', arabic: 'وَقَالَ الَّذِينَ', english: 'Wa Qala Alladhina' },
-    { id: '20', arabic: 'أَمَّنْ خَلَقَ', english: 'Amman Khalaqa' },
-    { id: '21', arabic: 'أُتْلُو', english: 'Utlu' },
-    { id: '22', arabic: 'وَمَنْ يَقْنُتْ', english: 'Wa Man Yaqnut' },
-    { id: '23', arabic: 'وَمَا لِيَ', english: 'Wa Ma Liya' },
-    { id: '24', arabic: 'فَمَنْ أَظْلَمُ', english: 'Fa Man Azlam' },
-    { id: '25', arabic: 'إِلَيْهِ يُرَدُّ', english: 'Ilayhi Yuraddu' },
-    { id: '26', arabic: 'حَمْ', english: 'Ha Mim' },
-    { id: '27', arabic: 'قَالَ فَمَا خَطْبُكُمْ', english: 'Qala Fa Ma Khatbukum' },
-    { id: '28', arabic: 'قَدْ سَمِعَ', english: 'Qad Sami\'a' },
-    { id: '29', arabic: 'تَبَارَكَ', english: 'Tabaraka' },
-    { id: '30', arabic: 'عَمَّ', english: 'Amma' },
+    { id: '01', arabic: 'الم', english: 'Alif Lam Meem', pageNumber: 2 },
+    { id: '02', arabic: 'سَيَقُولُ', english: 'Sayaqool', pageNumber: 3 },
+    { id: '03', arabic: 'تِلْكَ الرُّسُلُ', english: 'Tilka ar-Rusul', pageNumber: 12 },
+    { id: '04', arabic: 'لَنْ تَنَالُوا', english: 'Lantanalu', pageNumber: 16 },
+    { id: '05', arabic: 'وَالْمُحْصَنَاتُ', english: 'Wal-Mohsanat', pageNumber: 20 },
+    { id: '06', arabic: 'لَا يُحِبُّ اللَّهُ', english: 'La Yuhibbullah', pageNumber: 24 },
+    { id: '07', arabic: 'وَإِذَا سَمِعُوا', english: 'Wa Iza Samiu', pageNumber: 28 },
+    { id: '08', arabic: 'وَلَوْ أَنَّنَا', english: 'Wa Lau Annana', pageNumber: 32 },
+    { id: '09', arabic: 'قَدْ أَفْلَحَ', english: 'Qad Aflaha', pageNumber: 36 },
+    { id: '10', arabic: 'وَمَا أَدْرَاكَ', english: 'Wa Ma Adraka', pageNumber: 40 },
+    { id: '11', arabic: 'يَعْتَذِرُونَ', english: 'Ya\'taridun', pageNumber: 44 },
+    { id: '12', arabic: 'وَمَا مِنْ دَابَّةٍ', english: 'Wa Ma Min Dabbatin', pageNumber: 48 },
+    { id: '13', arabic: 'وَمَا أُبَرِّئُ', english: 'Wa Ma Ubarri\'u', pageNumber: 52 },
+    { id: '14', arabic: 'رُبَمَا', english: 'Rubama', pageNumber: 56 },
+    { id: '15', arabic: 'سُبْحَانَ', english: 'Subhana', pageNumber: 60 },
+    { id: '16', arabic: 'قَالَ', english: 'Qala', pageNumber: 64 },
+    { id: '17', arabic: 'اقْتَرَبَ', english: 'Iqtaraba', pageNumber: 68 },
+    { id: '18', arabic: 'قَدْ أَفْلَحَ', english: 'Qad Aflaha', pageNumber: 72 },
+    { id: '19', arabic: 'وَقَالَ الَّذِينَ', english: 'Wa Qala Alladhina', pageNumber: 76 },
+    { id: '20', arabic: 'أَمَّنْ خَلَقَ', english: 'Amman Khalaqa', pageNumber: 80 },
+    { id: '21', arabic: 'أُتْلُو', english: 'Utlu', pageNumber: 84 },
+    { id: '22', arabic: 'وَمَنْ يَقْنُتْ', english: 'Wa Man Yaqnut', pageNumber: 88 },
+    { id: '23', arabic: 'وَمَا لِيَ', english: 'Wa Ma Liya', pageNumber: 92 },
+    { id: '24', arabic: 'فَمَنْ أَظْلَمُ', english: 'Fa Man Azlam', pageNumber: 96 },
+    { id: '25', arabic: 'إِلَيْهِ يُرَدُّ', english: 'Ilayhi Yuraddu', pageNumber: 100 },
+    { id: '26', arabic: 'حَمْ', english: 'Ha Mim', pageNumber: 104 },
+    { id: '27', arabic: 'قَالَ فَمَا خَطْبُكُمْ', english: 'Qala Fa Ma Khatbukum', pageNumber: 108 },
+    { id: '28', arabic: 'قَدْ سَمِعَ', english: 'Qad Sami\'a', pageNumber: 112 },
+    { id: '29', arabic: 'تَبَارَكَ', english: 'Tabaraka', pageNumber: 116 },
+    { id: '30', arabic: 'عَمَّ', english: 'Amma', pageNumber: 120 },
   ];
 
   const handleBackPress = () => {
     // Handle back press - go back to previous screen
-    if (navigation && navigation.goBack) {
-      navigation.goBack();
-    }
+    navigation.goBack();
+    return true; // Prevent default behavior
   };
 
+  useEffect(() => {
+    // Add back button listener
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+
+    return () => {
+      backHandler.remove();
+    };
+  }, []);
+
   const handleParaPress = (para) => {
-    console.log(`Para ${para.id} pressed: ${para.arabic}`);
-    // Navigate to Quran reader with para info
-    if (navigation) {
-      navigation.navigate('quran-reader', {
-        chapterName: para.arabic,
-        verseNumber: para.id,
-        pageNumber: para.id,
-        sectionNumber: '1',
-        juzNumber: 'الجزء',
-        manzilNumber: 'منزل ١'
-      });
-    }
+    // Navigate to Quran reader with the specific para
+    navigation.navigate('quran-reader', { 
+      pageNumber: para.pageNumber,
+      paraId: para.id,
+      paraName: para.arabic
+    });
   };
 
   const renderParaItem = ({ item }) => (
@@ -67,56 +68,39 @@ const AllParasScreen = ({ navigation }) => {
       activeOpacity={0.7}
     >
       <View style={styles.paraContent}>
-        <View style={styles.paraNumber}>
-          <ResponsiveText 
-            size="large" 
-            weight="bold" 
-            color="#333333"
-            style={styles.paraNumberText}
-          >
-            {item.id}
-          </ResponsiveText>
+        <View style={styles.paraHeader}>
+          <Text style={styles.paraId}>{item.id}</Text>
+          <Text style={styles.pageText}>Page {item.pageNumber}</Text>
         </View>
-        
-        <View style={styles.paraText}>
-          <ResponsiveText 
-            size="large" 
-            weight="bold" 
-            color="#333333"
-            style={styles.arabicText}
-          >
-            {item.arabic}
-          </ResponsiveText>
-          <ResponsiveText 
-            size="medium" 
-            color="#666666"
-            style={styles.englishText}
-          >
-            {item.english}
-          </ResponsiveText>
-        </View>
+        <Text style={styles.arabicText}>{item.arabic}</Text>
+        <Text style={styles.englishText}>{item.english}</Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <CommonHeader 
-        title="All Para's"
-        onBackPress={handleBackPress}
-        showBackButton={true}
-        showMenu={false}
-      />
+      <StatusBar barStyle="light-content" backgroundColor="#2E7D32" />
       
-      <View style={styles.content}>
-        <FlatList
-          data={parasData}
-          renderItem={renderParaItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
-        />
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleBackPress}
+        >
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>All Paras (Juz)</Text>
       </View>
+
+      {/* Paras List */}
+      <FlatList
+        data={parasData}
+        renderItem={renderParaItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 };
@@ -124,43 +108,81 @@ const AllParasScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
   },
-  content: {
+  header: {
+    backgroundColor: '#2E7D32',
+    paddingTop: StatusBar.currentHeight || 0,
+    paddingBottom: 15,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  backButton: {
+    marginRight: 15,
+    padding: 5,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
     flex: 1,
   },
   listContainer: {
-    paddingVertical: getSpacing(10),
+    padding: 15,
   },
   paraItem: {
-    paddingHorizontal: getSpacing(20),
-    paddingVertical: getSpacing(15),
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
+    marginBottom: 12,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
   },
   paraContent: {
+    padding: 20,
+  },
+  paraHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 10,
   },
-  paraNumber: {
-    width: getSpacing(50),
-    alignItems: 'center',
+  paraId: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2E7D32',
   },
-  paraText: {
-    flex: 1,
-    marginLeft: getSpacing(15),
+  pageText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
   },
   arabicText: {
-    marginBottom: getSpacing(2),
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2E7D32',
     textAlign: 'right',
+    marginBottom: 8,
+    lineHeight: 32,
   },
   englishText: {
-    textAlign: 'right',
-  },
-  paraNumberText: {
-    fontFamily: 'Philosopher',
-    fontWeight: '700',
-    fontSize: 18,
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+    lineHeight: 22,
   },
 });
 
