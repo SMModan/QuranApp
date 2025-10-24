@@ -14,6 +14,15 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Pdf from 'react-native-pdf';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
+import RNFS from 'react-native-blob-util';
+import { runOnJS } from 'react-native-reanimated';
+
+// Utility function to get PDF source configuration
+const getPdfSource = () => {
+  // For React Native/Expo, use require() directly as it's the most reliable method
+  // This avoids the trust manager issues completely
+  return require('../assets/quran_sharif.pdf');
+};
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -24,6 +33,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [showControls, setShowControls] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [pdfSource, setPdfSource] = useState(null);
   const pdfRef = useRef(null);
 
   // Get chapter and verse info from route params with validation
@@ -32,7 +42,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const pageNumber = route?.params?.pageNumber || '6';
   const sectionNumber = route?.params?.sectionNumber || '1';
   const juzNumber = route?.params?.juzNumber || 'الجزء';
-  const manzilNumber = route?.params?.manzilNumber || 'منزل ١';
   
   // Validate navigation object
   const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
@@ -46,23 +55,80 @@ const QuranReaderScreen = ({ navigation, route }) => {
       StatusBar.setBarStyle('light-content', true);
     }
     
+    // Initialize PDF source
+    initializePdfSource();
+    
+    // Set a timeout to stop loading if PDF doesn't load within 10 seconds
+    const loadingTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.log('PDF loading timeout - stopping loading state');
+        setIsLoading(false);
+      }
+    }, 10000);
+    
     return () => {
       // Cleanup status bar on unmount
       if (Platform.OS === 'android') {
         StatusBar.setBackgroundColor('transparent', true);
       }
+      clearTimeout(loadingTimeout);
     };
   }, []);
 
+  const initializePdfSource = async () => {
+    try {
+      console.log('Starting PDF initialization...');
+      setIsLoading(true);
+      setHasError(false);
+      
+      // Use require() directly - this is the most reliable method for local PDF files
+      // and avoids the trust manager issues completely
+      const sourceConfig = getPdfSource();
+      console.log('PDF source config:', sourceConfig);
+      setPdfSource(sourceConfig);
+      console.log('PDF source set, waiting for load complete...');
+      
+      // Add a fallback timeout in case handleLoadComplete never fires
+      setTimeout(() => {
+        console.log('PDF load timeout - forcing loading to false');
+        setIsLoading(false);
+      }, 5000);
+    } catch (error) {
+      console.log('PDF Source Error:', error);
+      setHasError(true);
+      setIsLoading(false);
+    }
+  };
+
   const goToNextPage = () => {
+    if (hasError || isLoading) {
+      console.log('Navigation blocked - hasError:', hasError, 'isLoading:', isLoading);
+      return;
+    }
+    console.log('goToNextPage called, currentPage:', currentPage, 'totalPages:', totalPages);
     if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage(prev => {
+        console.log('Setting page to:', prev + 1);
+        return prev + 1;
+      });
+    } else {
+      console.log('Already at last page');
     }
   };
 
   const goToPreviousPage = () => {
+    if (hasError || isLoading) {
+      console.log('Navigation blocked - hasError:', hasError, 'isLoading:', isLoading);
+      return;
+    }
+    console.log('goToPreviousPage called, currentPage:', currentPage);
     if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
+      setCurrentPage(prev => {
+        console.log('Setting page to:', prev - 1);
+        return prev - 1;
+      });
+    } else {
+      console.log('Already at first page');
     }
   };
 
@@ -75,13 +141,18 @@ const QuranReaderScreen = ({ navigation, route }) => {
   };
 
   const handleError = (error) => {
-    console.log('PDF Error:', error);
+    console.log('PDF Error occurred:', error);
+    console.log('PDF Source at error:', pdfSource);
+    console.log('Setting hasError to true and isLoading to false');
     setHasError(true);
     setIsLoading(false);
     Alert.alert('Error', 'Failed to load Quran PDF. Please check if the file exists.');
   };
 
   const handleLoadComplete = (numberOfPages) => {
+    console.log('PDF loaded successfully! Pages:', numberOfPages);
+    console.log('Setting totalPages to:', numberOfPages);
+    console.log('Setting isLoading to false and hasError to false');
     setTotalPages(numberOfPages);
     setIsLoading(false);
     setHasError(false);
@@ -94,19 +165,23 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   // Swipe gesture handlers for PDF navigation
   const panGesture = Gesture.Pan()
-    .minDistance(20)
+    .minDistance(10)
     .onEnd((event) => {
-      if (hasError || isLoading) return;
-      
-      const { translationX, translationY } = event;
-      const swipeThreshold = 50;
+      'worklet';
+      const { translationX, translationY, velocityX } = event;
+      const swipeThreshold = 30;
+      const velocityThreshold = 500;
       const horizontalSwipe = Math.abs(translationX) > Math.abs(translationY);
       
-      if (horizontalSwipe && Math.abs(translationX) > swipeThreshold) {
-        if (translationX > 0) {
-          goToPreviousPage();
+      // Check for swipe based on distance or velocity
+      const isSwipe = horizontalSwipe && (Math.abs(translationX) > swipeThreshold || Math.abs(velocityX) > velocityThreshold);
+      
+      if (isSwipe) {
+        // RTL navigation: swipe right = next page, swipe left = previous page
+        if (translationX > 0 || velocityX > 0) {
+          runOnJS(goToNextPage)();
         } else {
-          goToNextPage();
+          runOnJS(goToPreviousPage)();
         }
       }
     });
@@ -143,6 +218,15 @@ const QuranReaderScreen = ({ navigation, route }) => {
         {isLoading && (
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Loading Quran...</Text>
+            <TouchableOpacity 
+              style={styles.forceLoadButton}
+              onPress={() => {
+                console.log('Force loading to false');
+                setIsLoading(false);
+              }}
+            >
+              <Text style={styles.forceLoadText}>Force Load</Text>
+            </TouchableOpacity>
           </View>
         )}
         
@@ -154,6 +238,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
               onPress={() => {
                 setHasError(false);
                 setIsLoading(true);
+                initializePdfSource();
               }}
             >
               <Text style={styles.retryText}>Retry</Text>
@@ -161,11 +246,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
           </View>
         )}
         
-        {!hasError && (
+        {!hasError && pdfSource && (
           <GestureDetector gesture={panGesture}>
             <Pdf
               ref={pdfRef}
-              source={require('../assets/quran_sharif.pdf')}
+              source={pdfSource}
               style={styles.pdf}
               page={currentPage}
               scale={1.0}
@@ -182,8 +267,13 @@ const QuranReaderScreen = ({ navigation, route }) => {
               enableRTL={true}
               enableAntialiasing={true}
               enableAnnotationRendering={true}
-              fitPolicy={0}
-              singlePage={false}
+              fitPolicy={1}
+              singlePage={true}
+              trustAllCerts={false}
+              enableDebug={true}
+              enableDoubleTapZoom={true}
+              enableFling={true}
+              activityIndicator={<Text style={styles.loadingText}>Loading Quran...</Text>}
             />
           </GestureDetector>
         )}
@@ -191,23 +281,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
       {/* Decorative Border */}
       <View style={styles.decorativeBorder} />
-
-      {/* Footer Section */}
-      <View style={styles.footer}>
-        <View style={styles.footerLeft}>
-          <Text style={styles.manzilText}>{manzilNumber}</Text>
-        </View>
-        
-        <View style={styles.footerRight}>
-          <TouchableOpacity 
-            style={styles.bookIcon}
-            onPress={toggleFullScreen}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.bookIconText}>📖</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
 
       {/* Navigation Controls (when not full screen) */}
       {!isFullScreen && (
@@ -297,10 +370,17 @@ const styles = StyleSheet.create({
   pdfContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   pdf: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    width: '100%',
+    height: '100%',
   },
   loadingContainer: {
     flex: 1,
@@ -311,6 +391,18 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: getFontSize(16),
     color: '#8B7355',
+    fontWeight: '600',
+    marginBottom: getSpacing(10),
+  },
+  forceLoadButton: {
+    backgroundColor: '#8B7355',
+    paddingHorizontal: getSpacing(20),
+    paddingVertical: getSpacing(10),
+    borderRadius: getSpacing(5),
+  },
+  forceLoadText: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(14),
     fontWeight: '600',
   },
   errorContainer: {
@@ -337,47 +429,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: getFontSize(14),
     fontWeight: '600',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: getSpacing(20),
-    paddingVertical: getSpacing(10),
-    borderTopWidth: 1,
-    borderTopColor: '#A68B5B',
-  },
-  footerLeft: {
-    flex: 1,
-  },
-  footerRight: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  manzilText: {
-    color: '#333333',
-    fontSize: getFontSize(14),
-    fontWeight: '600',
-  },
-  bookIcon: {
-    width: getSpacing(40),
-    height: getSpacing(40),
-    borderRadius: getSpacing(20),
-    backgroundColor: '#D2B48C', // Light brown/beige
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  bookIconText: {
-    fontSize: getFontSize(20),
   },
   controls: {
     flexDirection: 'row',
