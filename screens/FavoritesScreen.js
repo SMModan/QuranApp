@@ -214,7 +214,6 @@ const styles = StyleSheet.create({
     marginRight: getSpacing(12),
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 0,
   },
   pageText: {
     fontSize: getFontSize(12),
