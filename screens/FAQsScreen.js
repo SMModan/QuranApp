@@ -178,7 +178,7 @@ const FAQsScreen = ({ navigation }) => {
       <CommonHeader 
         title="FAQ's"
         onMenuPress={handleMenuPress}
-        showMenu={true}
+        showMenu={false}
       />
       
       <ScrollView 
@@ -190,12 +190,6 @@ const FAQsScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
-      <BottomPlayerBar 
-        currentPage="Page 6, Para 1"
-        onResume={() => console.log('Resume pressed')}
-        onFavorite={() => console.log('Favorite pressed')}
-        onBookmark={() => console.log('Bookmark pressed')}
-      />
     </View>
   );
 };

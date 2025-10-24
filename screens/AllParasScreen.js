@@ -91,21 +91,36 @@ const AllParasScreen = ({ navigation }) => {
       activeOpacity={0.7}
     >
       <View style={styles.paraContent}>
-        <View style={styles.paraHeader}>
+        <View style={styles.paraNumber}>
           <Text style={styles.paraId}>{item.id}</Text>
-          <View style={styles.headerRight}>
-            <Text style={styles.pageText}>Page {item.pageNumber}</Text>
-            <TouchableOpacity
-              style={styles.favoriteButton}
-              onPress={() => handleFavoritePress(item)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.favoriteIcon}>⭐</Text>
-            </TouchableOpacity>
-          </View>
         </View>
-        <Text style={styles.arabicText}>{item.arabic}</Text>
-        <Text style={styles.englishText}>{item.english}</Text>
+        
+        <TouchableOpacity
+          style={styles.starButton}
+          onPress={() => handleFavoritePress(item)}
+          activeOpacity={0.7}
+        >
+          <View style={{
+            width: 30,
+            height: 30,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+            <Text style={{
+              fontSize: 24,
+              lineHeight: 28,
+              textAlign: 'center',
+            }}>
+              ⭐
+            </Text>
+          </View>
+        </TouchableOpacity>
+        
+        <View style={styles.paraText}>
+          <Text style={styles.arabicText}>{item.arabic}</Text>
+          <Text style={styles.englishText}>{item.english}</Text>
+          <Text style={styles.pageText}>Page {item.pageNumber}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -184,48 +199,46 @@ const styles = StyleSheet.create({
     shadowRadius: 2.22,
   },
   paraContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 20,
   },
-  paraHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  headerRight: {
-    flexDirection: 'row',
+  paraNumber: {
+    width: 50,
     alignItems: 'center',
   },
-  favoriteButton: {
+  starButton: {
+    width: 40,
+    alignItems: 'center',
     marginLeft: 10,
-    padding: 5,
   },
-  favoriteIcon: {
-    fontSize: 24,
+  paraText: {
+    flex: 1,
+    marginLeft: 15,
   },
   paraId: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2E7D32',
   },
-  pageText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
   arabicText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#2E7D32',
+    marginBottom: 5,
     textAlign: 'right',
-    marginBottom: 8,
-    lineHeight: 32,
   },
   englishText: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-    lineHeight: 22,
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+    textAlign: 'right',
+  },
+  pageText: {
+    fontSize: 12,
+    color: '#8B7355',
+    textAlign: 'right',
+    fontStyle: 'italic',
   },
 });
 

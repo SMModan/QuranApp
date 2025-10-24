@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, BackHandler } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
 import { getFavorites, removeFavorite } from '../utils/FavoritesStorage';
@@ -65,36 +67,37 @@ const FavoritesScreen = ({ navigation }) => {
   };
 
   const renderFavoriteItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.favoriteItem}
-      onPress={() => handleFavoritePress(item)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.favoriteContent}>
-        <View style={styles.favoriteHeader}>
-          <View style={styles.favoriteInfo}>
+    <View style={styles.favoriteItem}>
+      <TouchableOpacity
+        style={styles.mainContent}
+        onPress={() => handleFavoritePress(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.typeSection}>
+          <View style={[styles.typeBadge, item.type === 'surah' ? styles.surahBadge : styles.paraBadge]}>
             <Text style={styles.typeText}>
-              {item.type === 'surah' ? 'Surah' : 'Para'}
+              {item.type === 'surah' ? 'SURAH' : 'PARA'}
             </Text>
-            <Text style={styles.pageText}>Page {item.pageNumber}</Text>
           </View>
-          <TouchableOpacity
-            style={styles.removeButton}
-            onPress={() => handleRemoveFavorite(item.id, item.arabic)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.removeButtonText}>✕</Text>
-          </TouchableOpacity>
         </View>
         
-        <Text style={styles.arabicText}>{item.arabic}</Text>
-        <Text style={styles.englishText}>{item.english}</Text>
-        
-        <Text style={styles.dateText}>
-          Added: {new Date(item.dateAdded).toLocaleDateString()}
-        </Text>
-      </View>
-    </TouchableOpacity>
+        <View style={styles.contentSection}>
+          <Text style={styles.arabicText}>{item.arabic}</Text>
+          <Text style={styles.englishText}>{item.english}</Text>
+          <View style={styles.pageContainer}>
+            <Text style={styles.pageText}>Page {item.pageNumber}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => handleRemoveFavorite(item.id, item.arabic)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.deleteIcon}>✕</Text>
+      </TouchableOpacity>
+    </View>
   );
 
   const renderEmptyState = () => (
@@ -109,33 +112,29 @@ const FavoritesScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBackPress}
-        >
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Favorites</Text>
-        <View style={styles.headerRight} />
+      <CommonHeader 
+        title="My Favorites"
+        onBackPress={handleBackPress}
+        showBackButton={true}
+        showMenu={false}
+      />
+      
+      <View style={styles.content}>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading favorites...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={favorites}
+            renderItem={renderFavoriteItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={renderEmptyState}
+          />
+        )}
       </View>
-
-      {/* Favorites List */}
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading favorites...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={favorites}
-          renderItem={renderFavoriteItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmptyState}
-        />
-      )}
     </View>
   );
 };
@@ -143,108 +142,97 @@ const FavoritesScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
   },
-  header: {
-    backgroundColor: '#2E7D32',
-    paddingTop: 50,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  backButton: {
-    marginRight: 15,
-    padding: 5,
-  },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
+  content: {
     flex: 1,
   },
-  headerRight: {
-    width: 40,
-  },
   listContainer: {
-    padding: 15,
-    flexGrow: 1,
+    padding: getSpacing(12),
   },
   favoriteItem: {
     backgroundColor: '#FFFFFF',
-    marginBottom: 12,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-  },
-  favoriteContent: {
-    padding: 20,
-  },
-  favoriteHeader: {
+    marginBottom: getSpacing(8),
+    borderRadius: getSpacing(12),
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    padding: getSpacing(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  favoriteInfo: {
+  mainContent: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  typeSection: {
+    marginRight: getSpacing(12),
+  },
+  typeBadge: {
+    paddingHorizontal: getSpacing(8),
+    paddingVertical: getSpacing(4),
+    borderRadius: getSpacing(12),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  surahBadge: {
+    backgroundColor: '#E8F5E8',
+  },
+  paraBadge: {
+    backgroundColor: '#E3F2FD',
   },
   typeText: {
-    fontSize: 14,
+    fontSize: getFontSize(10),
+    fontWeight: 'bold',
     color: '#2E7D32',
-    fontWeight: 'bold',
-    marginBottom: 2,
   },
-  pageText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
-  removeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#FF6B6B',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  removeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  contentSection: {
+    flex: 1,
+    paddingRight: getSpacing(8),
   },
   arabicText: {
-    fontSize: 24,
+    fontSize: getFontSize(20),
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: '#1A1A1A',
     textAlign: 'right',
-    marginBottom: 8,
-    lineHeight: 32,
+    marginBottom: getSpacing(3),
   },
   englishText: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-    lineHeight: 22,
-    marginBottom: 8,
-  },
-  dateText: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: getFontSize(15),
+    color: '#4A4A4A',
+    textAlign: 'right',
+    marginBottom: getSpacing(2),
     fontStyle: 'italic',
+  },
+  pageContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  pageText: {
+    fontSize: getFontSize(12),
+    color: '#8B7355',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: getSpacing(8),
+    paddingVertical: getSpacing(2),
+    borderRadius: getSpacing(10),
+    fontWeight: '500',
+  },
+  deleteButton: {
+    width: getSpacing(36),
+    height: getSpacing(36),
+    borderRadius: getSpacing(18),
+    backgroundColor: '#FFEBEE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: getSpacing(8),
+  },
+  deleteIcon: {
+    fontSize: getFontSize(18),
+    color: '#FF4444',
+    fontWeight: 'bold',
   },
   loadingContainer: {
     flex: 1,
