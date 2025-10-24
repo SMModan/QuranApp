@@ -81,12 +81,13 @@ const FavoritesScreen = ({ navigation }) => {
           </View>
         </View>
         
+        <View style={styles.pageContainer}>
+          <Text style={styles.pageText}>Page {item.pageNumber}</Text>
+        </View>
+        
         <View style={styles.contentSection}>
           <Text style={styles.arabicText}>{item.arabic}</Text>
           <Text style={styles.englishText}>{item.english}</Text>
-          <View style={styles.pageContainer}>
-            <Text style={styles.pageText}>Page {item.pageNumber}</Text>
-          </View>
         </View>
       </TouchableOpacity>
       
@@ -158,12 +159,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: getSpacing(16),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-    borderLeftWidth: 4,
-    borderLeftColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: '#E5E7EB',
   },
   mainContent: {
     flex: 1,
@@ -181,15 +182,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   surahBadge: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#F3F4F6',
   },
   paraBadge: {
-    backgroundColor: '#EC4899',
+    backgroundColor: '#F3F4F6',
   },
   typeText: {
     fontSize: getFontSize(11),
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#6B7280',
     textTransform: 'uppercase',
   },
   contentSection: {
@@ -210,17 +211,19 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   pageContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    marginRight: getSpacing(12),
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 0,
   },
   pageText: {
     fontSize: getFontSize(12),
-    color: '#8B5CF6',
-    backgroundColor: '#F3E8FF',
+    color: '#6B7280',
+    backgroundColor: '#F9FAFB',
     paddingHorizontal: getSpacing(8),
     paddingVertical: getSpacing(3),
     borderRadius: getSpacing(12),
-    fontWeight: '600',
+    fontWeight: '500',
   },
   deleteButton: {
     width: getSpacing(36),
