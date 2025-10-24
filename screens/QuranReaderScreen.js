@@ -179,32 +179,32 @@ const QuranReaderScreen = ({ navigation, route }) => {
         )}
         
         {!hasError && pdfSource && (
-          <Pdf
-            ref={pdfRef}
-            source={pdfSource}
-            style={styles.pdf}
-            scale={1.0}
-            minScale={0.5}
-            maxScale={3.0}
-            horizontal={false}
-            spacing={0}
-            password=""
-            onLoadComplete={handleLoadComplete}
-            onPageChanged={handlePageChanged}
-            onError={handleError}
-            onPress={() => toggleControls()}
-            enablePaging={true}
-            enableRTL={true}
-            enableAntialiasing={true}
-            enableAnnotationRendering={true}
-            fitPolicy={1}
-            singlePage={false}
-            trustAllCerts={false}
-            enableDebug={true}
-            enableDoubleTapZoom={true}
-            enableFling={true}
-            activityIndicator={<Text style={styles.loadingText}>Loading Quran...</Text>}
-          />
+            <Pdf
+              ref={pdfRef}
+              source={pdfSource}
+              style={styles.pdf}
+              scale={1.0}
+              minScale={0.5}
+              maxScale={3.0}
+              horizontal={false}
+              spacing={0}
+              password=""
+              onLoadComplete={handleLoadComplete}
+              onPageChanged={handlePageChanged}
+              onError={handleError}
+              onPress={() => toggleControls()}
+              enablePaging={true}
+              enableRTL={false}
+              enableAntialiasing={true}
+              enableAnnotationRendering={true}
+              fitPolicy={1}
+              singlePage={false}
+              trustAllCerts={false}
+              enableDebug={true}
+              enableDoubleTapZoom={true}
+              enableFling={true}
+              activityIndicator={<Text style={styles.loadingText}>Loading Quran...</Text>}
+            />
         )}
       </View>
 
