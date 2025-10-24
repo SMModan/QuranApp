@@ -12,13 +12,16 @@ import FavoritesScreen from '../screens/FavoritesScreen';
 
 const AppNavigator = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
+  const [routeParams, setRouteParams] = useState(null);
 
   const navigation = {
-    navigate: (screenName) => {
+    navigate: (screenName, params = null) => {
       setCurrentScreen(screenName);
+      setRouteParams(params);
     },
     goBack: () => {
       setCurrentScreen('home');
+      setRouteParams(null);
     }
   };
 
@@ -37,10 +40,10 @@ const AppNavigator = () => {
       case 'settings':
         return <SettingsScreen navigation={navigation} />;
       case 'quran-reader':
-        return <QuranReaderScreen navigation={navigation} />;
+        return <QuranReaderScreen navigation={navigation} route={{ params: routeParams }} />;
       case 'go-to-page':
         console.log('Rendering GoToPageScreen');
-        return <GoToPageScreen navigation={navigation} />;
+        return <GoToPageScreen navigation={navigation} route={{ params: routeParams }} />;
       case 'favorites':
         return <FavoritesScreen navigation={navigation} />;
       default:

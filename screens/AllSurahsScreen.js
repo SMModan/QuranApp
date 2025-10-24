@@ -133,12 +133,7 @@ const AllSurahsScreen = ({ navigation }) => {
   };
 
   const handleSurahPress = (surah) => {
-    console.log('=== SURAH PRESSED ===');
-    console.log(`Surah ${surah.id} pressed: ${surah.arabic} - Page ${surah.pageNumber}`);
-    console.log('Full surah object:', surah);
-    console.log('pageNumber being sent:', surah.pageNumber);
-    console.log('Type of pageNumber:', typeof surah.pageNumber);
-    
+    console.log('Sending page number:', surah.pageNumber);
     // Navigate to Quran reader with surah info
     if (navigation) {
       const navigationParams = {
@@ -148,7 +143,7 @@ const AllSurahsScreen = ({ navigation }) => {
         sectionNumber: '1',
         juzNumber: 'الجزء'
       };
-      console.log('Navigation params being sent:', navigationParams);
+      console.log('Navigation params:', navigationParams);
       navigation.navigate('quran-reader', navigationParams);
     }
   };

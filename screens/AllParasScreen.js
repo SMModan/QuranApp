@@ -54,19 +54,12 @@ const AllParasScreen = ({ navigation }) => {
   }, []);
 
   const handleParaPress = (para) => {
-    console.log('=== PARA PRESSED ===');
-    console.log(`Para ${para.id} pressed: ${para.arabic} - Page ${para.pageNumber}`);
-    console.log('Full para object:', para);
-    console.log('pageNumber being sent:', para.pageNumber);
-    console.log('Type of pageNumber:', typeof para.pageNumber);
-    
     // Navigate to Quran reader with the specific para
     const navigationParams = { 
       pageNumber: para.pageNumber,
       paraId: para.id,
       paraName: para.arabic
     };
-    console.log('Navigation params being sent:', navigationParams);
     navigation.navigate('quran-reader', navigationParams);
   };
 

@@ -39,31 +39,19 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   // Update currentPage when route params change
   useEffect(() => {
+    console.log('Route params:', route?.params);
+    console.log('pageNumber from route:', route?.params?.pageNumber);
+    console.log('page from route:', route?.params?.page);
     const newPage = route?.params?.pageNumber || route?.params?.page || 1;
-    console.log('=== ROUTE PARAMS CHANGED ===');
-    console.log('Route params changed, updating page to:', newPage);
-    console.log('Previous currentPage:', currentPage);
-    console.log('New page from route?.params?.pageNumber:', route?.params?.pageNumber);
-    console.log('New page from route?.params?.page:', route?.params?.page);
-    console.log('Final newPage:', newPage);
+    console.log('Received page number:', newPage);
     setCurrentPage(newPage);
     setPdfKey(prev => prev + 1); // Force PDF re-render
   }, [route?.params?.pageNumber, route?.params?.page]);
 
   // Navigate to specific page when currentPage changes and PDF is loaded
   useEffect(() => {
-    console.log('=== PAGE NAVIGATION EFFECT ===');
-    console.log('pdfRef.current exists:', !!pdfRef.current);
-    console.log('isLoading:', isLoading);
-    console.log('hasError:', hasError);
-    console.log('currentPage:', currentPage);
-    console.log('currentPage > 1:', currentPage > 1);
-    
     if (pdfRef.current && !isLoading && !hasError && currentPage > 1) {
-      console.log('✅ PDF is loaded, navigating to page:', currentPage);
       navigateToPage(currentPage);
-    } else {
-      console.log('❌ Cannot navigate - conditions not met');
     }
   }, [currentPage, isLoading, hasError]);
 
@@ -72,15 +60,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
 
   useEffect(() => {
-    // Log the initial page being loaded
-    console.log('=== QURAN READER SCREEN INITIALIZATION ===');
-    console.log('QuranReaderScreen: Starting at page', initialPage);
-    console.log('Route params:', route?.params);
-    console.log('pageNumber from route:', route?.params?.pageNumber);
-    console.log('page from route:', route?.params?.page);
-    console.log('Final initialPage:', initialPage);
-    console.log('Current currentPage state:', currentPage);
-    
     // Hide status bar for full screen
     StatusBar.setHidden(true, 'none');
     StatusBar.setTranslucent(true);
@@ -91,7 +70,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
     // Set a timeout to stop loading if PDF doesn't load within 10 seconds
     const loadingTimeout = setTimeout(() => {
       if (isLoading) {
-        console.log('PDF loading timeout - stopping loading state');
         setIsLoading(false);
       }
     }, 10000);
@@ -106,30 +84,23 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   // Debug totalPages changes
   useEffect(() => {
-    console.log('totalPages changed to:', totalPages);
   }, [totalPages]);
 
   const initializePdfSource = async () => {
     try {
-      console.log('Starting PDF initialization...');
-      console.log('Target page for initialization:', currentPage);
       setIsLoading(true);
       setHasError(false);
       
       // Use require() directly - this is the most reliable method for local PDF files
       // and avoids the trust manager issues completely
       const sourceConfig = getPdfSource();
-      console.log('PDF source config:', sourceConfig);
       setPdfSource(sourceConfig);
-      console.log('PDF source set, waiting for load complete...');
       
       // Add a fallback timeout in case handleLoadComplete never fires
       setTimeout(() => {
-        console.log('PDF load timeout - forcing loading to false');
         setIsLoading(false);
       }, 5000);
     } catch (error) {
-      console.log('PDF Source Error:', error);
       setHasError(true);
       setIsLoading(false);
     }
@@ -154,60 +125,42 @@ const QuranReaderScreen = ({ navigation, route }) => {
   };
 
   const navigateToPage = (pageNumber) => {
-    console.log('=== NAVIGATE TO PAGE FUNCTION ===');
     console.log('Attempting to navigate to page:', pageNumber);
-    console.log('pdfRef.current exists:', !!pdfRef.current);
     
     if (pdfRef.current && pageNumber > 1) {
       try {
-        console.log('🚀 Calling setPage with:', pageNumber);
         pdfRef.current.setPage(pageNumber);
         
         // Try again after a short delay
         setTimeout(() => {
-          console.log('🔄 Retry setPage with:', pageNumber);
           pdfRef.current.setPage(pageNumber);
         }, 500);
         
         // Try one more time after longer delay
         setTimeout(() => {
-          console.log('🔄 Final retry setPage with:', pageNumber);
           pdfRef.current.setPage(pageNumber);
         }, 1000);
       } catch (error) {
-        console.log('❌ Error calling setPage:', error);
+        // Silent error handling
       }
-    } else {
-      console.log('❌ Cannot navigate - pdfRef not available or page <= 1');
     }
   };
 
   const handleLoadComplete = (numberOfPages) => {
-    console.log('=== PDF LOAD COMPLETE ===');
-    console.log('PDF loaded successfully! Pages:', numberOfPages);
-    console.log('Setting totalPages to:', numberOfPages);
-    console.log('Setting isLoading to false and hasError to false');
-    console.log('Current page at load complete:', currentPage);
     setTotalPages(numberOfPages);
     setIsLoading(false);
     setHasError(false);
     
     // Navigate to the specific page after PDF loads
     if (currentPage > 1) {
-      console.log('🎯 PDF loaded, navigating to page:', currentPage);
       navigateToPage(currentPage);
-    } else {
-      console.log('❌ Cannot navigate from handleLoadComplete - page <= 1');
     }
   };
 
   const handlePageChanged = (page, numberOfPages) => {
-    console.log('Page changed to:', page, 'total pages:', numberOfPages);
-    console.log('Current totalPages state:', totalPages);
     setCurrentPage(page);
     // Always update totalPages if numberOfPages is provided and valid
     if (numberOfPages > 0) {
-      console.log('Updating totalPages from', totalPages, 'to', numberOfPages);
       setTotalPages(numberOfPages);
     }
   };
