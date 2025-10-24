@@ -10,12 +10,9 @@ import {
   Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Pdf from 'react-native-pdf';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 import RNFS from 'react-native-blob-util';
-import { runOnJS } from 'react-native-reanimated';
 
 // Utility function to get PDF source configuration
 const getPdfSource = () => {
@@ -99,39 +96,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
-  const goToNextPage = () => {
-    if (hasError || isLoading) {
-      console.log('Navigation blocked - hasError:', hasError, 'isLoading:', isLoading);
-      return;
-    }
-    console.log('goToNextPage called, currentPage:', currentPage, 'totalPages:', totalPages);
-    
-    // If totalPages is not set yet, allow navigation anyway (PDF will handle bounds)
-    if (totalPages === 0 || currentPage < totalPages) {
-      setCurrentPage(prev => {
-        console.log('Setting page to:', prev + 1);
-        return prev + 1;
-      });
-    } else {
-      console.log('Already at last page');
-    }
-  };
-
-  const goToPreviousPage = () => {
-    if (hasError || isLoading) {
-      console.log('Navigation blocked - hasError:', hasError, 'isLoading:', isLoading);
-      return;
-    }
-    console.log('goToPreviousPage called, currentPage:', currentPage);
-    if (currentPage > 1) {
-      setCurrentPage(prev => {
-        console.log('Setting page to:', prev - 1);
-        return prev - 1;
-      });
-    } else {
-      console.log('Already at first page');
-    }
-  };
 
   const toggleFullScreen = () => {
     setIsFullScreen(!isFullScreen);
@@ -161,40 +125,18 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   const handlePageChanged = (page, numberOfPages) => {
     console.log('Page changed to:', page, 'total pages:', numberOfPages);
+    console.log('Current totalPages state:', totalPages);
     setCurrentPage(page);
-    // Only update totalPages if it's different and not 0
-    if (numberOfPages > 0 && numberOfPages !== totalPages) {
+    // Always update totalPages if numberOfPages is provided and valid
+    if (numberOfPages > 0) {
       console.log('Updating totalPages from', totalPages, 'to', numberOfPages);
       setTotalPages(numberOfPages);
     }
   };
 
-  // Swipe gesture handlers for PDF navigation
-  const panGesture = Gesture.Pan()
-    .minDistance(10)
-    .onEnd((event) => {
-      'worklet';
-      const { translationX, translationY, velocityX } = event;
-      const swipeThreshold = 30;
-      const velocityThreshold = 500;
-      const horizontalSwipe = Math.abs(translationX) > Math.abs(translationY);
-      
-      // Check for swipe based on distance or velocity
-      const isSwipe = horizontalSwipe && (Math.abs(translationX) > swipeThreshold || Math.abs(velocityX) > velocityThreshold);
-      
-      if (isSwipe) {
-        // RTL navigation: swipe right = next page, swipe left = previous page
-        if (translationX > 0 || velocityX > 0) {
-          runOnJS(goToNextPage)();
-        } else {
-          runOnJS(goToPreviousPage)();
-        }
-      }
-    });
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container}>
         <StatusBar 
           barStyle="light-content" 
           backgroundColor="#8B7355" 
@@ -219,6 +161,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
           </View>
         )}
         
+        
         {hasError && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>Failed to load PDF</Text>
@@ -236,62 +179,35 @@ const QuranReaderScreen = ({ navigation, route }) => {
         )}
         
         {!hasError && pdfSource && (
-          <GestureDetector gesture={panGesture}>
-            <Pdf
-              ref={pdfRef}
-              source={pdfSource}
-              style={styles.pdf}
-              page={currentPage}
-              scale={1.0}
-              minScale={0.5}
-              maxScale={3.0}
-              horizontal={false}
-              spacing={0}
-              password=""
-              onLoadComplete={handleLoadComplete}
-              onPageChanged={handlePageChanged}
-              onError={handleError}
-              onPress={() => toggleControls()}
-              enablePaging={true}
-              enableRTL={true}
-              enableAntialiasing={true}
-              enableAnnotationRendering={true}
-              fitPolicy={1}
-              singlePage={true}
-              trustAllCerts={false}
-              enableDebug={true}
-              enableDoubleTapZoom={true}
-              enableFling={true}
-              activityIndicator={<Text style={styles.loadingText}>Loading Quran...</Text>}
-            />
-          </GestureDetector>
+          <Pdf
+            ref={pdfRef}
+            source={pdfSource}
+            style={styles.pdf}
+            scale={1.0}
+            minScale={0.5}
+            maxScale={3.0}
+            horizontal={false}
+            spacing={0}
+            password=""
+            onLoadComplete={handleLoadComplete}
+            onPageChanged={handlePageChanged}
+            onError={handleError}
+            onPress={() => toggleControls()}
+            enablePaging={true}
+            enableRTL={true}
+            enableAntialiasing={true}
+            enableAnnotationRendering={true}
+            fitPolicy={1}
+            singlePage={false}
+            trustAllCerts={false}
+            enableDebug={true}
+            enableDoubleTapZoom={true}
+            enableFling={true}
+            activityIndicator={<Text style={styles.loadingText}>Loading Quran...</Text>}
+          />
         )}
       </View>
 
-      {/* Navigation Controls (when not full screen) */}
-      {!isFullScreen && (
-        <View style={styles.controls}>
-          <TouchableOpacity 
-            style={styles.controlButton}
-            onPress={goToPreviousPage}
-            disabled={currentPage <= 1}
-          >
-            <Text style={styles.controlText}>←</Text>
-          </TouchableOpacity>
-          
-          <Text style={styles.pageIndicator}>
-            {currentPage} / {totalPages}
-          </Text>
-          
-          <TouchableOpacity 
-            style={styles.controlButton}
-            onPress={goToNextPage}
-            disabled={currentPage >= totalPages}
-          >
-            <Text style={styles.controlText}>→</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       {/* Back Button */}
       <TouchableOpacity 
@@ -301,8 +217,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
       >
         <Text style={styles.backButtonText}>←</Text>
       </TouchableOpacity>
-      </SafeAreaView>
-    </GestureHandlerRootView>
+    </SafeAreaView>
   );
 };
 
@@ -370,32 +285,6 @@ const styles = StyleSheet.create({
   retryText: {
     color: '#FFFFFF',
     fontSize: getFontSize(14),
-    fontWeight: '600',
-  },
-  controls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#8B7355',
-    paddingHorizontal: getSpacing(20),
-    paddingVertical: getSpacing(15),
-  },
-  controlButton: {
-    width: getSpacing(50),
-    height: getSpacing(50),
-    borderRadius: getSpacing(25),
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  controlText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(20),
-    fontWeight: 'bold',
-  },
-  pageIndicator: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(16),
     fontWeight: '600',
   },
   backButton: {
