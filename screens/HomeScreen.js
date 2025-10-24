@@ -92,8 +92,11 @@ const HomeScreen = ({ navigation }) => {
     // Navigate to QuranReaderScreen with the specified page
     if (navigation) {
       navigation.navigate('quran-reader', { 
-        page: page,
-        title: `الصفحة ${page}`
+        pageNumber: page,
+        chapterName: `الصفحة ${page}`,
+        verseNumber: '1',
+        sectionNumber: '1',
+        juzNumber: 'الجزء'
       });
     }
   };
