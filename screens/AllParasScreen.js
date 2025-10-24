@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, BackHandler, StatusBar, Alert } from 'react-native';
+import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
-import { saveFavorite } from '../utils/FavoritesStorage';
+import { saveFavorite, isFavorite } from '../utils/FavoritesStorage';
 
 const AllParasScreen = ({ navigation }) => {
   const parasData = [
@@ -63,7 +64,7 @@ const AllParasScreen = ({ navigation }) => {
     navigation.navigate('quran-reader', navigationParams);
   };
 
-  const handleFavoritePress = async (para) => {
+  const handleFavoritePress = async (para, setFavoriteStatus) => {
     try {
       const result = await saveFavorite({
         type: 'para',
@@ -74,6 +75,7 @@ const AllParasScreen = ({ navigation }) => {
       });
 
       if (result.success) {
+        setFavoriteStatus(true);
         Alert.alert('Success', result.message);
       } else {
         Alert.alert('Info', result.message);
@@ -84,70 +86,78 @@ const AllParasScreen = ({ navigation }) => {
     }
   };
 
-  const renderParaItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.paraItem}
-      onPress={() => handleParaPress(item)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.paraContent}>
-        <View style={styles.paraNumber}>
-          <Text style={styles.paraId}>{item.id}</Text>
-        </View>
-        
-        <TouchableOpacity
-          style={styles.starButton}
-          onPress={() => handleFavoritePress(item)}
-          activeOpacity={0.7}
-        >
-          <View style={{
-            width: 30,
-            height: 30,
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-            <Text style={{
-              fontSize: 24,
-              lineHeight: 28,
-              textAlign: 'center',
-            }}>
-              ⭐
-            </Text>
+  const renderParaItem = ({ item }) => {
+    const [favoriteStatus, setFavoriteStatus] = useState(false);
+    
+    useEffect(() => {
+      const checkFavorite = async () => {
+        const isFav = await isFavorite(item.id, 'para');
+        setFavoriteStatus(isFav);
+      };
+      checkFavorite();
+    }, [item.id]);
+    
+    return (
+      <TouchableOpacity
+        style={styles.paraItem}
+        onPress={() => handleParaPress(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.paraContent}>
+          <View style={styles.paraNumber}>
+            <Text style={styles.paraId}>{item.id}</Text>
           </View>
-        </TouchableOpacity>
-        
-        <View style={styles.paraText}>
-          <Text style={styles.arabicText}>{item.arabic}</Text>
-          <Text style={styles.englishText}>{item.english}</Text>
+          
+          <TouchableOpacity
+            style={styles.starButton}
+            onPress={() => handleFavoritePress(item, setFavoriteStatus)}
+            activeOpacity={0.7}
+          >
+            <View style={{
+              width: 30,
+              height: 30,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <Text style={{
+                fontSize: 24,
+                lineHeight: 28,
+                textAlign: 'center',
+              }}>
+                {favoriteStatus ? '⭐' : '☆'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+          
           <Text style={styles.pageText}>Page {item.pageNumber}</Text>
+          
+          <View style={styles.paraText}>
+            <Text style={styles.arabicText}>{item.arabic}</Text>
+            <Text style={styles.englishText}>{item.english}</Text>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#2E7D32" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBackPress}
-        >
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>All Paras (Juz)</Text>
-      </View>
-
-      {/* Paras List */}
-      <FlatList
-        data={parasData}
-        renderItem={renderParaItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
+      <CommonHeader 
+        title="All Paras (Juz)"
+        onBackPress={handleBackPress}
+        showBackButton={true}
+        showMenu={false}
       />
+      
+      <View style={styles.content}>
+        <FlatList
+          data={parasData}
+          renderItem={renderParaItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
     </View>
   );
 };
@@ -155,90 +165,77 @@ const AllParasScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FAFAFA',
   },
-  header: {
-    backgroundColor: '#2E7D32',
-    paddingTop: StatusBar.currentHeight || 0,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  backButton: {
-    marginRight: 15,
-    padding: 5,
-  },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
+  content: {
     flex: 1,
   },
   listContainer: {
-    padding: 15,
+    padding: getSpacing(8),
   },
   paraItem: {
     backgroundColor: '#FFFFFF',
-    marginBottom: 12,
-    borderRadius: 12,
-    elevation: 2,
+    marginBottom: getSpacing(8),
+    borderRadius: getSpacing(4),
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: getSpacing(16),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   paraContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    flex: 1,
   },
   paraNumber: {
-    width: 50,
+    width: getSpacing(50),
     alignItems: 'center',
+    marginRight: getSpacing(12),
   },
   starButton: {
-    width: 40,
+    width: getSpacing(40),
     alignItems: 'center',
-    marginLeft: 10,
+    marginLeft: getSpacing(10),
   },
   paraText: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: getSpacing(15),
   },
   paraId: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2E7D32',
+    fontSize: getFontSize(16),
+    fontWeight: '500',
+    color: '#1976D2',
   },
   arabicText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2E7D32',
-    marginBottom: 5,
+    fontSize: getFontSize(18),
+    fontWeight: '400',
+    color: '#212121',
+    marginBottom: getSpacing(4),
     textAlign: 'right',
+    lineHeight: getFontSize(24),
   },
   englishText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
+    fontSize: getFontSize(14),
+    color: '#757575',
+    marginBottom: getSpacing(2),
     textAlign: 'right',
+    fontWeight: '400',
   },
   pageText: {
-    fontSize: 12,
-    color: '#8B7355',
-    textAlign: 'right',
-    fontStyle: 'italic',
+    fontSize: getFontSize(12),
+    color: '#1976D2',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: getSpacing(8),
+    paddingVertical: getSpacing(4),
+    borderRadius: getSpacing(16),
+    fontWeight: '500',
+    textAlign: 'center',
+    marginLeft: getSpacing(16),
+    marginRight: getSpacing(12),
   },
 });
 

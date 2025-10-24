@@ -266,6 +266,14 @@ const AllSurahsScreen = ({ navigation }) => {
             </Animated.Text>
           </TouchableOpacity>
           
+          <ResponsiveText 
+            size="small" 
+            color="#8B7355"
+            style={styles.pageText}
+          >
+            Page {item.pageNumber}
+          </ResponsiveText>
+          
           <View style={styles.surahText}>
             <ResponsiveText 
               size="large" 
@@ -281,13 +289,6 @@ const AllSurahsScreen = ({ navigation }) => {
               style={styles.englishText}
             >
               {item.english}
-            </ResponsiveText>
-            <ResponsiveText 
-              size="small" 
-              color="#8B7355"
-              style={styles.pageText}
-            >
-              Page {item.pageNumber}
             </ResponsiveText>
           </View>
         </View>
@@ -320,27 +321,36 @@ const AllSurahsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAFAFA',
   },
   content: {
     flex: 1,
   },
   listContainer: {
-    paddingVertical: getSpacing(10),
+    padding: getSpacing(8),
   },
   surahItem: {
-    paddingHorizontal: getSpacing(20),
-    paddingVertical: getSpacing(15),
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
+    marginBottom: getSpacing(8),
+    borderRadius: getSpacing(4),
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: getSpacing(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   surahContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   surahNumber: {
     width: getSpacing(50),
     alignItems: 'center',
+    marginRight: getSpacing(12),
   },
   starButton: {
     width: getSpacing(40),
@@ -348,7 +358,7 @@ const styles = StyleSheet.create({
     marginLeft: getSpacing(10),
   },
   starIcon: {
-    fontSize: getFontSize(32),
+    fontSize: getFontSize(24),
     color: '#CCCCCC',
   },
   starFilled: {
@@ -359,16 +369,31 @@ const styles = StyleSheet.create({
     marginLeft: getSpacing(15),
   },
   arabicText: {
-    marginBottom: getSpacing(2),
+    marginBottom: getSpacing(4),
     textAlign: 'right',
+    fontSize: getFontSize(18),
+    fontWeight: '400',
+    color: '#212121',
+    lineHeight: getFontSize(24),
   },
   englishText: {
     textAlign: 'right',
+    marginBottom: getSpacing(2),
+    fontSize: getFontSize(14),
+    color: '#757575',
+    fontWeight: '400',
   },
   pageText: {
-    textAlign: 'right',
-    marginTop: getSpacing(2),
-    fontStyle: 'italic',
+    textAlign: 'center',
+    marginLeft: getSpacing(16),
+    marginRight: getSpacing(12),
+    fontSize: getFontSize(12),
+    color: '#1976D2',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: getSpacing(8),
+    paddingVertical: getSpacing(4),
+    borderRadius: getSpacing(16),
+    fontWeight: '500',
   },
 });
 

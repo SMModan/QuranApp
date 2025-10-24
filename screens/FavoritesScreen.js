@@ -223,6 +223,7 @@ const styles = StyleSheet.create({
     paddingVertical: getSpacing(4),
     borderRadius: getSpacing(16),
     fontWeight: '500',
+    textAlign: 'center',
   },
   deleteButton: {
     width: getSpacing(40),
