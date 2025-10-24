@@ -39,11 +39,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     // Hide status bar for full screen
-    if (Platform.OS === 'android') {
-      StatusBar.setHidden(true, 'fade');
-    } else {
-      StatusBar.setHidden(true, 'fade');
-    }
+    StatusBar.setHidden(true, 'none');
+    StatusBar.setTranslucent(true);
     
     // Initialize PDF source
     initializePdfSource();
@@ -58,11 +55,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
     
     return () => {
       // Restore status bar on unmount
-      if (Platform.OS === 'android') {
-        StatusBar.setHidden(false, 'fade');
-      } else {
-        StatusBar.setHidden(false, 'fade');
-      }
+      StatusBar.setHidden(false, 'none');
+      StatusBar.setTranslucent(false);
       clearTimeout(loadingTimeout);
     };
   }, []);
@@ -137,7 +131,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
         <StatusBar 
           hidden={true}
           translucent={true}
@@ -221,7 +215,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
       >
         <Text style={styles.backButtonText}>←</Text>
       </TouchableOpacity>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -229,6 +223,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   decorativeBorder: {
     height: 2,
@@ -238,10 +237,17 @@ const styles = StyleSheet.create({
   pdfContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   pdf: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    width: '100%',
+    height: '100%',
   },
   loadingContainer: {
     flex: 1,
