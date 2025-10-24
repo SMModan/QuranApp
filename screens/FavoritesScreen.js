@@ -95,7 +95,7 @@ const FavoritesScreen = ({ navigation }) => {
         onPress={() => handleRemoveFavorite(item.id, item.arabic)}
         activeOpacity={0.7}
       >
-        <Text style={styles.deleteIcon}>✕</Text>
+        <Text style={styles.deleteIcon}>−</Text>
       </TouchableOpacity>
     </View>
   );
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   },
   favoriteItem: {
     backgroundColor: '#FFFFFF',
-    marginBottom: getSpacing(8),
+    marginBottom: getSpacing(10),
     borderRadius: getSpacing(12),
     flexDirection: 'row',
     alignItems: 'center',
@@ -160,8 +160,10 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#8B5CF6',
   },
   mainContent: {
     flex: 1,
@@ -172,37 +174,37 @@ const styles = StyleSheet.create({
     marginRight: getSpacing(12),
   },
   typeBadge: {
-    paddingHorizontal: getSpacing(8),
-    paddingVertical: getSpacing(4),
-    borderRadius: getSpacing(12),
+    paddingHorizontal: getSpacing(12),
+    paddingVertical: getSpacing(6),
+    borderRadius: getSpacing(20),
     alignItems: 'center',
     justifyContent: 'center',
   },
   surahBadge: {
-    backgroundColor: '#E8F5E8',
+    backgroundColor: '#8B5CF6',
   },
   paraBadge: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#EC4899',
   },
   typeText: {
-    fontSize: getFontSize(10),
+    fontSize: getFontSize(11),
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
   },
   contentSection: {
     flex: 1,
-    paddingRight: getSpacing(8),
   },
   arabicText: {
     fontSize: getFontSize(20),
     fontWeight: 'bold',
-    color: '#1A1A1A',
+    color: '#374151',
     textAlign: 'right',
     marginBottom: getSpacing(3),
   },
   englishText: {
     fontSize: getFontSize(15),
-    color: '#4A4A4A',
+    color: '#6B7280',
     textAlign: 'right',
     marginBottom: getSpacing(2),
     fontStyle: 'italic',
@@ -213,24 +215,26 @@ const styles = StyleSheet.create({
   },
   pageText: {
     fontSize: getFontSize(12),
-    color: '#8B7355',
-    backgroundColor: '#F5F5F5',
+    color: '#8B5CF6',
+    backgroundColor: '#F3E8FF',
     paddingHorizontal: getSpacing(8),
-    paddingVertical: getSpacing(2),
-    borderRadius: getSpacing(10),
-    fontWeight: '500',
+    paddingVertical: getSpacing(3),
+    borderRadius: getSpacing(12),
+    fontWeight: '600',
   },
   deleteButton: {
     width: getSpacing(36),
     height: getSpacing(36),
     borderRadius: getSpacing(18),
-    backgroundColor: '#FFEBEE',
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: getSpacing(8),
+    marginLeft: getSpacing(24),
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   deleteIcon: {
-    fontSize: getFontSize(18),
+    fontSize: getFontSize(16),
     color: '#FF4444',
     fontWeight: 'bold',
   },
@@ -241,7 +245,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#666',
+    color: '#6B7280',
     fontWeight: '500',
   },
   emptyContainer: {
@@ -257,13 +261,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#374151',
     marginBottom: 10,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#6B7280',
     textAlign: 'center',
     lineHeight: 24,
   },
