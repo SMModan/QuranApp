@@ -28,7 +28,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const QuranReaderScreen = ({ navigation, route }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(604); // Total pages in Quran
+  const [totalPages, setTotalPages] = useState(0); // Will be set when PDF loads
   const [isFullScreen, setIsFullScreen] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,12 +36,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [pdfSource, setPdfSource] = useState(null);
   const pdfRef = useRef(null);
 
-  // Get chapter and verse info from route params with validation
-  const chapterName = route?.params?.chapterName || 'البقرة';
-  const verseNumber = route?.params?.verseNumber || '٢';
-  const pageNumber = route?.params?.pageNumber || '6';
-  const sectionNumber = route?.params?.sectionNumber || '1';
-  const juzNumber = route?.params?.juzNumber || 'الجزء';
   
   // Validate navigation object
   const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
@@ -75,6 +69,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
     };
   }, []);
 
+  // Debug totalPages changes
+  useEffect(() => {
+    console.log('totalPages changed to:', totalPages);
+  }, [totalPages]);
+
   const initializePdfSource = async () => {
     try {
       console.log('Starting PDF initialization...');
@@ -106,7 +105,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
       return;
     }
     console.log('goToNextPage called, currentPage:', currentPage, 'totalPages:', totalPages);
-    if (currentPage < totalPages) {
+    
+    // If totalPages is not set yet, allow navigation anyway (PDF will handle bounds)
+    if (totalPages === 0 || currentPage < totalPages) {
       setCurrentPage(prev => {
         console.log('Setting page to:', prev + 1);
         return prev + 1;
@@ -159,8 +160,13 @@ const QuranReaderScreen = ({ navigation, route }) => {
   };
 
   const handlePageChanged = (page, numberOfPages) => {
+    console.log('Page changed to:', page, 'total pages:', numberOfPages);
     setCurrentPage(page);
-    setTotalPages(numberOfPages);
+    // Only update totalPages if it's different and not 0
+    if (numberOfPages > 0 && numberOfPages !== totalPages) {
+      console.log('Updating totalPages from', totalPages, 'to', numberOfPages);
+      setTotalPages(numberOfPages);
+    }
   };
 
   // Swipe gesture handlers for PDF navigation
@@ -195,23 +201,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
           translucent={false}
         />
       
-      {/* Header Section */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.chapterText}>{chapterName} {verseNumber}</Text>
-        </View>
-        
-        <View style={styles.headerCenter}>
-          <Text style={styles.pageText}>{pageNumber}/{sectionNumber}</Text>
-        </View>
-        
-        <View style={styles.headerRight}>
-          <Text style={styles.juzText}>{juzNumber}</Text>
-        </View>
-      </View>
-
-      {/* Decorative Border */}
-      <View style={styles.decorativeBorder} />
 
       {/* PDF Reader with Swipe Gestures */}
       <View style={styles.pdfContainer}>
@@ -279,9 +268,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
         )}
       </View>
 
-      {/* Decorative Border */}
-      <View style={styles.decorativeBorder} />
-
       {/* Navigation Controls (when not full screen) */}
       {!isFullScreen && (
         <View style={styles.controls}>
@@ -325,43 +311,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#8B7355', // Olive green background
-    paddingHorizontal: getSpacing(20),
-    paddingVertical: getSpacing(15),
-    paddingTop: Platform.OS === 'ios' ? getSpacing(10) : getSpacing(15),
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerRight: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  chapterText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(16),
-    fontWeight: 'bold',
-    textAlign: 'left',
-  },
-  pageText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(14),
-    fontWeight: '600',
-  },
-  juzText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(14),
-    fontWeight: '600',
-    textAlign: 'right',
-  },
   decorativeBorder: {
     height: 2,
     backgroundColor: '#A68B5B', // Light green/gold border
@@ -370,17 +319,10 @@ const styles = StyleSheet.create({
   pdfContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   pdf: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    width: '100%',
-    height: '100%',
   },
   loadingContainer: {
     flex: 1,
