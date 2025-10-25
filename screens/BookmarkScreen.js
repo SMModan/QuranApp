@@ -53,7 +53,8 @@ const BookmarkScreen = ({ navigation }) => {
 
   // Navigate to bookmarked page
   const navigateToPage = (pageNumber) => {
-    navigation.navigate('QuranReader', { pageNumber: pageNumber });
+    console.log('Navigating to page:', pageNumber);
+    navigation.navigate('quran-reader', { pageNumber: pageNumber });
   };
 
   // Clear all bookmarks

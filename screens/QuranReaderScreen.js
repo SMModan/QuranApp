@@ -45,7 +45,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [headerTimeout, setHeaderTimeout] = useState(null);
   const [useWebView, setUseWebView] = useState(false); // Toggle between WebView and react-native-pdf
   const [bookmarks, setBookmarks] = useState([]);
-  const [showBookmarkList, setShowBookmarkList] = useState(false);
   const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
   const [bookmarkComment, setBookmarkComment] = useState('');
   const pdfRef = useRef(null);
@@ -425,13 +424,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
               </Text>
             </TouchableOpacity>
             
-            <TouchableOpacity 
-              style={styles.bookmarkListButton}
-              onPress={() => setShowBookmarkList(true)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.bookmarkListIcon}>📋</Text>
-            </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.bookmarkButton}
@@ -598,54 +590,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
          </View>
        )}
 
-       {/* Bookmark List Modal */}
-       {showBookmarkList && (
-         <View style={styles.bookmarkModal}>
-           <View style={styles.bookmarkModalContent}>
-             <View style={styles.bookmarkModalHeader}>
-               <Text style={styles.bookmarkModalTitle}>Bookmarks ({bookmarks.length})</Text>
-               <TouchableOpacity 
-                 style={styles.closeButton}
-                 onPress={() => setShowBookmarkList(false)}
-               >
-                 <Text style={styles.closeButtonText}>✕</Text>
-               </TouchableOpacity>
-             </View>
-             
-             {bookmarks.length === 0 ? (
-               <View style={styles.emptyBookmarks}>
-                 <Text style={styles.emptyBookmarksText}>No bookmarks yet</Text>
-                 <Text style={styles.emptyBookmarksSubtext}>Tap the bookmark button to save pages</Text>
-               </View>
-             ) : (
-               <ScrollView style={styles.bookmarkList}>
-                 {bookmarks.map((bookmark) => (
-                   <TouchableOpacity
-                     key={bookmark.id}
-                     style={styles.bookmarkItem}
-                     onPress={() => {
-                       setCurrentPage(bookmark.page);
-                       setShowBookmarkList(false);
-                       // Navigate to the bookmarked page
-                       if (pdfRef.current) {
-                         navigateToPage(bookmark.page);
-                       }
-                     }}
-                   >
-                     <View style={styles.bookmarkItemContent}>
-                       <Text style={styles.bookmarkItemPage}>Page {bookmark.page}</Text>
-                       <Text style={styles.bookmarkItemComment}>{bookmark.comment}</Text>
-                       <Text style={styles.bookmarkItemDate}>
-                         {new Date(bookmark.timestamp).toLocaleDateString()}
-                       </Text>
-                     </View>
-                   </TouchableOpacity>
-                 ))}
-               </ScrollView>
-             )}
-           </View>
-         </View>
-       )}
 
     </View>
   );
@@ -833,95 +777,60 @@ const styles = StyleSheet.create({
     width: screenWidth,
     height: screenHeight,
   },
-  bookmarkListButton: {
-    width: getSpacing(40),
-    height: getSpacing(40),
-    borderRadius: getSpacing(20),
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: getSpacing(10),
-  },
-  bookmarkListIcon: {
-    fontSize: getFontSize(18),
-  },
   bookmarkModal: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 2000,
+    paddingHorizontal: getSpacing(20),
   },
   bookmarkModalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: getSpacing(10),
-    width: screenWidth * 0.9,
-    maxHeight: screenHeight * 0.7,
-    padding: getSpacing(20),
+    borderRadius: getSpacing(15),
+    width: '100%',
+    maxWidth: screenWidth * 0.85,
+    maxHeight: screenHeight * 0.6,
+    padding: getSpacing(25),
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   bookmarkModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: getSpacing(20),
-    paddingBottom: getSpacing(10),
+    paddingBottom: getSpacing(15),
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
   bookmarkModalTitle: {
-    fontSize: getFontSize(18),
+    fontSize: getFontSize(20),
     fontWeight: 'bold',
     color: '#1a237e',
   },
   closeButton: {
-    width: getSpacing(30),
-    height: getSpacing(30),
-    borderRadius: getSpacing(15),
+    width: getSpacing(35),
+    height: getSpacing(35),
+    borderRadius: getSpacing(17.5),
     backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButtonText: {
-    fontSize: getFontSize(16),
+    fontSize: getFontSize(18),
     color: '#666666',
-  },
-  emptyBookmarks: {
-    alignItems: 'center',
-    paddingVertical: getSpacing(40),
-  },
-  emptyBookmarksText: {
-    fontSize: getFontSize(16),
-    color: '#666666',
-    marginBottom: getSpacing(10),
-  },
-  emptyBookmarksSubtext: {
-    fontSize: getFontSize(14),
-    color: '#999999',
-  },
-  bookmarkList: {
-    maxHeight: screenHeight * 0.5,
-  },
-  bookmarkItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: getSpacing(15),
-    paddingHorizontal: getSpacing(10),
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  bookmarkItemPage: {
-    fontSize: getFontSize(16),
-    fontWeight: '600',
-    color: '#1a237e',
-  },
-  bookmarkItemDate: {
-    fontSize: getFontSize(12),
-    color: '#666666',
+    fontWeight: 'bold',
   },
   bookmarkInputContainer: {
     paddingVertical: getSpacing(10),
@@ -933,14 +842,16 @@ const styles = StyleSheet.create({
     marginBottom: getSpacing(10),
   },
   bookmarkInput: {
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#E0E0E0',
-    borderRadius: getSpacing(8),
-    padding: getSpacing(12),
-    fontSize: getFontSize(14),
-    backgroundColor: '#F9F9F9',
-    minHeight: getSpacing(80),
+    borderRadius: getSpacing(12),
+    padding: getSpacing(15),
+    fontSize: getFontSize(16),
+    backgroundColor: '#FAFAFA',
+    minHeight: getSpacing(100),
     textAlignVertical: 'top',
+    color: '#333333',
+    lineHeight: getFontSize(22),
   },
   bookmarkButtonContainer: {
     flexDirection: 'row',
@@ -950,29 +861,39 @@ const styles = StyleSheet.create({
   cancelButton: {
     flex: 1,
     backgroundColor: '#F5F5F5',
-    paddingVertical: getSpacing(12),
-    paddingHorizontal: getSpacing(20),
-    borderRadius: getSpacing(8),
-    marginRight: getSpacing(10),
+    paddingVertical: getSpacing(15),
+    paddingHorizontal: getSpacing(25),
+    borderRadius: getSpacing(12),
+    marginRight: getSpacing(15),
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   cancelButtonText: {
     color: '#666666',
-    fontSize: getFontSize(14),
+    fontSize: getFontSize(16),
     fontWeight: '600',
   },
   saveButton: {
     flex: 1,
     backgroundColor: '#1a237e',
-    paddingVertical: getSpacing(12),
-    paddingHorizontal: getSpacing(20),
-    borderRadius: getSpacing(8),
-    marginLeft: getSpacing(10),
+    paddingVertical: getSpacing(15),
+    paddingHorizontal: getSpacing(25),
+    borderRadius: getSpacing(12),
+    marginLeft: getSpacing(15),
     alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#1a237e',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   saveButtonText: {
     color: '#FFFFFF',
-    fontSize: getFontSize(14),
+    fontSize: getFontSize(16),
     fontWeight: '600',
   },
   bookmarkItemContent: {

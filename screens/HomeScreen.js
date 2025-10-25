@@ -142,7 +142,9 @@ const HomeScreen = ({ navigation }) => {
         break;
       case 'bookmarks':
         // Navigate to bookmarks screen
-        console.log('Navigate to bookmarks');
+        if (navigation) {
+          navigation.navigate('bookmarks');
+        }
         break;
       case 'favourites':
         // Navigate to favourites screen
