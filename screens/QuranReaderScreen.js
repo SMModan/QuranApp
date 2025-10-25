@@ -34,7 +34,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(134); // Default Quran pages, will be updated when PDF loads
   const [isFullScreen, setIsFullScreen] = useState(true);
-  const [showControls, setShowControls] = useState(false);
+  const [showControls, setShowControls] = useState(true); // Set to true for testing
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [pdfSource, setPdfSource] = useState(null);
@@ -44,6 +44,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [bookmarks, setBookmarks] = useState([]);
   const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
   const [bookmarkComment, setBookmarkComment] = useState('');
+  const [touchStart, setTouchStart] = useState(null);
   const pdfRef = useRef(null);
 
   // Update currentPage when route params change
@@ -139,6 +140,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   const initializePdfSource = async () => {
     try {
+      console.log('Initializing PDF source...');
       setIsLoading(true);
       setHasError(false);
       
@@ -160,10 +162,12 @@ const QuranReaderScreen = ({ navigation, route }) => {
         console.log('PDF source loaded via file path:', sourceConfig);
       }
       
+      console.log('Setting PDF source:', sourceConfig);
       setPdfSource(sourceConfig);
       
       // Reduce timeout since we're loading from assets
       setTimeout(() => {
+        console.log('PDF loading timeout check, isLoading:', isLoading);
         if (isLoading) {
           console.log('PDF loading timeout, forcing completion');
           setIsLoading(false);
@@ -386,6 +390,32 @@ const QuranReaderScreen = ({ navigation, route }) => {
     console.log('PDF scroll event:', event);
   };
 
+  // Handle touch start for swipe detection
+  const handleTouchStart = (event) => {
+    const touch = event.nativeEvent.touches[0];
+    setTouchStart({ x: touch.pageX, y: touch.pageY });
+  };
+
+  // Handle touch end for swipe detection
+  const handleTouchEnd = (event) => {
+    if (!touchStart) return;
+    
+    const touch = event.nativeEvent.changedTouches[0];
+    const deltaX = touch.pageX - touchStart.x;
+    const deltaY = touch.pageY - touchStart.y;
+    
+    // Check if it's a right swipe (deltaX > 100 and not too much vertical movement)
+    if (deltaX > 100 && Math.abs(deltaY) < 100) {
+      console.log('Right swipe detected, going back to home');
+      safeNavigation.goBack();
+    }
+    
+    setTouchStart(null);
+  };
+
+
+  console.log('Rendering QuranReaderScreen - isLoading:', isLoading, 'hasError:', hasError, 'pdfSource:', pdfSource, 'showControls:', showControls);
+  console.log('Back button should be visible:', showControls);
 
   return (
     <View style={styles.container}>
@@ -397,7 +427,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
       
 
       {/* PDF Reader with Swipe Gestures */}
-      <View style={styles.pdfContainer}>
+      <View 
+        style={styles.pdfContainer}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {isLoading && (
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Loading Quran...</Text>
@@ -459,6 +493,22 @@ const QuranReaderScreen = ({ navigation, route }) => {
         )}
       </View>
 
+      {/* Floating Back Button */}
+      {showControls && (
+        <TouchableOpacity 
+          style={styles.floatingBackButton}
+          onPress={() => {
+            console.log('Back button pressed');
+            safeNavigation.goBack();
+          }}
+          activeOpacity={0.7}
+        >
+          <View style={styles.iconContainer}>
+            <Text style={styles.floatingBackIcon}>←</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+
       {/* Floating Bookmark Button */}
       {showControls && (
         <TouchableOpacity 
@@ -466,9 +516,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
           onPress={handleBookmark}
           activeOpacity={0.7}
         >
-          <Text style={styles.floatingBookmarkIcon}>
-            {isBookmarked ? '🔖' : '📖'}
-          </Text>
+          <View style={styles.iconContainer}>
+            <Text style={styles.floatingBookmarkIcon}>
+              {isBookmarked ? '🔖' : '📖'}
+            </Text>
+          </View>
         </TouchableOpacity>
       )}
 
@@ -540,7 +592,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: screenWidth,
     height: screenHeight,
-    zIndex: 1000,
+    zIndex: 1,
   },
   decorativeBorder: {
     height: 2,
@@ -622,6 +674,44 @@ const styles = StyleSheet.create({
     fontSize: getFontSize(18),
     fontWeight: 'bold',
   },
+  floatingBackButton: {
+    position: 'absolute',
+    bottom: getSpacing(30),
+    left: getSpacing(20),
+    width: getSpacing(60),
+    height: getSpacing(60),
+    borderRadius: getSpacing(30),
+    backgroundColor: 'rgba(26, 35, 126, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+    display: 'flex',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  iconContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  floatingBackIcon: {
+    fontSize: getFontSize(28),
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    includeFontPadding: false,
+    marginTop: -2,
+  },
   floatingBookmarkButton: {
     position: 'absolute',
     bottom: getSpacing(30),
@@ -632,7 +722,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(26, 35, 126, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1001,
+    zIndex: 9999,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: {
@@ -643,7 +733,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   floatingBookmarkIcon: {
-    fontSize: getFontSize(24),
+    fontSize: getFontSize(28),
+    textAlign: 'center',
+    includeFontPadding: false,
+    marginTop: -2,
   },
   bookmarkModal: {
     position: 'absolute',
