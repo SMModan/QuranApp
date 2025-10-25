@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 import RNFS from 'react-native-blob-util';
 import CommonHeader from '../components/CommonHeader';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 // Utility function to get PDF source configuration
 const getPdfSource = () => {
@@ -503,9 +504,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
           }}
           activeOpacity={0.7}
         >
-          <View style={styles.iconContainer}>
-            <Text style={styles.floatingBackIcon}>←</Text>
-          </View>
+          <Text style={styles.backIconText}>←</Text>
         </TouchableOpacity>
       )}
 
@@ -516,11 +515,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
           onPress={handleBookmark}
           activeOpacity={0.7}
         >
-          <View style={styles.iconContainer}>
-            <Text style={styles.floatingBookmarkIcon}>
-              {isBookmarked ? '🔖' : '📖'}
-            </Text>
-          </View>
+          <Text style={styles.bookmarkIconText}>
+            {isBookmarked ? '🔖' : '📖'}
+          </Text>
         </TouchableOpacity>
       )}
 
@@ -695,23 +692,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
   },
-  iconContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  floatingBackIcon: {
-    fontSize: getFontSize(28),
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    includeFontPadding: false,
-    marginTop: -2,
-  },
   floatingBookmarkButton: {
     position: 'absolute',
     bottom: getSpacing(30),
@@ -732,11 +712,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
   },
-  floatingBookmarkIcon: {
-    fontSize: getFontSize(28),
+  backIconText: {
+    fontSize: 28,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
     textAlign: 'center',
     includeFontPadding: false,
-    marginTop: -2,
+  },
+  bookmarkIconText: {
+    fontSize: 28,
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   bookmarkModal: {
     position: 'absolute',
