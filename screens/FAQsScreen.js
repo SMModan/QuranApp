@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Linking, Alert } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
+import SideMenu from '../components/SideMenu';
 import ResponsiveText from '../components/ResponsiveText';
 import BottomPlayerBar from '../components/BottomPlayerBar';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
 
 const FAQsScreen = ({ navigation }) => {
   const [expandedItems, setExpandedItems] = useState({});
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
   const animations = React.useRef({});
   
   // Create animated values for each FAQ item

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Linking, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
+import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
 import ResponsiveText from '../components/ResponsiveText';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
@@ -11,6 +12,7 @@ const ContactUsScreen = ({ navigation }) => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
 
   const contactInfo = [
     {
@@ -83,6 +85,43 @@ const ContactUsScreen = ({ navigation }) => {
     }
   };
 
+  const handleMenuPress = () => {
+    setIsMenuVisible(true);
+  };
+
+  const handleMenuClose = () => {
+    setIsMenuVisible(false);
+  };
+
+  const handleMenuItemPress = (itemId) => {
+    switch (itemId) {
+      case 'our_apps':
+        navigation.navigate('our-apps');
+        break;
+      case 'visit_website':
+        Linking.openURL('https://www.peerbits.com/').catch(err => {
+          Alert.alert('Error', 'Could not open website');
+        });
+        break;
+      case 'contact_us':
+        // Already on contact us page
+        break;
+      case 'share_app':
+        // Handle share functionality
+        Alert.alert('Share App', 'Share functionality will be implemented');
+        break;
+      case 'rate_app':
+        // Handle rate app functionality
+        Alert.alert('Rate App', 'Rate app functionality will be implemented');
+        break;
+      case 'faqs':
+        navigation.navigate('faqs');
+        break;
+      default:
+        break;
+    }
+  };
+
   const handleContactPress = (contact) => {
     Alert.alert(
       contact.type,
@@ -98,9 +137,9 @@ const ContactUsScreen = ({ navigation }) => {
     <View style={styles.container}>
       <CommonHeader 
         title="Contact Us"
-        onBackPress={() => navigation.goBack()}
-        showBackButton={true}
-        showMenu={false}
+        onMenuPress={handleMenuPress}
+        showMenu={true}
+        showBackButton={false}
       />
       
       <KeyboardAvoidingView 
@@ -243,6 +282,12 @@ const ContactUsScreen = ({ navigation }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <SideMenu
+        visible={isMenuVisible}
+        onClose={handleMenuClose}
+        onMenuItemPress={handleMenuItemPress}
+      />
     </View>
   );
 };

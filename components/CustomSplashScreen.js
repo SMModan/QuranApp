@@ -5,8 +5,8 @@ import { getImageDimensions, screenData, getSpacing } from '../utils/ResponsiveD
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const CustomSplashScreen = () => {
-  // Get responsive image dimensions
-  const imageDimensions = getImageDimensions(300, 400);
+  // Get responsive image dimensions - make it larger for better visibility
+  const imageDimensions = getImageDimensions(200, 200);
   
   return (
     <View style={styles.container}>
@@ -47,6 +47,8 @@ const styles = StyleSheet.create({
   },
   splashImage: {
     // Dimensions will be set dynamically based on screen size
+    maxWidth: screenWidth * 0.6,
+    maxHeight: screenHeight * 0.4,
   },
 });
 

@@ -14,10 +14,9 @@
       "translucent": true
     },
     "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#1a237e",
-      "tabletImage": "./assets/splash-3x.png"
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a237e"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -31,10 +30,9 @@
         "translucent": true
       },
       "splash": {
-        "image": "./assets/splash.png",
-        "resizeMode": "cover",
-        "backgroundColor": "#1a237e",
-        "tabletImage": "./assets/splash-3x.png"
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#1a237e"
       }
     },
     "android": {
@@ -49,10 +47,9 @@
         "translucent": true
       },
       "splash": {
-        "image": "./assets/splash.png",
-        "resizeMode": "cover",
-        "backgroundColor": "#1a237e",
-        "tabletImage": "./assets/splash-3x.png"
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#1a237e"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.QuranAppExpo",
