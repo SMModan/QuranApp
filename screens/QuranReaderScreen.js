@@ -9,22 +9,12 @@ import {
   Alert,
   StatusBar,
   TextInput,
-  ScrollView
+  ScrollView,
+  Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Pdf from 'react-native-pdf';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
-import RNFS from 'react-native-blob-util';
-import CommonHeader from '../components/CommonHeader';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-
-// Utility function to get PDF source configuration
-const getPdfSource = () => {
-  // For React Native/Expo, use require() directly as it's the most reliable method
-  // This avoids the trust manager issues completely
-  return require('../assets/quran_sharif.pdf');
-};
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -33,53 +23,173 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const initialPage = route?.params?.pageNumber || route?.params?.page || 1;
   
   const [currentPage, setCurrentPage] = useState(initialPage);
-  const [totalPages, setTotalPages] = useState(134); // Default Quran pages, will be updated when PDF loads
-  const [isFullScreen, setIsFullScreen] = useState(true);
-  const [showControls, setShowControls] = useState(true); // Set to true for testing
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [pdfSource, setPdfSource] = useState(null);
-  const [pdfKey, setPdfKey] = useState(0); // Force re-render key
+  const [totalPages, setTotalPages] = useState(134);
+  const [showControls, setShowControls] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [headerTimeout, setHeaderTimeout] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
   const [bookmarkComment, setBookmarkComment] = useState('');
-  const [touchStart, setTouchStart] = useState(null);
-  const pdfRef = useRef(null);
-
-  // Update currentPage when route params change
-  useEffect(() => {
-    console.log('Route params:', route?.params);
-    console.log('pageNumber from route:', route?.params?.pageNumber);
-    console.log('page from route:', route?.params?.page);
-    const newPage = route?.params?.pageNumber || route?.params?.page || 1;
-    console.log('Received page number:', newPage);
-    setCurrentPage(newPage);
-    setPdfKey(prev => prev + 1); // Force PDF re-render
-  }, [route?.params?.pageNumber, route?.params?.page]);
-
-  // Navigate to specific page when currentPage changes and PDF is loaded
-  useEffect(() => {
-    if (pdfRef.current && !isLoading && !hasError && currentPage > 1) {
-      navigateToPage(currentPage);
-    }
-  }, [currentPage, isLoading, hasError]);
-
+  const [showSlider, setShowSlider] = useState(false);
+  
+  // ScrollView ref for image slider
+  const scrollViewRef = useRef(null);
   
   // Validate navigation object
   const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
+
+  // Get image source for current page
+  const getImageSource = (pageNumber) => {
+    // Create a mapping of page numbers to image sources
+    const imageMap = {
+      1: require('../assets/quran_safa/quran_safa_1.jpg'),
+      2: require('../assets/quran_safa/quran_safa_2.jpg'),
+      3: require('../assets/quran_safa/quran_safa_3.jpg'),
+      4: require('../assets/quran_safa/quran_safa_4.jpg'),
+      5: require('../assets/quran_safa/quran_safa_5.jpg'),
+      6: require('../assets/quran_safa/quran_safa_6.jpg'),
+      7: require('../assets/quran_safa/quran_safa_7.jpg'),
+      8: require('../assets/quran_safa/quran_safa_8.jpg'),
+      9: require('../assets/quran_safa/quran_safa_9.jpg'),
+      10: require('../assets/quran_safa/quran_safa_10.jpg'),
+      11: require('../assets/quran_safa/quran_safa_11.jpg'),
+      12: require('../assets/quran_safa/quran_safa_12.jpg'),
+      13: require('../assets/quran_safa/quran_safa_13.jpg'),
+      14: require('../assets/quran_safa/quran_safa_14.jpg'),
+      15: require('../assets/quran_safa/quran_safa_15.jpg'),
+      16: require('../assets/quran_safa/quran_safa_16.jpg'),
+      17: require('../assets/quran_safa/quran_safa_17.jpg'),
+      18: require('../assets/quran_safa/quran_safa_18.jpg'),
+      19: require('../assets/quran_safa/quran_safa_19.jpg'),
+      20: require('../assets/quran_safa/quran_safa_20.jpg'),
+      21: require('../assets/quran_safa/quran_safa_21.jpg'),
+      22: require('../assets/quran_safa/quran_safa_22.jpg'),
+      23: require('../assets/quran_safa/quran_safa_23.jpg'),
+      24: require('../assets/quran_safa/quran_safa_24.jpg'),
+      25: require('../assets/quran_safa/quran_safa_25.jpg'),
+      26: require('../assets/quran_safa/quran_safa_26.jpg'),
+      27: require('../assets/quran_safa/quran_safa_27.jpg'),
+      28: require('../assets/quran_safa/quran_safa_28.jpg'),
+      29: require('../assets/quran_safa/quran_safa_29.jpg'),
+      30: require('../assets/quran_safa/quran_safa_30.jpg'),
+      31: require('../assets/quran_safa/quran_safa_31.jpg'),
+      32: require('../assets/quran_safa/quran_safa_32.jpg'),
+      33: require('../assets/quran_safa/quran_safa_33.jpg'),
+      34: require('../assets/quran_safa/quran_safa_34.jpg'),
+      35: require('../assets/quran_safa/quran_safa_35.jpg'),
+      36: require('../assets/quran_safa/quran_safa_36.jpg'),
+      37: require('../assets/quran_safa/quran_safa_37.jpg'),
+      38: require('../assets/quran_safa/quran_safa_38.jpg'),
+      39: require('../assets/quran_safa/quran_safa_39.jpg'),
+      40: require('../assets/quran_safa/quran_safa_40.jpg'),
+      41: require('../assets/quran_safa/quran_safa_41.jpg'),
+      42: require('../assets/quran_safa/quran_safa_42.jpg'),
+      43: require('../assets/quran_safa/quran_safa_43.jpg'),
+      44: require('../assets/quran_safa/quran_safa_44.jpg'),
+      45: require('../assets/quran_safa/quran_safa_45.jpg'),
+      46: require('../assets/quran_safa/quran_safa_46.jpg'),
+      47: require('../assets/quran_safa/quran_safa_47.jpg'),
+      48: require('../assets/quran_safa/quran_safa_48.jpg'),
+      49: require('../assets/quran_safa/quran_safa_49.jpg'),
+      50: require('../assets/quran_safa/quran_safa_50.jpg'),
+      51: require('../assets/quran_safa/quran_safa_51.jpg'),
+      52: require('../assets/quran_safa/quran_safa_52.jpg'),
+      53: require('../assets/quran_safa/quran_safa_53.jpg'),
+      54: require('../assets/quran_safa/quran_safa_54.jpg'),
+      55: require('../assets/quran_safa/quran_safa_55.jpg'),
+      56: require('../assets/quran_safa/quran_safa_56.jpg'),
+      57: require('../assets/quran_safa/quran_safa_57.jpg'),
+      58: require('../assets/quran_safa/quran_safa_58.jpg'),
+      59: require('../assets/quran_safa/quran_safa_59.jpg'),
+      60: require('../assets/quran_safa/quran_safa_60.jpg'),
+      61: require('../assets/quran_safa/quran_safa_61.jpg'),
+      62: require('../assets/quran_safa/quran_safa_62.jpg'),
+      63: require('../assets/quran_safa/quran_safa_63.jpg'),
+      64: require('../assets/quran_safa/quran_safa_64.jpg'),
+      65: require('../assets/quran_safa/quran_safa_65.jpg'),
+      66: require('../assets/quran_safa/quran_safa_66.jpg'),
+      67: require('../assets/quran_safa/quran_safa_67.jpg'),
+      68: require('../assets/quran_safa/quran_safa_68.jpg'),
+      69: require('../assets/quran_safa/quran_safa_69.jpg'),
+      70: require('../assets/quran_safa/quran_safa_70.jpg'),
+      71: require('../assets/quran_safa/quran_safa_71.jpg'),
+      72: require('../assets/quran_safa/quran_safa_72.jpg'),
+      73: require('../assets/quran_safa/quran_safa_73.jpg'),
+      74: require('../assets/quran_safa/quran_safa_74.jpg'),
+      75: require('../assets/quran_safa/quran_safa_75.jpg'),
+      76: require('../assets/quran_safa/quran_safa_76.jpg'),
+      77: require('../assets/quran_safa/quran_safa_77.jpg'),
+      78: require('../assets/quran_safa/quran_safa_78.jpg'),
+      79: require('../assets/quran_safa/quran_safa_79.jpg'),
+      80: require('../assets/quran_safa/quran_safa_80.jpg'),
+      81: require('../assets/quran_safa/quran_safa_81.jpg'),
+      82: require('../assets/quran_safa/quran_safa_82.jpg'),
+      83: require('../assets/quran_safa/quran_safa_83.jpg'),
+      84: require('../assets/quran_safa/quran_safa_84.jpg'),
+      85: require('../assets/quran_safa/quran_safa_85.jpg'),
+      86: require('../assets/quran_safa/quran_safa_86.jpg'),
+      87: require('../assets/quran_safa/quran_safa_87.jpg'),
+      88: require('../assets/quran_safa/quran_safa_88.jpg'),
+      89: require('../assets/quran_safa/quran_safa_89.jpg'),
+      90: require('../assets/quran_safa/quran_safa_90.jpg'),
+      91: require('../assets/quran_safa/quran_safa_91.jpg'),
+      92: require('../assets/quran_safa/quran_safa_92.jpg'),
+      93: require('../assets/quran_safa/quran_safa_93.jpg'),
+      94: require('../assets/quran_safa/quran_safa_94.jpg'),
+      95: require('../assets/quran_safa/quran_safa_95.jpg'),
+      96: require('../assets/quran_safa/quran_safa_96.jpg'),
+      97: require('../assets/quran_safa/quran_safa_97.jpg'),
+      98: require('../assets/quran_safa/quran_safa_98.jpg'),
+      99: require('../assets/quran_safa/quran_safa_99.jpg'),
+      100: require('../assets/quran_safa/quran_safa_100.jpg'),
+      101: require('../assets/quran_safa/quran_safa_101.jpg'),
+      102: require('../assets/quran_safa/quran_safa_102.jpg'),
+      103: require('../assets/quran_safa/quran_safa_103.jpg'),
+      104: require('../assets/quran_safa/quran_safa_104.jpg'),
+      105: require('../assets/quran_safa/quran_safa_105.jpg'),
+      106: require('../assets/quran_safa/quran_safa_106.jpg'),
+      107: require('../assets/quran_safa/quran_safa_107.jpg'),
+      108: require('../assets/quran_safa/quran_safa_108.jpg'),
+      109: require('../assets/quran_safa/quran_safa_109.jpg'),
+      110: require('../assets/quran_safa/quran_safa_110.jpg'),
+      111: require('../assets/quran_safa/quran_safa_111.jpg'),
+      112: require('../assets/quran_safa/quran_safa_112.jpg'),
+      113: require('../assets/quran_safa/quran_safa_113.jpg'),
+      114: require('../assets/quran_safa/quran_safa_114.jpg'),
+      115: require('../assets/quran_safa/quran_safa_115.jpg'),
+      116: require('../assets/quran_safa/quran_safa_116.jpg'),
+      117: require('../assets/quran_safa/quran_safa_117.jpg'),
+      118: require('../assets/quran_safa/quran_safa_118.jpg'),
+      119: require('../assets/quran_safa/quran_safa_119.jpg'),
+      120: require('../assets/quran_safa/quran_safa_120.jpg'),
+      121: require('../assets/quran_safa/quran_safa_121.jpg'),
+      122: require('../assets/quran_safa/quran_safa_122.jpg'),
+      123: require('../assets/quran_safa/quran_safa_123.jpg'),
+      124: require('../assets/quran_safa/quran_safa_124.jpg'),
+      125: require('../assets/quran_safa/quran_safa_125.jpg'),
+      126: require('../assets/quran_safa/quran_safa_126.jpg'),
+      127: require('../assets/quran_safa/quran_safa_127.jpg'),
+      128: require('../assets/quran_safa/quran_safa_128.jpg'),
+      129: require('../assets/quran_safa/quran_safa_129.jpg'),
+      130: require('../assets/quran_safa/quran_safa_130.jpg'),
+      131: require('../assets/quran_safa/quran_safa_131.jpg'),
+      132: require('../assets/quran_safa/quran_safa_132.jpg'),
+      133: require('../assets/quran_safa/quran_safa_133.jpg'),
+      134: require('../assets/quran_safa/quran_safa_134.jpg'),
+    };
+    
+    return imageMap[pageNumber] || imageMap[1]; // Fallback to page 1 if not found
+  };
 
   // Load bookmarks from AsyncStorage
   const loadBookmarks = async () => {
     try {
       const savedBookmarks = await AsyncStorage.getItem('quran_bookmarks');
       if (savedBookmarks) {
-        const bookmarksList = JSON.parse(savedBookmarks);
-        setBookmarks(bookmarksList);
+        const parsedBookmarks = JSON.parse(savedBookmarks);
+        setBookmarks(parsedBookmarks);
         
         // Check if current page is bookmarked
-        const isCurrentPageBookmarked = bookmarksList.some(bookmark => bookmark.page === currentPage);
+        const isCurrentPageBookmarked = parsedBookmarks.some(bookmark => bookmark.page === currentPage);
         setIsBookmarked(isCurrentPageBookmarked);
       }
     } catch (error) {
@@ -88,420 +198,179 @@ const QuranReaderScreen = ({ navigation, route }) => {
   };
 
   useEffect(() => {
-    // Initialize PDF source
-    initializePdfSource();
-    
-    // Load bookmarks
     loadBookmarks();
-    
-    // Set a timeout to stop loading if PDF doesn't load within 10 seconds
-    const loadingTimeout = setTimeout(() => {
-      if (isLoading) {
-        setIsLoading(false);
-      }
-    }, 10000);
-    
-    return () => {
-      clearTimeout(loadingTimeout);
-    };
-  }, []);
-
-  // Debug totalPages changes
-  useEffect(() => {
-    console.log('totalPages updated to:', totalPages);
-  }, [totalPages]);
-
-  // Monitor PDF source changes
-  useEffect(() => {
-    if (pdfSource) {
-      console.log('PDF source set:', pdfSource);
-      // Reset total pages when source changes
-      setTotalPages(134); // Reset to default
-    }
-  }, [pdfSource]);
-
-
-  // Cleanup effect to prevent memory leaks and null reference issues
-  useEffect(() => {
-    return () => {
-      // Save current page when component unmounts
-      if (currentPage > 1) {
-        saveCurrentPage(currentPage);
-      }
-      
-      // Cleanup when component unmounts
-      if (pdfRef.current) {
-        pdfRef.current = null;
-      }
-      if (headerTimeout) {
-        clearTimeout(headerTimeout);
-      }
-    };
   }, [currentPage]);
 
-  const initializePdfSource = async () => {
-    try {
-      console.log('Initializing PDF source...');
-      setIsLoading(true);
-      setHasError(false);
-      
-      // Try different approaches for local PDF loading
-      let sourceConfig;
-      
-      try {
-        // Method 1: Direct require
-        sourceConfig = require('../assets/quran_sharif.pdf');
-        console.log('PDF source loaded via require:', sourceConfig);
-      } catch (requireError) {
-        console.log('Require failed, trying alternative method:', requireError);
-        
-        // Method 2: Using file system path
-        sourceConfig = {
-          uri: 'file:///android_asset/quran_sharif.pdf',
-          cache: true,
-        };
-        console.log('PDF source loaded via file path:', sourceConfig);
-      }
-      
-      console.log('Setting PDF source:', sourceConfig);
-      setPdfSource(sourceConfig);
-      
-      // Reduce timeout since we're loading from assets
-      setTimeout(() => {
-        console.log('PDF loading timeout check, isLoading:', isLoading);
-        if (isLoading) {
-          console.log('PDF loading timeout, forcing completion');
-          setIsLoading(false);
-        }
-      }, 5000);
-    } catch (error) {
-      console.log('Error initializing PDF source:', error);
-      setHasError(true);
-      setIsLoading(false);
-    }
-  };
-
-
-  const toggleFullScreen = () => {
-    setIsFullScreen(!isFullScreen);
-  };
-
-  // Toggle controls visibility with auto-hide
-  const toggleControls = () => {
-    console.log('Toggling controls visibility:', !showControls);
-    setShowControls(!showControls);
-    
-    // Auto-hide after 3 seconds
-    if (!showControls) {
-      if (headerTimeout) {
-        clearTimeout(headerTimeout);
-      }
-      const timeout = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
-      setHeaderTimeout(timeout);
-    } else {
-      if (headerTimeout) {
-        clearTimeout(headerTimeout);
-        setHeaderTimeout(null);
-      }
-    }
-  };
-
-
-
-
-  // Save bookmarks to AsyncStorage
-  const saveBookmarks = async (bookmarksList) => {
-    try {
-      await AsyncStorage.setItem('quran_bookmarks', JSON.stringify(bookmarksList));
-      setBookmarks(bookmarksList);
-    } catch (error) {
-      console.log('Error saving bookmarks:', error);
-    }
-  };
+  // Scroll to current page when it changes
+  useEffect(() => {
+    scrollToPage(currentPage);
+  }, [currentPage]);
 
   // Save current page to local storage for resume functionality
   const saveCurrentPage = async (page) => {
     try {
       const resumeData = {
         page: page,
-        timestamp: new Date().toISOString(),
-        totalPages: totalPages
+        timestamp: new Date().toISOString()
       };
-      await AsyncStorage.setItem('quran_resume_page', JSON.stringify(resumeData));
-      console.log('Saved resume page:', page);
+      await AsyncStorage.setItem('quran_resume_data', JSON.stringify(resumeData));
     } catch (error) {
       console.log('Error saving current page:', error);
     }
   };
 
-  const handleBookmark = async () => {
-    if (isBookmarked) {
-      // Remove bookmark
-      try {
-        const updatedBookmarks = bookmarks.filter(bookmark => bookmark.page !== currentPage);
-        await saveBookmarks(updatedBookmarks);
-        setIsBookmarked(false);
-        Alert.alert('Bookmark Removed', `Page ${currentPage} removed from bookmarks`);
-      } catch (error) {
-        console.log('Error removing bookmark:', error);
-        Alert.alert('Error', 'Failed to remove bookmark');
+  // Load current page from local storage
+  const loadCurrentPage = async () => {
+    try {
+      const savedData = await AsyncStorage.getItem('quran_resume_data');
+      if (savedData) {
+        const resumeData = JSON.parse(savedData);
+        setCurrentPage(resumeData.page || initialPage);
       }
+    } catch (error) {
+      console.log('Error loading current page:', error);
+    }
+  };
+
+  // Navigate to next page
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+      saveCurrentPage(newPage);
+      scrollToPage(newPage);
+    }
+  };
+
+  // Navigate to previous page
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      const newPage = currentPage - 1;
+      setCurrentPage(newPage);
+      saveCurrentPage(newPage);
+      scrollToPage(newPage);
+    }
+  };
+
+  // Scroll to specific page
+  const scrollToPage = (pageNumber) => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({
+        x: (pageNumber - 1) * screenWidth,
+        animated: true
+      });
+    }
+  };
+
+  // Handle scroll end to update current page
+  const handleScrollEnd = (event) => {
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const newPage = Math.round(contentOffsetX / screenWidth) + 1;
+    if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      saveCurrentPage(newPage);
+    }
+  };
+
+  // Toggle controls visibility
+  const toggleControls = () => {
+    setShowControls(!showControls);
+  };
+
+  // Toggle bookmark
+  const toggleBookmark = () => {
+    if (isBookmarked) {
+      removeBookmark();
     } else {
-      // Show input dialog for bookmark comment
       setShowBookmarkDialog(true);
     }
   };
 
-  const saveBookmarkWithComment = async () => {
+  // Add bookmark
+  const addBookmark = async () => {
     try {
       const newBookmark = {
         id: Date.now(),
         page: currentPage,
-        timestamp: new Date().toISOString(),
-        title: `Page ${currentPage}`,
-        comment: bookmarkComment.trim() || `Bookmark for Page ${currentPage}`,
-        totalPages: totalPages
+        comment: bookmarkComment,
+        timestamp: new Date().toISOString()
       };
       
       const updatedBookmarks = [...bookmarks, newBookmark];
-      await saveBookmarks(updatedBookmarks);
+      setBookmarks(updatedBookmarks);
       setIsBookmarked(true);
       setShowBookmarkDialog(false);
       setBookmarkComment('');
-      Alert.alert('Bookmark Added', `Page ${currentPage} added to bookmarks`);
+      
+      await AsyncStorage.setItem('quran_bookmarks', JSON.stringify(updatedBookmarks));
+      Alert.alert('Success', 'Bookmark added successfully!');
     } catch (error) {
       console.log('Error saving bookmark:', error);
       Alert.alert('Error', 'Failed to save bookmark');
     }
   };
 
-
-
-  const handleError = (error) => {
-    console.log('PDF Error occurred:', error);
-    console.log('PDF Source at error:', pdfSource);
-    
-    // Handle specific error types
-    if (error && error.message) {
-      if (error.message.includes('setPage') || error.message.includes('null')) {
-        console.log('PDF ref error, not showing alert');
-        return;
-      }
-      if (error.message.includes('scroll') || error.message.includes('fling')) {
-        console.log('Scroll/gesture error, not showing alert');
-        return;
-      }
-      if (error.message.includes('DownloadFailed') || error.message.includes('localhost')) {
-        console.log('PDF download error, trying alternative loading method');
-        // Try alternative loading method
-        setPdfSource({
-          uri: 'file:///android_asset/quran_sharif.pdf',
-          cache: true,
-        });
-        return;
-      }
-    }
-    
-    console.log('Setting hasError to true and isLoading to false');
-    setHasError(true);
-    setIsLoading(false);
-    Alert.alert('Error', 'Failed to load Quran PDF. Please check if the file exists.');
-  };
-
-  const navigateToPage = (pageNumber) => {
-    console.log('Attempting to navigate to page:', pageNumber);
-    
-    if (pageNumber > 1) {
-      const attemptNavigation = () => {
-        if (pdfRef.current && pdfRef.current.setPage) {
-      try {
-        pdfRef.current.setPage(pageNumber);
-            console.log('Successfully navigated to page:', pageNumber);
-          } catch (error) {
-            console.log('Error calling setPage:', error);
-          }
-        } else {
-          console.log('PDF ref not ready, retrying...');
-        }
-      };
-
-      // Try immediately
-      attemptNavigation();
-        
-        // Try again after a short delay
-        setTimeout(() => {
-        attemptNavigation();
-        }, 500);
-        
-        // Try one more time after longer delay
-        setTimeout(() => {
-        attemptNavigation();
-        }, 1000);
+  // Remove bookmark
+  const removeBookmark = async () => {
+    try {
+      const updatedBookmarks = bookmarks.filter(bookmark => bookmark.page !== currentPage);
+      setBookmarks(updatedBookmarks);
+      setIsBookmarked(false);
+      
+      await AsyncStorage.setItem('quran_bookmarks', JSON.stringify(updatedBookmarks));
+      Alert.alert('Success', 'Bookmark removed successfully!');
+    } catch (error) {
+      console.log('Error removing bookmark:', error);
+      Alert.alert('Error', 'Failed to remove bookmark');
     }
   };
 
-  const handleLoadComplete = (numberOfPages) => {
-    console.log('PDF loaded completely with', numberOfPages, 'pages');
-    console.log('Setting totalPages to:', numberOfPages);
-    
-    // Ensure we have a valid page count
-    if (numberOfPages && numberOfPages > 0) {
-    setTotalPages(numberOfPages);
-      console.log('Total pages set successfully:', numberOfPages);
-    } else {
-      console.log('Invalid page count received:', numberOfPages);
-      // Set a default value for Quran (typically 604 pages)
-      setTotalPages(134);
-    }
-    
-    setIsLoading(false);
-    setHasError(false);
-    
-    // PDF is now fully loaded, navigate to the specific page if needed
-    if (currentPage > 1 && pdfRef.current) {
-      // Use a small delay to ensure PDF is fully rendered
-      setTimeout(() => {
-      navigateToPage(currentPage);
-      }, 100);
+  // Toggle slider
+  const toggleSlider = () => {
+    setShowSlider(!showSlider);
+  };
+
+  // Handle slider change
+  const onSliderChange = (value) => {
+    const newPage = Math.round(value);
+    if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      saveCurrentPage(newPage);
+      scrollToPage(newPage);
     }
   };
-
-  const handlePageChanged = (page, numberOfPages) => {
-    console.log('Page changed to:', page, 'Total pages:', numberOfPages);
-    setCurrentPage(page);
-    
-    // Save current page to local storage for resume functionality
-    saveCurrentPage(page);
-    
-    // Always update totalPages if numberOfPages is provided and valid
-    if (numberOfPages && numberOfPages > 0) {
-      console.log('Updating totalPages from page change:', numberOfPages);
-      setTotalPages(numberOfPages);
-    } else if (totalPages === 0) {
-      // If we don't have total pages yet, set a default for Quran
-      console.log('Setting default totalPages to 134');
-      setTotalPages(134);
-    }
-  };
-
-  // Handle scroll events
-  const handleScroll = (event) => {
-    console.log('PDF scroll event:', event);
-  };
-
-  // Handle touch start for swipe detection
-  const handleTouchStart = (event) => {
-    const touch = event.nativeEvent.touches[0];
-    setTouchStart({ x: touch.pageX, y: touch.pageY });
-  };
-
-  // Handle touch end for swipe detection
-  const handleTouchEnd = (event) => {
-    if (!touchStart) return;
-    
-    const touch = event.nativeEvent.changedTouches[0];
-    const deltaX = touch.pageX - touchStart.x;
-    const deltaY = touch.pageY - touchStart.y;
-    
-    // Check if it's a right swipe (deltaX > 100 and not too much vertical movement)
-    if (deltaX > 100 && Math.abs(deltaY) < 100) {
-      console.log('Right swipe detected, going back to home');
-      safeNavigation.goBack();
-    }
-    
-    setTouchStart(null);
-  };
-
-
-  console.log('Rendering QuranReaderScreen - isLoading:', isLoading, 'hasError:', hasError, 'pdfSource:', pdfSource, 'showControls:', showControls);
-  console.log('Back button should be visible:', showControls);
 
   return (
     <View style={styles.container}>
-      <StatusBar 
-        hidden={true}
-        backgroundColor="transparent"
-        translucent={true}
-      />
+      <StatusBar hidden={true} />
       
-
-      {/* PDF Reader with Swipe Gestures */}
-      <View 
-        style={styles.pdfContainer}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+      {/* Image Slider */}
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScrollEnd}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
       >
-        {isLoading && (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading Quran...</Text>
-          </View>
-        )}
-        
-        
-        {hasError && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>Failed to load PDF</Text>
-            <TouchableOpacity 
-              style={styles.retryButton}
-              onPress={() => {
-                setHasError(false);
-                setIsLoading(true);
-                initializePdfSource();
-              }}
-            >
-              <Text style={styles.retryText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        
-        {!hasError && pdfSource && (
-            <Pdf
-            key={`pdf-${pdfKey}`}
-              ref={pdfRef}
-              source={pdfSource}
-              style={styles.pdf}
-              page={currentPage}
-              scale={1.0}
-              minScale={1.0}
-            maxScale={2.5}
-              horizontal={false}
-              spacing={0}
-              password=""
-              onLoadComplete={handleLoadComplete}
-              onPageChanged={handlePageChanged}
-              onError={handleError}
-              onScroll={handleScroll}
-            onPress={toggleControls}
-              enablePaging={true}
-              enableRTL={false}
-            enableAntialiasing={false}
-            enableAnnotationRendering={false}
-              fitPolicy={0}
-              singlePage={false}
-              trustAllCerts={false}
-            enableDebug={false}
-              enableDoubleTapZoom={true}
-              enableFling={true}
-              enableScroll={true}
-              activityIndicator={
-                <View style={styles.loaderContainer}>
-                  <Text style={styles.loadingText}>Loading Quran...</Text>
-                </View>
-              }
+        {Array.from({ length: totalPages }, (_, index) => (
+          <View key={index + 1} style={styles.pageContainer}>
+            <Image
+              source={getImageSource(index + 1)}
+              style={styles.quranImage}
+              contentFit="fill"
+              onPress={toggleControls}
             />
-        )}
-      </View>
+          </View>
+        ))}
+      </ScrollView>
 
       {/* Floating Back Button */}
       {showControls && (
         <TouchableOpacity 
           style={styles.floatingBackButton}
-          onPress={() => {
-            console.log('Back button pressed');
-            safeNavigation.goBack();
-          }}
+          onPress={() => safeNavigation.goBack()}
           activeOpacity={0.7}
         >
           <Text style={styles.backIconText}>←</Text>
@@ -512,7 +381,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
       {showControls && (
         <TouchableOpacity 
           style={styles.floatingBookmarkButton}
-          onPress={handleBookmark}
+          onPress={toggleBookmark}
           activeOpacity={0.7}
         >
           <Text style={styles.bookmarkIconText}>
@@ -521,59 +390,116 @@ const QuranReaderScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       )}
 
-       {/* Bookmark Input Dialog */}
-       {showBookmarkDialog && (
-         <View style={styles.bookmarkModal}>
-           <View style={styles.bookmarkModalContent}>
-             <View style={styles.bookmarkModalHeader}>
-               <Text style={styles.bookmarkModalTitle}>Add Bookmark</Text>
-               <TouchableOpacity 
-                 style={styles.closeButton}
-                 onPress={() => {
-                   setShowBookmarkDialog(false);
-                   setBookmarkComment('');
-                 }}
-               >
-                 <Text style={styles.closeButtonText}>✕</Text>
-               </TouchableOpacity>
-      </View>
+      {/* Page Slider */}
+      {showSlider && (
+        <View style={styles.sliderContainer}>
+          <View style={styles.sliderHeader}>
+            <Text style={styles.sliderTitle}>Go to Page</Text>
+            <TouchableOpacity onPress={toggleSlider}>
+              <Text style={styles.closeSliderText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Custom Slider Implementation */}
+          <View style={styles.customSliderContainer}>
+            <View style={styles.sliderTrack}>
+              <View 
+                style={[
+                  styles.sliderProgress, 
+                  { width: `${((currentPage - 1) / (totalPages - 1)) * 100}%` }
+                ]} 
+              />
+              <View 
+                style={[
+                  styles.sliderThumb,
+                  { left: `${((currentPage - 1) / (totalPages - 1)) * 100}%` }
+                ]}
+              />
+            </View>
+            
+            {/* Quick Page Buttons */}
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.pageButtonsContainer}
+            >
+              {Array.from({ length: Math.min(20, totalPages) }, (_, i) => {
+                const pageNum = i + 1;
+                return (
+                  <TouchableOpacity
+                    key={pageNum}
+                    style={[
+                      styles.pageButton,
+                      currentPage === pageNum && styles.pageButtonActive
+                    ]}
+                    onPress={() => onSliderChange(pageNum)}
+                  >
+                    <Text style={[
+                      styles.pageButtonText,
+                      currentPage === pageNum && styles.pageButtonTextActive
+                    ]}>
+                      {pageNum}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+          
+          <Text style={styles.sliderText}>Page {currentPage} of {totalPages}</Text>
+        </View>
+      )}
 
-             <View style={styles.bookmarkInputContainer}>
-               <Text style={styles.bookmarkInputLabel}>Page {currentPage}</Text>
-               <TextInput
-                 style={styles.bookmarkInput}
-                 placeholder="Add a comment for this bookmark..."
-                 value={bookmarkComment}
-                 onChangeText={setBookmarkComment}
-                 multiline={true}
-                 numberOfLines={3}
-                 textAlignVertical="top"
-               />
-               
-               <View style={styles.bookmarkButtonContainer}>
-                 <TouchableOpacity 
-                   style={styles.cancelButton}
-                   onPress={() => {
-                     setShowBookmarkDialog(false);
-                     setBookmarkComment('');
-                   }}
-                 >
-                   <Text style={styles.cancelButtonText}>Cancel</Text>
-                 </TouchableOpacity>
-                 
-      <TouchableOpacity 
-                   style={styles.saveButton}
-                   onPress={saveBookmarkWithComment}
-      >
-                   <Text style={styles.saveButtonText}>Save</Text>
-      </TouchableOpacity>
-               </View>
-             </View>
-           </View>
-         </View>
-       )}
+      {/* Page Info */}
+      {showControls && (
+        <View style={styles.pageInfo}>
+          <Text style={styles.pageText}>Page {currentPage} of {totalPages}</Text>
+          <TouchableOpacity onPress={toggleSlider} style={styles.sliderButton}>
+            <Text style={styles.sliderButtonText}>📄</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
-
+      {/* Bookmark Input Dialog */}
+      {showBookmarkDialog && (
+        <View style={styles.bookmarkModal}>
+          <View style={styles.bookmarkModalContent}>
+            <View style={styles.bookmarkModalHeader}>
+              <Text style={styles.bookmarkModalTitle}>Add Bookmark</Text>
+              <TouchableOpacity onPress={() => setShowBookmarkDialog(false)}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={styles.bookmarkModalSubtitle}>Page {currentPage}</Text>
+            
+            <TextInput
+              style={styles.bookmarkInput}
+              placeholder="Add a comment (optional)"
+              value={bookmarkComment}
+              onChangeText={setBookmarkComment}
+              multiline
+              maxLength={100}
+            />
+            
+            <View style={styles.bookmarkModalButtons}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => setShowBookmarkDialog(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.saveButton}
+                onPress={addBookmark}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -581,95 +507,22 @@ const QuranReaderScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    backgroundColor: '#000000',
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  scrollContent: {
+    flexDirection: 'row',
+  },
+  pageContainer: {
     width: screenWidth,
     height: screenHeight,
-    zIndex: 1,
   },
-  decorativeBorder: {
-    height: 2,
-    backgroundColor: '#A68B5B', // Light green/gold border
-    marginHorizontal: getSpacing(10),
-  },
-  pdfContainer: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  pdf: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  loadingText: {
-    fontSize: getFontSize(16),
-    color: '#8B7355',
-    fontWeight: '600',
-    marginBottom: getSpacing(10),
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: getSpacing(20),
-  },
-  errorText: {
-    fontSize: getFontSize(16),
-    color: '#FF6B6B',
-    fontWeight: '600',
-    marginBottom: getSpacing(20),
-    textAlign: 'center',
-  },
-  retryButton: {
-    backgroundColor: '#8B7355',
-    paddingHorizontal: getSpacing(20),
-    paddingVertical: getSpacing(10),
-    borderRadius: getSpacing(5),
-  },
-  retryText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(14),
-    fontWeight: '600',
-  },
-  backButton: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? getSpacing(50) : getSpacing(30),
-    left: getSpacing(20),
-    width: getSpacing(40),
-    height: getSpacing(40),
-    borderRadius: getSpacing(20),
-    backgroundColor: 'rgba(139, 115, 85, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(18),
-    fontWeight: 'bold',
+  quranImage: {
+    width: screenWidth,
+    height: screenHeight,
   },
   floatingBackButton: {
     position: 'absolute',
@@ -682,13 +535,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 9999,
-    display: 'flex',
     elevation: 8,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
   },
@@ -705,10 +554,7 @@ const styles = StyleSheet.create({
     zIndex: 9999,
     elevation: 8,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
   },
@@ -724,133 +570,196 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     includeFontPadding: false,
   },
+  pageInfo: {
+    position: 'absolute',
+    top: getSpacing(50),
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: getSpacing(20),
+    zIndex: 9999,
+  },
+  pageText: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(16),
+    fontWeight: '600',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: getSpacing(15),
+    paddingVertical: getSpacing(8),
+    borderRadius: getSpacing(20),
+  },
+  sliderButton: {
+    backgroundColor: 'rgba(26, 35, 126, 0.9)',
+    paddingHorizontal: getSpacing(15),
+    paddingVertical: getSpacing(8),
+    borderRadius: getSpacing(20),
+  },
+  sliderButtonText: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(16),
+  },
+  sliderContainer: {
+    position: 'absolute',
+    bottom: getSpacing(100),
+    left: getSpacing(20),
+    right: getSpacing(20),
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    borderRadius: getSpacing(15),
+    padding: getSpacing(20),
+    zIndex: 9999,
+  },
+  sliderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: getSpacing(15),
+  },
+  sliderTitle: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(18),
+    fontWeight: 'bold',
+  },
+  closeSliderText: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(18),
+    fontWeight: 'bold',
+  },
+  customSliderContainer: {
+    marginVertical: getSpacing(15),
+  },
+  sliderTrack: {
+    height: getSpacing(6),
+    backgroundColor: '#E0E0E0',
+    borderRadius: getSpacing(3),
+    position: 'relative',
+    marginBottom: getSpacing(20),
+  },
+  sliderProgress: {
+    height: getSpacing(6),
+    backgroundColor: '#1a237e',
+    borderRadius: getSpacing(3),
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  sliderThumb: {
+    position: 'absolute',
+    top: -getSpacing(7),
+    width: getSpacing(20),
+    height: getSpacing(20),
+    backgroundColor: '#1a237e',
+    borderRadius: getSpacing(10),
+    marginLeft: -getSpacing(10),
+  },
+  pageButtonsContainer: {
+    marginTop: getSpacing(10),
+  },
+  pageButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: getSpacing(12),
+    paddingVertical: getSpacing(8),
+    borderRadius: getSpacing(15),
+    marginRight: getSpacing(8),
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  pageButtonActive: {
+    backgroundColor: '#1a237e',
+    borderColor: '#1a237e',
+  },
+  pageButtonText: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(14),
+    fontWeight: '600',
+  },
+  pageButtonTextActive: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  sliderText: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(14),
+    textAlign: 'center',
+    marginTop: getSpacing(10),
+  },
   bookmarkModal: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2000,
-    paddingHorizontal: getSpacing(20),
+    zIndex: 10000,
   },
   bookmarkModalContent: {
     backgroundColor: '#FFFFFF',
     borderRadius: getSpacing(15),
-    width: '100%',
-    maxWidth: screenWidth * 0.85,
-    maxHeight: screenHeight * 0.6,
-    padding: getSpacing(25),
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    padding: getSpacing(20),
+    width: screenWidth * 0.8,
+    maxWidth: 400,
   },
   bookmarkModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: getSpacing(20),
-    paddingBottom: getSpacing(15),
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    marginBottom: getSpacing(15),
   },
   bookmarkModalTitle: {
-    fontSize: getFontSize(20),
+    fontSize: getFontSize(18),
     fontWeight: 'bold',
     color: '#1a237e',
-  },
-  closeButton: {
-    width: getSpacing(35),
-    height: getSpacing(35),
-    borderRadius: getSpacing(17.5),
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   closeButtonText: {
-    fontSize: getFontSize(18),
-    color: '#666666',
+    fontSize: getFontSize(20),
+    color: '#666',
     fontWeight: 'bold',
   },
-  bookmarkInputContainer: {
-    paddingVertical: getSpacing(10),
-  },
-  bookmarkInputLabel: {
-    fontSize: getFontSize(16),
-    fontWeight: '600',
-    color: '#1a237e',
-    marginBottom: getSpacing(10),
+  bookmarkModalSubtitle: {
+    fontSize: getFontSize(14),
+    color: '#666',
+    marginBottom: getSpacing(15),
   },
   bookmarkInput: {
-    borderWidth: 2,
-    borderColor: '#E0E0E0',
-    borderRadius: getSpacing(12),
-    padding: getSpacing(15),
-    fontSize: getFontSize(16),
-    backgroundColor: '#FAFAFA',
-    minHeight: getSpacing(100),
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: getSpacing(8),
+    padding: getSpacing(12),
+    fontSize: getFontSize(14),
+    marginBottom: getSpacing(20),
+    minHeight: getSpacing(80),
     textAlignVertical: 'top',
-    color: '#333333',
-    lineHeight: getFontSize(22),
   },
-  bookmarkButtonContainer: {
+  bookmarkModalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: getSpacing(20),
+    justifyContent: 'flex-end',
+    gap: getSpacing(10),
   },
   cancelButton: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-    paddingVertical: getSpacing(15),
-    paddingHorizontal: getSpacing(25),
-    borderRadius: getSpacing(12),
-    marginRight: getSpacing(15),
-    alignItems: 'center',
+    paddingHorizontal: getSpacing(20),
+    paddingVertical: getSpacing(10),
+    borderRadius: getSpacing(8),
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#DDD',
   },
   cancelButtonText: {
-    color: '#666666',
-    fontSize: getFontSize(16),
+    color: '#666',
+    fontSize: getFontSize(14),
     fontWeight: '600',
   },
   saveButton: {
-    flex: 1,
     backgroundColor: '#1a237e',
-    paddingVertical: getSpacing(15),
-    paddingHorizontal: getSpacing(25),
-    borderRadius: getSpacing(12),
-    marginLeft: getSpacing(15),
-    alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#1a237e',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    paddingHorizontal: getSpacing(20),
+    paddingVertical: getSpacing(10),
+    borderRadius: getSpacing(8),
   },
   saveButtonText: {
     color: '#FFFFFF',
-    fontSize: getFontSize(16),
-    fontWeight: '600',
-  },
-  bookmarkItemContent: {
-    flex: 1,
-  },
-  bookmarkItemComment: {
     fontSize: getFontSize(14),
-    color: '#666666',
-    marginTop: getSpacing(5),
-    marginBottom: getSpacing(5),
+    fontWeight: '600',
   },
 });
 
