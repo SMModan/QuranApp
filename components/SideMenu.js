@@ -58,6 +58,11 @@ const SideMenu = ({
 
   const menuItems = [
     {
+      id: 'bookmarks',
+      title: 'Bookmarks',
+      icon: require('../assets/icons/menu_icon/Book.png'),
+    },
+    {
       id: 'our_apps',
       title: 'Our Apps',
       icon: require('../assets/icons/menu_icon/Apps.png'),
