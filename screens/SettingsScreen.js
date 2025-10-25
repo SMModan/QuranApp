@@ -145,8 +145,9 @@ const SettingsScreen = ({ navigation }) => {
     <View style={styles.container}>
       <CommonHeader 
         title="Settings"
-        onMenuPress={handleMenuPress}
-        showMenu={true}
+        onBackPress={() => navigation.goBack()}
+        showBackButton={true}
+        showMenu={false}
       />
       
       <ScrollView style={styles.content}>

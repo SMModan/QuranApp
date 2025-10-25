@@ -80,8 +80,9 @@ const ReadingModeScreen = ({ navigation }) => {
     <View style={styles.container}>
       <CommonHeader 
         title="Reading Mode"
-        onMenuPress={handleMenuPress}
-        showMenu={true}
+        onBackPress={() => navigation.goBack()}
+        showBackButton={true}
+        showMenu={false}
       />
       
       <ScrollView style={styles.content}>

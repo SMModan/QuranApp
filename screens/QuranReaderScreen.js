@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Pdf from 'react-native-pdf';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 import RNFS from 'react-native-blob-util';
+import CommonHeader from '../components/CommonHeader';
 
 // Utility function to get PDF source configuration
 const getPdfSource = () => {

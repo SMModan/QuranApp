@@ -177,7 +177,8 @@ const FAQsScreen = ({ navigation }) => {
     <View style={styles.container}>
       <CommonHeader 
         title="FAQ's"
-        onMenuPress={handleMenuPress}
+        onBackPress={() => navigation.goBack()}
+        showBackButton={true}
         showMenu={false}
       />
       

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ImageBackground, Image, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ImageBackground, Image, TextInput, Alert, KeyboardAvoidingView, Platform, Linking, Share } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
 import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
@@ -101,6 +101,35 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  // Share app functionality
+  const shareApp = async () => {
+    try {
+      const result = await Share.share({
+        message: 'Check out this amazing Quran app! Download it now.',
+        url: 'https://play.google.com/store/apps/details?id=com.yourcompany.quranapp', // Replace with actual app store URL
+        title: 'Quran App'
+      });
+      
+      if (result.action === Share.sharedAction) {
+        console.log('App shared successfully');
+      }
+    } catch (error) {
+      console.log('Error sharing app:', error);
+      Alert.alert('Error', 'Could not share the app');
+    }
+  };
+
+  // Rate app functionality
+  const rateApp = () => {
+    const appStoreUrl = Platform.OS === 'ios' 
+      ? 'https://apps.apple.com/app/id123456789' // Replace with actual iOS app ID
+      : 'https://play.google.com/store/apps/details?id=com.yourcompany.quranapp'; // Replace with actual package name
+    
+    Linking.openURL(appStoreUrl).catch(err => {
+      Alert.alert('Error', 'Could not open app store');
+    });
+  };
+
   const handleMenuItemPress = (itemId) => {
     console.log(`Menu item pressed: ${itemId}`);
     // Handle navigation to different screens based on itemId
@@ -147,15 +176,36 @@ const HomeScreen = ({ navigation }) => {
         }
         break;
       case 'backup_restore':
-      case 'our_apps':
-      case 'visit_website':
-      case 'contact_us':
-      case 'share_app':
-      case 'rate_app':
-        // Navigate to settings screen for these options
+        // Navigate to backup/restore screen
         if (navigation) {
-          navigation.navigate('settings');
+          navigation.navigate('backup-restore');
         }
+        break;
+      case 'our_apps':
+        // Navigate to our apps screen
+        if (navigation) {
+          navigation.navigate('our-apps');
+        }
+        break;
+      case 'visit_website':
+        // Open Peerbits website in browser
+        Linking.openURL('https://www.peerbits.com/').catch(err => {
+          Alert.alert('Error', 'Could not open website');
+        });
+        break;
+      case 'contact_us':
+        // Navigate to contact us screen
+        if (navigation) {
+          navigation.navigate('contact-us');
+        }
+        break;
+      case 'share_app':
+        // Share app functionality
+        shareApp();
+        break;
+      case 'rate_app':
+        // Rate app functionality
+        rateApp();
         break;
       case 'faqs':
         // Navigate to FAQ screen

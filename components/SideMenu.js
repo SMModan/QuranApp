@@ -58,16 +58,6 @@ const SideMenu = ({
 
   const menuItems = [
     {
-      id: 'change_reading_mode',
-      title: 'Change reading Mode',
-      icon: require('../assets/icons/menu_icon/Book.png'),
-    },
-    {
-      id: 'backup_restore',
-      title: 'Backup & Restore',
-      icon: require('../assets/icons/menu_icon/Cloud Backup.png'),
-    },
-    {
       id: 'our_apps',
       title: 'Our Apps',
       icon: require('../assets/icons/menu_icon/Apps.png'),

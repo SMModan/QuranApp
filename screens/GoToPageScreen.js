@@ -44,7 +44,8 @@ const GoToPageScreen = ({ navigation }) => {
     <View style={styles.container}>
       <CommonHeader
         title="انتقل إلى الصفحة"
-        onMenuPress={handleBackPress}
+        onBackPress={handleBackPress}
+        showBackButton={true}
         showMenu={false}
         backgroundColor="#083569"
       />

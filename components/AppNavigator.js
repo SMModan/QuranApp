@@ -9,6 +9,8 @@ import SettingsScreen from '../screens/SettingsScreen';
 import QuranReaderScreen from '../screens/QuranReaderScreen';
 import GoToPageScreen from '../screens/GoToPageScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
+import OurAppsScreen from '../screens/OurAppsScreen';
+import ContactUsScreen from '../screens/ContactUsScreen';
 
 const AppNavigator = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -46,6 +48,10 @@ const AppNavigator = () => {
         return <GoToPageScreen navigation={navigation} route={{ params: routeParams }} />;
       case 'favorites':
         return <FavoritesScreen navigation={navigation} />;
+      case 'our-apps':
+        return <OurAppsScreen navigation={navigation} />;
+      case 'contact-us':
+        return <ContactUsScreen navigation={navigation} />;
       default:
         return <HomeScreen navigation={navigation} />;
     }
