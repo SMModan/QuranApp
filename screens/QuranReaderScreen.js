@@ -40,7 +40,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [pdfSource, setPdfSource] = useState(null);
   const [pdfKey, setPdfKey] = useState(0); // Force re-render key
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [showHeader, setShowHeader] = useState(true);
   const [headerTimeout, setHeaderTimeout] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
   const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
@@ -167,7 +166,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
       setTimeout(() => {
         if (isLoading) {
           console.log('PDF loading timeout, forcing completion');
-        setIsLoading(false);
+          setIsLoading(false);
         }
       }, 5000);
     } catch (error) {
@@ -182,34 +181,26 @@ const QuranReaderScreen = ({ navigation, route }) => {
     setIsFullScreen(!isFullScreen);
   };
 
+  // Toggle controls visibility with auto-hide
   const toggleControls = () => {
+    console.log('Toggling controls visibility:', !showControls);
     setShowControls(!showControls);
-    // Toggle header visibility
-    setShowHeader(!showHeader);
     
-    // Clear any existing timeout since we're not auto-hiding
-    if (headerTimeout) {
-      clearTimeout(headerTimeout);
-      setHeaderTimeout(null);
+    // Auto-hide after 3 seconds
+    if (!showControls) {
+      if (headerTimeout) {
+        clearTimeout(headerTimeout);
+      }
+      const timeout = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+      setHeaderTimeout(timeout);
+    } else {
+      if (headerTimeout) {
+        clearTimeout(headerTimeout);
+        setHeaderTimeout(null);
+      }
     }
-  };
-
-  // Handle tap events - toggle header visibility
-  const handleTap = () => {
-    console.log('Screen tapped, toggling header');
-    setShowHeader(!showHeader);
-    
-    // Clear any existing timeout since we're not auto-hiding
-    if (headerTimeout) {
-      clearTimeout(headerTimeout);
-      setHeaderTimeout(null);
-    }
-  };
-
-  // Toggle header visibility
-  const toggleHeader = () => {
-    console.log('Toggling header visibility:', !showHeader);
-    setShowHeader(!showHeader);
   };
 
 
@@ -390,6 +381,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
+  // Handle scroll events
+  const handleScroll = (event) => {
+    console.log('PDF scroll event:', event);
+  };
+
 
   return (
     <View style={styles.container}>
@@ -399,44 +395,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
         translucent={true}
       />
       
-      {/* Header with Auto-Hide */}
-      {showHeader && (
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButtonHeader}
-            onPress={() => safeNavigation.goBack()}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>القرآن الكريم</Text>
-            <Text style={styles.headerSubtitle}>
-              Page {currentPage} of {totalPages}
-            </Text>
-          </View>
-          
-          <View style={styles.headerRight}>
-            <TouchableOpacity 
-              style={styles.bookmarkButton}
-              onPress={handleBookmark}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.bookmarkIcon}>
-                {isBookmarked ? '🔖' : '📖'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
 
       {/* PDF Reader with Swipe Gestures */}
-      <TouchableOpacity 
-        style={styles.pdfContainer}
-        onPress={toggleHeader}
-        activeOpacity={1}
-      >
+      <View style={styles.pdfContainer}>
         {isLoading && (
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Loading Quran...</Text>
@@ -476,7 +437,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
               onLoadComplete={handleLoadComplete}
               onPageChanged={handlePageChanged}
               onError={handleError}
-            onPress={toggleHeader}
+              onScroll={handleScroll}
+            onPress={toggleControls}
               enablePaging={true}
               enableRTL={false}
             enableAntialiasing={false}
@@ -487,6 +449,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
             enableDebug={false}
               enableDoubleTapZoom={true}
               enableFling={true}
+              enableScroll={true}
               activityIndicator={
                 <View style={styles.loaderContainer}>
                   <Text style={styles.loadingText}>Loading Quran...</Text>
@@ -494,7 +457,20 @@ const QuranReaderScreen = ({ navigation, route }) => {
               }
             />
         )}
-      </TouchableOpacity>
+      </View>
+
+      {/* Floating Bookmark Button */}
+      {showControls && (
+        <TouchableOpacity 
+          style={styles.floatingBookmarkButton}
+          onPress={handleBookmark}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.floatingBookmarkIcon}>
+            {isBookmarked ? '🔖' : '📖'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
        {/* Bookmark Input Dialog */}
        {showBookmarkDialog && (
@@ -540,7 +516,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
                    style={styles.saveButton}
                    onPress={saveBookmarkWithComment}
       >
-                   <Text style={styles.saveButtonText}>Save Bookmark</Text>
+                   <Text style={styles.saveButtonText}>Save</Text>
       </TouchableOpacity>
                </View>
              </View>
@@ -574,19 +550,10 @@ const styles = StyleSheet.create({
   pdfContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: screenWidth,
-    height: screenHeight,
   },
   pdf: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    width: screenWidth,
-    height: screenHeight,
   },
   loadingContainer: {
     flex: 1,
@@ -655,67 +622,28 @@ const styles = StyleSheet.create({
     fontSize: getFontSize(18),
     fontWeight: 'bold',
   },
-  header: {
+  floatingBookmarkButton: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: Platform.OS === 'ios' ? getSpacing(100) : getSpacing(80),
-    backgroundColor: 'rgba(26, 35, 126, 0.95)',
-    flexDirection: 'row',
+    bottom: getSpacing(30),
+    right: getSpacing(20),
+    width: getSpacing(60),
+    height: getSpacing(60),
+    borderRadius: getSpacing(30),
+    backgroundColor: 'rgba(26, 35, 126, 0.9)',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: getSpacing(20),
-    paddingTop: Platform.OS === 'ios' ? getSpacing(40) : getSpacing(20),
     zIndex: 1001,
-    elevation: 5,
+    elevation: 8,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
-  backButtonHeader: {
-    width: getSpacing(40),
-    height: getSpacing(40),
-    borderRadius: getSpacing(20),
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: getSpacing(20),
-  },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(18),
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  headerSubtitle: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: getFontSize(14),
-    textAlign: 'center',
-    marginTop: getSpacing(2),
-  },
-  bookmarkButton: {
-    width: getSpacing(40),
-    height: getSpacing(40),
-    borderRadius: getSpacing(20),
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  bookmarkIcon: {
-    fontSize: getFontSize(20),
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  floatingBookmarkIcon: {
+    fontSize: getFontSize(24),
   },
   bookmarkModal: {
     position: 'absolute',
