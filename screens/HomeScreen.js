@@ -5,6 +5,7 @@ import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
 import ResponsiveText from '../components/ResponsiveText';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = ({ navigation }) => {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
@@ -130,14 +131,33 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
+  // Load saved page and navigate to Quran reader
+  const loadResumePage = async () => {
+    try {
+      const savedResumeData = await AsyncStorage.getItem('quran_resume_page');
+      if (savedResumeData) {
+        const resumeData = JSON.parse(savedResumeData);
+        console.log('Loading resume page:', resumeData.page);
+        navigation.navigate('quran-reader', { pageNumber: resumeData.page });
+      } else {
+        console.log('No saved page found, navigating to page 1');
+        navigation.navigate('quran-reader', { pageNumber: 1 });
+      }
+    } catch (error) {
+      console.log('Error loading resume page:', error);
+      // Fallback to page 1 if there's an error
+      navigation.navigate('quran-reader', { pageNumber: 1 });
+    }
+  };
+
   const handleMenuItemPress = (itemId) => {
     console.log(`Menu item pressed: ${itemId}`);
     // Handle navigation to different screens based on itemId
     switch (itemId) {
       case 'resume':
-        // Navigate to Quran reader
+        // Navigate to Quran reader with saved page
         if (navigation) {
-          navigation.navigate('quran-reader');
+          loadResumePage();
         }
         break;
       case 'bookmarks':

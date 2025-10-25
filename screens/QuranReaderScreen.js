@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Pdf from 'react-native-pdf';
-import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 import RNFS from 'react-native-blob-util';
@@ -43,12 +42,10 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showHeader, setShowHeader] = useState(true);
   const [headerTimeout, setHeaderTimeout] = useState(null);
-  const [useWebView, setUseWebView] = useState(false); // Toggle between WebView and react-native-pdf
   const [bookmarks, setBookmarks] = useState([]);
   const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
   const [bookmarkComment, setBookmarkComment] = useState('');
   const pdfRef = useRef(null);
-  const webViewRef = useRef(null);
 
   // Update currentPage when route params change
   useEffect(() => {
@@ -126,6 +123,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
   // Cleanup effect to prevent memory leaks and null reference issues
   useEffect(() => {
     return () => {
+      // Save current page when component unmounts
+      if (currentPage > 1) {
+        saveCurrentPage(currentPage);
+      }
+      
       // Cleanup when component unmounts
       if (pdfRef.current) {
         pdfRef.current = null;
@@ -134,7 +136,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
         clearTimeout(headerTimeout);
       }
     };
-  }, []);
+  }, [currentPage]);
 
   const initializePdfSource = async () => {
     try {
@@ -165,7 +167,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
       setTimeout(() => {
         if (isLoading) {
           console.log('PDF loading timeout, forcing completion');
-          setIsLoading(false);
+        setIsLoading(false);
         }
       }, 5000);
     } catch (error) {
@@ -223,6 +225,21 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
+  // Save current page to local storage for resume functionality
+  const saveCurrentPage = async (page) => {
+    try {
+      const resumeData = {
+        page: page,
+        timestamp: new Date().toISOString(),
+        totalPages: totalPages
+      };
+      await AsyncStorage.setItem('quran_resume_page', JSON.stringify(resumeData));
+      console.log('Saved resume page:', page);
+    } catch (error) {
+      console.log('Error saving current page:', error);
+    }
+  };
+
   const handleBookmark = async () => {
     if (isBookmarked) {
       // Remove bookmark
@@ -264,23 +281,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
-  const togglePdfViewer = () => {
-    setUseWebView(!useWebView);
-    Alert.alert(
-      'PDF Viewer Changed',
-      `Switched to ${useWebView ? 'react-native-pdf' : 'WebView'} viewer`,
-      [{ text: 'OK' }]
-    );
-  };
 
-  // WebView PDF source
-  const getWebViewPdfSource = () => {
-    if (Platform.OS === 'ios') {
-      return require('../assets/quran_sharif.pdf');
-    } else {
-      return 'file:///android_asset/quran_sharif.pdf';
-    }
-  };
 
   const handleError = (error) => {
     console.log('PDF Error occurred:', error);
@@ -319,8 +320,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
     if (pageNumber > 1) {
       const attemptNavigation = () => {
         if (pdfRef.current && pdfRef.current.setPage) {
-          try {
-            pdfRef.current.setPage(pageNumber);
+      try {
+        pdfRef.current.setPage(pageNumber);
             console.log('Successfully navigated to page:', pageNumber);
           } catch (error) {
             console.log('Error calling setPage:', error);
@@ -332,16 +333,16 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
       // Try immediately
       attemptNavigation();
-      
-      // Try again after a short delay
-      setTimeout(() => {
+        
+        // Try again after a short delay
+        setTimeout(() => {
         attemptNavigation();
-      }, 500);
-      
-      // Try one more time after longer delay
-      setTimeout(() => {
+        }, 500);
+        
+        // Try one more time after longer delay
+        setTimeout(() => {
         attemptNavigation();
-      }, 1000);
+        }, 1000);
     }
   };
 
@@ -351,7 +352,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
     
     // Ensure we have a valid page count
     if (numberOfPages && numberOfPages > 0) {
-      setTotalPages(numberOfPages);
+    setTotalPages(numberOfPages);
       console.log('Total pages set successfully:', numberOfPages);
     } else {
       console.log('Invalid page count received:', numberOfPages);
@@ -366,7 +367,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
     if (currentPage > 1 && pdfRef.current) {
       // Use a small delay to ensure PDF is fully rendered
       setTimeout(() => {
-        navigateToPage(currentPage);
+      navigateToPage(currentPage);
       }, 100);
     }
   };
@@ -374,6 +375,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const handlePageChanged = (page, numberOfPages) => {
     console.log('Page changed to:', page, 'Total pages:', numberOfPages);
     setCurrentPage(page);
+    
+    // Save current page to local storage for resume functionality
+    saveCurrentPage(page);
     
     // Always update totalPages if numberOfPages is provided and valid
     if (numberOfPages && numberOfPages > 0) {
@@ -414,17 +418,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
           </View>
           
           <View style={styles.headerRight}>
-            <TouchableOpacity 
-              style={styles.viewerToggleButton}
-              onPress={togglePdfViewer}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.viewerToggleIcon}>
-                {useWebView ? '📱' : '🌐'}
-              </Text>
-            </TouchableOpacity>
-            
-            
             <TouchableOpacity 
               style={styles.bookmarkButton}
               onPress={handleBookmark}
@@ -467,74 +460,39 @@ const QuranReaderScreen = ({ navigation, route }) => {
           </View>
         )}
         
-        {!hasError && (
-          useWebView ? (
-            <WebView
-              ref={webViewRef}
-              source={{ uri: getWebViewPdfSource() }}
-              style={styles.webView}
-              onLoadStart={() => setIsLoading(true)}
-              onLoadEnd={() => setIsLoading(false)}
-              onError={(error) => {
-                console.log('WebView PDF Error:', error);
-                setHasError(true);
-                setIsLoading(false);
-              }}
-              onMessage={(event) => {
-                // Handle messages from WebView if needed
-                console.log('WebView message:', event.nativeEvent.data);
-              }}
-              javaScriptEnabled={true}
-              domStorageEnabled={true}
-              startInLoadingState={true}
-              scalesPageToFit={true}
-              showsHorizontalScrollIndicator={false}
-              showsVerticalScrollIndicator={false}
-              bounces={true}
-              scrollEnabled={true}
-              nestedScrollEnabled={true}
-              renderLoading={() => (
-                <View style={styles.loaderContainer}>
-                  <Text style={styles.loadingText}>Loading Quran...</Text>
-                </View>
-              )}
-            />
-          ) : (
-            pdfSource && (
-              <Pdf
-                key={`pdf-${pdfKey}`}
-                ref={pdfRef}
-                source={pdfSource}
-                style={styles.pdf}
-                page={currentPage}
-                scale={1.0}
-                minScale={1.0}
-                maxScale={2.5}
-                horizontal={false}
-                spacing={0}
-                password=""
-                onLoadComplete={handleLoadComplete}
-                onPageChanged={handlePageChanged}
-                onError={handleError}
-                onPress={toggleHeader}
+        {!hasError && pdfSource && (
+            <Pdf
+            key={`pdf-${pdfKey}`}
+              ref={pdfRef}
+              source={pdfSource}
+              style={styles.pdf}
+              page={currentPage}
+              scale={1.0}
+              minScale={1.0}
+            maxScale={2.5}
+              horizontal={false}
+              spacing={0}
+              password=""
+              onLoadComplete={handleLoadComplete}
+              onPageChanged={handlePageChanged}
+              onError={handleError}
+            onPress={toggleHeader}
               enablePaging={true}
               enableRTL={false}
-              enableAntialiasing={false}
-              enableAnnotationRendering={false}
+            enableAntialiasing={false}
+            enableAnnotationRendering={false}
               fitPolicy={0}
               singlePage={false}
               trustAllCerts={false}
-              enableDebug={false}
+            enableDebug={false}
               enableDoubleTapZoom={true}
               enableFling={true}
-                activityIndicator={
-                  <View style={styles.loaderContainer}>
-                    <Text style={styles.loadingText}>Loading Quran...</Text>
-                  </View>
-                }
-              />
-            )
-          )
+              activityIndicator={
+                <View style={styles.loaderContainer}>
+                  <Text style={styles.loadingText}>Loading Quran...</Text>
+                </View>
+              }
+            />
         )}
       </TouchableOpacity>
 
@@ -553,8 +511,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
                >
                  <Text style={styles.closeButtonText}>✕</Text>
                </TouchableOpacity>
-             </View>
-             
+      </View>
+
              <View style={styles.bookmarkInputContainer}>
                <Text style={styles.bookmarkInputLabel}>Page {currentPage}</Text>
                <TextInput
@@ -578,12 +536,12 @@ const QuranReaderScreen = ({ navigation, route }) => {
                    <Text style={styles.cancelButtonText}>Cancel</Text>
                  </TouchableOpacity>
                  
-                 <TouchableOpacity 
+      <TouchableOpacity 
                    style={styles.saveButton}
                    onPress={saveBookmarkWithComment}
-                 >
+      >
                    <Text style={styles.saveButtonText}>Save Bookmark</Text>
-                 </TouchableOpacity>
+      </TouchableOpacity>
                </View>
              </View>
            </View>
@@ -758,24 +716,6 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  viewerToggleButton: {
-    width: getSpacing(40),
-    height: getSpacing(40),
-    borderRadius: getSpacing(20),
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: getSpacing(10),
-  },
-  viewerToggleIcon: {
-    fontSize: getFontSize(18),
-  },
-  webView: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    width: screenWidth,
-    height: screenHeight,
   },
   bookmarkModal: {
     position: 'absolute',
