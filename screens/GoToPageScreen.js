@@ -24,14 +24,14 @@ const GoToPageScreen = ({ navigation }) => {
       return;
     }
     
-    if (isNaN(page) || page < 1 || page > 604) {
-      Alert.alert('خطأ', 'رقم الصفحة يجب أن يكون بين 1 و 604');
+    if (isNaN(page) || page < 1 || page > 134) {
+      Alert.alert('خطأ', 'رقم الصفحة يجب أن يكون بين 1 و 134');
       return;
     }
     
     // Navigate to QuranReaderScreen with the specified page
     navigation.navigate('quran-reader', { 
-      page: page,
+      pageNumber: page,
       title: `الصفحة ${page}`
     });
   };

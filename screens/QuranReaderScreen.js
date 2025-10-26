@@ -36,10 +36,12 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
   const [bookmarkComment, setBookmarkComment] = useState('');
   const [showSlider, setShowSlider] = useState(false);
+  const [hideTimer, setHideTimer] = useState(null);
   const [scale, setScale] = useState(1);
   const [translateX, setTranslateX] = useState(0);
   const [translateY, setTranslateY] = useState(0);
   const [isZooming, setIsZooming] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(true);
   
   // ScrollView ref for image slider
   const scrollViewRef = useRef(null);
@@ -51,6 +53,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   // Get image source for current page
   const getImageSource = (pageNumber) => {
+    console.log('Getting image source for page:', pageNumber);
     // Create a mapping of page numbers to image sources
     const imageMap = {
       1: require('../assets/quran_safa/quran_safa_1.jpg'),
@@ -189,7 +192,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
       134: require('../assets/quran_safa/quran_safa_134.jpg'),
     };
     
-    return imageMap[pageNumber] || imageMap[1]; // Fallback to page 1 if not found
+    const imageSource = imageMap[pageNumber] || imageMap[1]; // Fallback to page 1 if not found
+    console.log('Image source found:', !!imageSource);
+    return imageSource;
   };
 
   // Load bookmarks from AsyncStorage
@@ -216,7 +221,28 @@ const QuranReaderScreen = ({ navigation, route }) => {
   // Scroll to current page when it changes
   useEffect(() => {
     scrollToPage(currentPage);
+    logMemoryUsage();
   }, [currentPage]);
+
+  // Start auto-hide timer when component mounts
+  useEffect(() => {
+    startHideTimer();
+    return () => {
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
+    };
+  }, []);
+
+  // Memory cleanup effect
+  useEffect(() => {
+    return () => {
+      // Clear any pending timers
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
+    };
+  }, [hideTimer]);
 
   // Save current page to local storage for resume functionality
   const saveCurrentPage = async (page) => {
@@ -284,9 +310,37 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
+  // Auto-hide controls after 3 seconds
+  const startHideTimer = () => {
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+    }
+    const timer = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+    setHideTimer(timer);
+  };
+
   // Toggle controls visibility
   const toggleControls = () => {
     setShowControls(!showControls);
+    if (!showControls) {
+      startHideTimer();
+    } else {
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+        setHideTimer(null);
+      }
+    }
+  };
+
+  // Toggle full screen mode
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+    // Auto-hide indicator after 2 seconds
+    setTimeout(() => {
+      // Indicator will be hidden by the showControls state
+    }, 2000);
   };
 
   // Toggle bookmark
@@ -352,11 +406,23 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
+  console.log('QuranReaderScreen rendering - currentPage:', currentPage, 'totalPages:', totalPages);
+  
+  // Memory monitoring
+  const logMemoryUsage = () => {
+    if (__DEV__) {
+      console.log('Memory usage - Current page:', currentPage, 'Rendering pages:', 
+        Array.from({ length: totalPages }, (_, i) => i + 1)
+          .filter(page => Math.abs(page - currentPage) <= 1)
+      );
+    }
+  };
+  
   return (
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.container}>
-        <StatusBar hidden={true} />
       
+       <StatusBar hidden={true} />
       {/* Image Slider */}
       <ScrollView
         ref={scrollViewRef}
@@ -371,19 +437,47 @@ const QuranReaderScreen = ({ navigation, route }) => {
         bouncesZoom={false}
         alwaysBounceHorizontal={false}
         alwaysBounceVertical={false}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+        initialNumToRender={3}
       >
-        {Array.from({ length: totalPages }, (_, index) => (
-          <View key={index + 1} style={styles.pageContainer}>
-            <View style={styles.imageContainer}>
-              <Image
-                source={getImageSource(index + 1)}
-                style={styles.quranImage}
-                resizeMode="stretch"
-                onPress={toggleControls}
-              />
+        {Array.from({ length: totalPages }, (_, index) => {
+          const pageNumber = index + 1;
+          const shouldRender = Math.abs(pageNumber - currentPage) <= 1; // Only render current page ± 1 page
+          
+          return (
+            <View key={pageNumber} style={styles.pageContainer}>
+            <TouchableOpacity 
+              style={styles.imageContainer}
+              onPress={toggleControls}
+              onLongPress={toggleFullScreen}
+              activeOpacity={1}
+            >
+                {shouldRender ? (
+                  <Image
+                    source={getImageSource(pageNumber)}
+                    style={styles.quranImage}
+                    resizeMode="stretch"
+                    onError={(error) => {
+                      console.log('Image load error for page', pageNumber, error);
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully for page', pageNumber);
+                    }}
+                    // Add memory optimization
+                    fadeDuration={0}
+                    loadingIndicatorSource={null}
+                  />
+                ) : (
+                  <View style={styles.placeholderContainer}>
+                    <Text style={styles.placeholderText}>Page {pageNumber}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
 
       {/* Floating Back Button */}
@@ -415,6 +509,20 @@ const QuranReaderScreen = ({ navigation, route }) => {
           />
         </TouchableOpacity>
       )}
+
+      {/* Floating Full Screen Toggle Button */}
+      {showControls && (
+        <TouchableOpacity 
+          style={styles.floatingFullScreenButton}
+          onPress={toggleFullScreen}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.fullScreenIcon}>
+            {isFullScreen ? '⤢' : '⤡'}
+          </Text>
+        </TouchableOpacity>
+      )}
+
 
       {/* Page Slider */}
       {showSlider && (
@@ -527,6 +635,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+    paddingTop: Platform.OS === 'ios' ? 0 : 0,
   },
   scrollView: {
     flex: 1,
@@ -534,6 +643,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexDirection: 'row',
+    minHeight: screenHeight,
   },
   pageContainer: {
     width: screenWidth,
@@ -554,11 +664,11 @@ const styles = StyleSheet.create({
   },
   floatingBackButton: {
     position: 'absolute',
-    bottom: getSpacing(30),
-    left: getSpacing(20),
-    width: getSpacing(60),
-    height: getSpacing(60),
-    borderRadius: getSpacing(30),
+    bottom: getSpacing(20),
+    left: getSpacing(15),
+    width: getSpacing(40),
+    height: getSpacing(40),
+    borderRadius: getSpacing(20),
     backgroundColor: 'rgba(26, 35, 126, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -571,11 +681,28 @@ const styles = StyleSheet.create({
   },
   floatingBookmarkButton: {
     position: 'absolute',
-    bottom: getSpacing(30),
-    right: getSpacing(20),
-    width: getSpacing(60),
-    height: getSpacing(60),
-    borderRadius: getSpacing(30),
+    bottom: getSpacing(20),
+    right: getSpacing(15),
+    width: getSpacing(40),
+    height: getSpacing(40),
+    borderRadius: getSpacing(20),
+    backgroundColor: 'rgba(26, 35, 126, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  floatingFullScreenButton: {
+    position: 'absolute',
+    top: getSpacing(20),
+    right: getSpacing(15),
+    width: getSpacing(40),
+    height: getSpacing(40),
+    borderRadius: getSpacing(20),
     backgroundColor: 'rgba(26, 35, 126, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -587,17 +714,22 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   backIconImage: {
-    width: 24,
-    height: 24,
+    width: 18,
+    height: 18,
     tintColor: '#FFFFFF',
   },
   bookmarkIconImage: {
-    width: 24,
-    height: 24,
+    width: 18,
+    height: 18,
     tintColor: '#FFFFFF',
   },
   bookmarkedIcon: {
     tintColor: '#FFD700', // Gold color when bookmarked
+  },
+  fullScreenIcon: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(18),
+    fontWeight: 'bold',
   },
   pageInfo: {
     position: 'absolute',
@@ -789,6 +921,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: getFontSize(14),
     fontWeight: '600',
+  },
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+  },
+  placeholderText: {
+    color: '#FFFFFF',
+    fontSize: getFontSize(18),
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 
