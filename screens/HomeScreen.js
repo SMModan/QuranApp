@@ -264,8 +264,8 @@ const HomeScreen = ({ navigation }) => {
     console.log(`Card pressed: ${itemId}`);
     // Handle card press - same as menu item press
     if (itemId === 'go_to_page') {
-      // For go to page, use the existing handleGoToPage function
-      handleGoToPage();
+      // Do nothing for go to page card - only input field and button work
+      return;
     } else {
       handleMenuItemPress(itemId);
     }
