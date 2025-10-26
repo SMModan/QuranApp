@@ -393,7 +393,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
           onPress={() => safeNavigation.goBack()}
           activeOpacity={0.7}
         >
-          <Text style={styles.backIconText}>←</Text>
+          <Image 
+            source={require('../assets/icons/ic_back.png')}
+            style={styles.backIconImage}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       )}
 
@@ -404,9 +408,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
           onPress={toggleBookmark}
           activeOpacity={0.7}
         >
-          <Text style={styles.bookmarkIconText}>
-            {isBookmarked ? '🔖' : '📖'}
-          </Text>
+          <Image 
+            source={require('../assets/icons/ic_bookmark.png')}
+            style={[styles.bookmarkIconImage, isBookmarked && styles.bookmarkedIcon]}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       )}
 
@@ -580,17 +586,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
   },
-  backIconText: {
-    fontSize: 28,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    includeFontPadding: false,
+  backIconImage: {
+    width: 24,
+    height: 24,
+    tintColor: '#FFFFFF',
   },
-  bookmarkIconText: {
-    fontSize: 28,
-    textAlign: 'center',
-    includeFontPadding: false,
+  bookmarkIconImage: {
+    width: 24,
+    height: 24,
+    tintColor: '#FFFFFF',
+  },
+  bookmarkedIcon: {
+    tintColor: '#FFD700', // Gold color when bookmarked
   },
   pageInfo: {
     position: 'absolute',
