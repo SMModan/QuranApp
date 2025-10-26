@@ -107,12 +107,8 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const handleInputFocus = () => {
-    // Scroll to the input field when keyboard opens
-    setTimeout(() => {
-      if (scrollViewRef.current) {
-        scrollViewRef.current.scrollToEnd({ animated: true });
-      }
-    }, 100);
+    // Optional: Add any focus handling if needed
+    console.log('Input focused');
   };
 
   // Share app functionality
@@ -300,19 +296,13 @@ const HomeScreen = ({ navigation }) => {
         backgroundColor="#083569"
       />
       
-      <KeyboardAvoidingView 
-        style={styles.content}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-        enabled={true}
-      >
+      <View style={styles.content}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView 
             ref={scrollViewRef}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.scrollContent}
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
             keyboardDismissMode="interactive"
           >
         <Animated.View 
@@ -436,7 +426,7 @@ const HomeScreen = ({ navigation }) => {
         </Animated.View>
           </ScrollView>
         </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+      </View>
 
       <SideMenu
         visible={isMenuVisible}
@@ -457,11 +447,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: getSpacing(100), // Extra padding for keyboard
+    paddingBottom: getSpacing(5),
   },
   mainContent: {
     paddingTop: getSpacing(20),
-    paddingBottom: getSpacing(40),
+    paddingBottom: getSpacing(10),
   },
   welcomeSection: {
     alignItems: 'center',
