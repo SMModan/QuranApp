@@ -10,7 +10,8 @@ import {
   StatusBar,
   TextInput,
   ScrollView,
-  Image
+  Image,
+  I18nManager
 } from 'react-native';
 import { 
   PanGestureHandler,
@@ -42,11 +43,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [translateY, setTranslateY] = useState(0);
   const [isZooming, setIsZooming] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(true);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const [loadedPages, setLoadedPages] = useState(new Set());
   
-  // ScrollView ref for image slider
-  const scrollViewRef = useRef(null);
   const pinchRef = useRef(null);
   const panRef = useRef(null);
   
@@ -220,17 +217,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
     loadBookmarks();
   }, [currentPage]);
 
-  // Scroll to current page when it changes
+  // Log memory usage when page changes
   useEffect(() => {
-    if (scrollViewRef.current) {
-      // Use a small delay to ensure ScrollView is ready
-      setTimeout(() => {
-        scrollViewRef.current.scrollTo({
-          x: (currentPage - 1) * screenWidth,
-          animated: true
-        });
-      }, 100);
-    }
     logMemoryUsage();
   }, [currentPage]);
 
@@ -244,19 +232,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
     };
   }, []);
 
-  // Initial scroll to current page when component mounts
-  useEffect(() => {
-    if (scrollViewRef.current && initialPage) {
-      setTimeout(() => {
-        scrollViewRef.current.scrollTo({
-          x: (initialPage - 1) * screenWidth,
-          animated: false // No animation for initial load
-        });
-      }, 200);
-    }
-    // Preload initial pages
-    preloadNearbyPages(initialPage);
-  }, []);
 
   // Memory cleanup effect
   useEffect(() => {
@@ -300,7 +275,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
       const newPage = currentPage + 1;
       setCurrentPage(newPage);
       saveCurrentPage(newPage);
-      scrollToPage(newPage);
+      console.log('Navigating to next page:', newPage);
     }
   };
 
@@ -310,56 +285,12 @@ const QuranReaderScreen = ({ navigation, route }) => {
       const newPage = currentPage - 1;
       setCurrentPage(newPage);
       saveCurrentPage(newPage);
-      scrollToPage(newPage);
+      console.log('Navigating to previous page:', newPage);
     }
   };
 
-  // Scroll to specific page
-  const scrollToPage = (pageNumber) => {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({
-        x: (pageNumber - 1) * screenWidth,
-        animated: true
-      });
-    }
-  };
 
-  // Handle scroll end to update current page
-  const handleScrollEnd = (event) => {
-    if (isScrolling) return; // Prevent multiple rapid updates
-    
-    const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const newPage = Math.round(contentOffsetX / screenWidth) + 1;
-    
-    // Only update if the page actually changed and is valid
-    if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages) {
-      setIsScrolling(true);
-      setCurrentPage(newPage);
-      saveCurrentPage(newPage);
-      
-      // Preload nearby pages
-      preloadNearbyPages(newPage);
-      
-      // Reset scrolling state after a short delay
-      setTimeout(() => {
-        setIsScrolling(false);
-      }, 200);
-    }
-  };
 
-  // Preload nearby pages to ensure smooth scrolling
-  const preloadNearbyPages = (page) => {
-    const pagesToLoad = [];
-    for (let i = Math.max(1, page - 5); i <= Math.min(totalPages, page + 5); i++) {
-      pagesToLoad.push(i);
-    }
-    
-    setLoadedPages(prev => {
-      const newSet = new Set(prev);
-      pagesToLoad.forEach(pageNum => newSet.add(pageNum));
-      return newSet;
-    });
-  };
 
   // Auto-hide controls after 3 seconds
   const startHideTimer = () => {
@@ -470,79 +401,54 @@ const QuranReaderScreen = ({ navigation, route }) => {
   };
   
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <View style={styles.container}>
+    <GestureHandlerRootView style={[styles.container, { direction: 'rtl' }]}>
+      <View style={[styles.container, { direction: 'rtl' }]}>
       
        <StatusBar hidden={true} />
       {/* Image Slider */}
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScrollEnd}
-        onScrollEndDrag={handleScrollEnd}
-        onScrollBeginDrag={() => setIsScrolling(true)}
-        onScroll={(event) => {
-          const contentOffsetX = event.nativeEvent.contentOffset.x;
-          const currentScrollPage = Math.round(contentOffsetX / screenWidth) + 1;
-          if (currentScrollPage >= 1 && currentScrollPage <= totalPages) {
-            preloadNearbyPages(currentScrollPage);
+      <PanGestureHandler
+        onGestureEvent={(event) => {
+          const { translationX } = event.nativeEvent;
+          // Handle swipe gestures for navigation
+        }}
+        onHandlerStateChange={(event) => {
+          if (event.nativeEvent.state === State.END) {
+            const { translationX, velocityX } = event.nativeEvent;
+            
+            // RTL Navigation: Swipe right = next page, Swipe left = previous page
+            if (translationX > 50 || velocityX > 500) {
+              goToNextPage(); // Swipe right = next page in RTL
+            }
+            else if (translationX < -50 || velocityX < -500) {
+              goToPreviousPage(); // Swipe left = previous page in RTL
+            }
           }
         }}
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        scrollEventThrottle={1}
-        bounces={false}
-        bouncesZoom={false}
-        alwaysBounceHorizontal={false}
-        alwaysBounceVertical={false}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={5}
-        windowSize={7}
-        initialNumToRender={5}
-        decelerationRate="fast"
       >
-        {Array.from({ length: totalPages }, (_, index) => {
-          const pageNumber = index + 1;
-          const shouldRender = Math.abs(pageNumber - currentPage) <= 3 || loadedPages.has(pageNumber);
-          
-          return (
-            <View key={pageNumber} style={styles.pageContainer}>
-            <TouchableOpacity 
-              style={styles.imageContainer}
-              onPress={toggleControls}
-              onLongPress={toggleFullScreen}
-              activeOpacity={1}
-            >
-                {shouldRender ? (
-                  <>
-                    <Image
-                      source={getImageSource(pageNumber)}
-                      style={styles.quranImage}
-                      resizeMode="stretch"
-                      onError={(error) => {
-                        console.log('Image load error for page', pageNumber, error);
-                      }}
-                      onLoad={() => {
-                        console.log('Image loaded successfully for page', pageNumber);
-                      }}
-                      // Add memory optimization
-                      fadeDuration={200}
-                      loadingIndicatorSource={null}
-                      defaultSource={require('../assets/quran_safa/quran_safa_1.jpg')}
-                    />
-                  </>
-                ) : (
-                  <View style={styles.placeholderContainer}>
-                    <Text style={styles.placeholderText}>Page {pageNumber}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-      </ScrollView>
+        <View style={styles.pageContainer}>
+          <TouchableOpacity 
+            style={styles.imageContainer}
+            onPress={toggleControls}
+            onLongPress={toggleFullScreen}
+            activeOpacity={1}
+          >
+            <Image
+              source={getImageSource(currentPage)}
+              style={styles.quranImage}
+              resizeMode="stretch"
+              onError={(error) => {
+                console.log('Image load error for page', currentPage, error);
+              }}
+              onLoad={() => {
+                console.log('Image loaded successfully for page', currentPage);
+              }}
+              fadeDuration={300}
+              loadingIndicatorSource={null}
+              defaultSource={require('../assets/quran_safa/quran_safa_1.jpg')}
+            />
+          </TouchableOpacity>
+        </View>
+      </PanGestureHandler>
 
       {/* Floating Back Button */}
       {showControls && (
@@ -630,6 +536,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
               onChangeText={setBookmarkComment}
               multiline
               maxLength={100}
+              textAlign="right" // RTL text alignment
+              writingDirection="rtl" // RTL writing direction
             />
             
             <View style={styles.bookmarkModalButtons}>
@@ -659,6 +567,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+    direction: 'rtl',
   },
   scrollView: {
     flex: 1,
@@ -677,6 +586,7 @@ const styles = StyleSheet.create({
     height: screenHeight,
     margin: 0,
     padding: 0,
+    direction: 'rtl',
   },
   gestureContainer: {
     flex: 1,
@@ -689,6 +599,7 @@ const styles = StyleSheet.create({
     margin: 0,
     padding: 0,
     backgroundColor: '#000000',
+    direction: 'rtl',
   },
   quranImage: {
     width: screenWidth,
@@ -699,7 +610,7 @@ const styles = StyleSheet.create({
   floatingBackButton: {
     position: 'absolute',
     bottom: getSpacing(20),
-    left: getSpacing(15),
+    right: getSpacing(15), // Changed from left to right for RTL
     width: getSpacing(40),
     height: getSpacing(40),
     borderRadius: getSpacing(20),
@@ -716,7 +627,7 @@ const styles = StyleSheet.create({
   floatingBookmarkButton: {
     position: 'absolute',
     bottom: getSpacing(20),
-    right: getSpacing(15),
+    left: getSpacing(15), // Changed from right to left for RTL
     width: getSpacing(40),
     height: getSpacing(40),
     borderRadius: getSpacing(20),
@@ -842,6 +753,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10000,
+    direction: 'rtl',
   },
   bookmarkModalContent: {
     backgroundColor: '#FFFFFF',
@@ -880,10 +792,12 @@ const styles = StyleSheet.create({
     marginBottom: getSpacing(20),
     minHeight: getSpacing(80),
     textAlignVertical: 'top',
+    textAlign: 'right', // RTL text alignment
+    writingDirection: 'rtl', // RTL writing direction
   },
   bookmarkModalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: 'row-reverse', // RTL button order
+    justifyContent: 'flex-start', // RTL alignment
     gap: getSpacing(10),
   },
   cancelButton: {
@@ -908,18 +822,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: getFontSize(14),
     fontWeight: '600',
-  },
-  placeholderContainer: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(18),
-    fontWeight: '600',
-    textAlign: 'center',
   },
 });
 
