@@ -42,6 +42,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [translateY, setTranslateY] = useState(0);
   const [isZooming, setIsZooming] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(true);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [loadedPages, setLoadedPages] = useState(new Set());
   
   // ScrollView ref for image slider
   const scrollViewRef = useRef(null);
@@ -252,6 +254,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
         });
       }, 200);
     }
+    // Preload initial pages
+    preloadNearbyPages(initialPage);
   }, []);
 
   // Memory cleanup effect
@@ -322,12 +326,39 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   // Handle scroll end to update current page
   const handleScrollEnd = (event) => {
+    if (isScrolling) return; // Prevent multiple rapid updates
+    
     const contentOffsetX = event.nativeEvent.contentOffset.x;
     const newPage = Math.round(contentOffsetX / screenWidth) + 1;
+    
+    // Only update if the page actually changed and is valid
     if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages) {
+      setIsScrolling(true);
       setCurrentPage(newPage);
       saveCurrentPage(newPage);
+      
+      // Preload nearby pages
+      preloadNearbyPages(newPage);
+      
+      // Reset scrolling state after a short delay
+      setTimeout(() => {
+        setIsScrolling(false);
+      }, 200);
     }
+  };
+
+  // Preload nearby pages to ensure smooth scrolling
+  const preloadNearbyPages = (page) => {
+    const pagesToLoad = [];
+    for (let i = Math.max(1, page - 5); i <= Math.min(totalPages, page + 5); i++) {
+      pagesToLoad.push(i);
+    }
+    
+    setLoadedPages(prev => {
+      const newSet = new Set(prev);
+      pagesToLoad.forEach(pageNum => newSet.add(pageNum));
+      return newSet;
+    });
   };
 
   // Auto-hide controls after 3 seconds
@@ -450,6 +481,15 @@ const QuranReaderScreen = ({ navigation, route }) => {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleScrollEnd}
+        onScrollEndDrag={handleScrollEnd}
+        onScrollBeginDrag={() => setIsScrolling(true)}
+        onScroll={(event) => {
+          const contentOffsetX = event.nativeEvent.contentOffset.x;
+          const currentScrollPage = Math.round(contentOffsetX / screenWidth) + 1;
+          if (currentScrollPage >= 1 && currentScrollPage <= totalPages) {
+            preloadNearbyPages(currentScrollPage);
+          }
+        }}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         scrollEventThrottle={1}
@@ -458,14 +498,14 @@ const QuranReaderScreen = ({ navigation, route }) => {
         alwaysBounceHorizontal={false}
         alwaysBounceVertical={false}
         removeClippedSubviews={true}
-        maxToRenderPerBatch={3}
-        windowSize={5}
-        initialNumToRender={3}
+        maxToRenderPerBatch={5}
+        windowSize={7}
+        initialNumToRender={5}
         decelerationRate="fast"
       >
         {Array.from({ length: totalPages }, (_, index) => {
           const pageNumber = index + 1;
-          const shouldRender = Math.abs(pageNumber - currentPage) <= 1; // Only render current page ± 1 page
+          const shouldRender = Math.abs(pageNumber - currentPage) <= 3 || loadedPages.has(pageNumber);
           
           return (
             <View key={pageNumber} style={styles.pageContainer}>
@@ -476,20 +516,23 @@ const QuranReaderScreen = ({ navigation, route }) => {
               activeOpacity={1}
             >
                 {shouldRender ? (
-                  <Image
-                    source={getImageSource(pageNumber)}
-                    style={styles.quranImage}
-                    resizeMode="stretch"
-                    onError={(error) => {
-                      console.log('Image load error for page', pageNumber, error);
-                    }}
-                    onLoad={() => {
-                      console.log('Image loaded successfully for page', pageNumber);
-                    }}
-                    // Add memory optimization
-                    fadeDuration={0}
-                    loadingIndicatorSource={null}
-                  />
+                  <>
+                    <Image
+                      source={getImageSource(pageNumber)}
+                      style={styles.quranImage}
+                      resizeMode="stretch"
+                      onError={(error) => {
+                        console.log('Image load error for page', pageNumber, error);
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully for page', pageNumber);
+                      }}
+                      // Add memory optimization
+                      fadeDuration={200}
+                      loadingIndicatorSource={null}
+                      defaultSource={require('../assets/quran_safa/quran_safa_1.jpg')}
+                    />
+                  </>
                 ) : (
                   <View style={styles.placeholderContainer}>
                     <Text style={styles.placeholderText}>Page {pageNumber}</Text>
@@ -645,6 +688,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     margin: 0,
     padding: 0,
+    backgroundColor: '#000000',
   },
   quranImage: {
     width: screenWidth,
@@ -867,9 +911,9 @@ const styles = StyleSheet.create({
   },
   placeholderContainer: {
     flex: 1,
+    backgroundColor: '#1a1a1a',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
   },
   placeholderText: {
     color: '#FFFFFF',
