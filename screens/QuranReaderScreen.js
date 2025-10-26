@@ -10,8 +10,12 @@ import {
   StatusBar,
   TextInput,
   ScrollView,
-  Image
+  Image,
+  PanGestureHandler,
+  PinchGestureHandler,
+  State
 } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
@@ -30,9 +34,15 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
   const [bookmarkComment, setBookmarkComment] = useState('');
   const [showSlider, setShowSlider] = useState(false);
+  const [scale, setScale] = useState(1);
+  const [translateX, setTranslateX] = useState(0);
+  const [translateY, setTranslateY] = useState(0);
+  const [isZooming, setIsZooming] = useState(false);
   
   // ScrollView ref for image slider
   const scrollViewRef = useRef(null);
+  const pinchRef = useRef(null);
+  const panRef = useRef(null);
   
   // Validate navigation object
   const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
@@ -356,12 +366,61 @@ const QuranReaderScreen = ({ navigation, route }) => {
       >
         {Array.from({ length: totalPages }, (_, index) => (
           <View key={index + 1} style={styles.pageContainer}>
-            <Image
-              source={getImageSource(index + 1)}
-              style={styles.quranImage}
-              contentFit="fill"
-              onPress={toggleControls}
-            />
+            <GestureHandlerRootView style={styles.gestureContainer}>
+              <PinchGestureHandler
+                ref={pinchRef}
+                onGestureEvent={(event) => {
+                  const newScale = Math.max(1, Math.min(3, scale * event.nativeEvent.scale));
+                  setScale(newScale);
+                  setIsZooming(newScale > 1);
+                }}
+                onHandlerStateChange={(event) => {
+                  if (event.nativeEvent.state === State.END) {
+                    if (scale < 1.1) {
+                      setScale(1);
+                      setTranslateX(0);
+                      setTranslateY(0);
+                      setIsZooming(false);
+                    }
+                  }
+                }}
+              >
+                <PanGestureHandler
+                  ref={panRef}
+                  enabled={isZooming}
+                  onGestureEvent={(event) => {
+                    if (isZooming) {
+                      setTranslateX(event.nativeEvent.translationX);
+                      setTranslateY(event.nativeEvent.translationY);
+                    }
+                  }}
+                  onHandlerStateChange={(event) => {
+                    if (event.nativeEvent.state === State.END && !isZooming) {
+                      setTranslateX(0);
+                      setTranslateY(0);
+                    }
+                  }}
+                >
+                  <View style={styles.imageContainer}>
+                    <Image
+                      source={getImageSource(index + 1)}
+                      style={[
+                        styles.quranImage,
+                        {
+                          transform: [
+                            { scale: scale },
+                            { translateX: translateX },
+                            { translateY: translateY }
+                          ]
+                        }
+                      ]}
+                      resizeMode="stretch"
+                      onPress={toggleControls}
+                    />
+                  </View>
+                </PanGestureHandler>
+              </PinchGestureHandler>
+            </GestureHandlerRootView>
           </View>
         ))}
       </ScrollView>
@@ -450,15 +509,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
         </View>
       )}
 
-      {/* Page Info */}
-      {showControls && (
-        <View style={styles.pageInfo}>
-          <Text style={styles.pageText}>Page {currentPage} of {totalPages}</Text>
-          <TouchableOpacity onPress={toggleSlider} style={styles.sliderButton}>
-            <Text style={styles.sliderButtonText}>📄</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Page Info - Removed header as requested */}
 
       {/* Bookmark Input Dialog */}
       {showBookmarkDialog && (
@@ -519,6 +570,15 @@ const styles = StyleSheet.create({
   pageContainer: {
     width: screenWidth,
     height: screenHeight,
+  },
+  gestureContainer: {
+    flex: 1,
+  },
+  imageContainer: {
+    width: screenWidth,
+    height: screenHeight,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   quranImage: {
     width: screenWidth,
