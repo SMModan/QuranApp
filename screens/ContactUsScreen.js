@@ -93,6 +93,10 @@ const ContactUsScreen = ({ navigation }) => {
     setIsMenuVisible(false);
   };
 
+  const handleBackPress = () => {
+    navigation.goBack();
+  };
+
   const handleMenuItemPress = (itemId) => {
     switch (itemId) {
       case 'our_apps':
@@ -139,7 +143,8 @@ const ContactUsScreen = ({ navigation }) => {
         title="Contact Us"
         onMenuPress={handleMenuPress}
         showMenu={true}
-        showBackButton={false}
+        showBackButton={true}
+        onBackPress={handleBackPress}
       />
       
       <KeyboardAvoidingView 

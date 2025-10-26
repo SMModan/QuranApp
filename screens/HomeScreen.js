@@ -150,7 +150,7 @@ const HomeScreen = ({ navigation }) => {
   // Load saved page and navigate to Quran reader
   const loadResumePage = async () => {
     try {
-      const savedResumeData = await AsyncStorage.getItem('quran_resume_page');
+      const savedResumeData = await AsyncStorage.getItem('quran_resume_data');
       if (savedResumeData) {
         const resumeData = JSON.parse(savedResumeData);
         console.log('Loading resume page:', resumeData.page);

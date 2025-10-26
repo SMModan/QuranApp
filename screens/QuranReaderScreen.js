@@ -225,10 +225,10 @@ const QuranReaderScreen = ({ navigation, route }) => {
     loadBookmarks();
   }, [currentPage]);
 
-  // Load saved page on component mount
+  // Load saved page on component mount and when route params change
   useEffect(() => {
     loadCurrentPage();
-  }, []);
+  }, [route?.params]);
 
   // Log memory usage when page changes
   useEffect(() => {
@@ -263,7 +263,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
         page: page,
         timestamp: new Date().toISOString()
       };
+      console.log('Saving current page:', page, 'Data:', resumeData);
       await AsyncStorage.setItem('quran_resume_data', JSON.stringify(resumeData));
+      console.log('Page saved successfully');
     } catch (error) {
       console.log('Error saving current page:', error);
     }
@@ -293,6 +295,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
       }
     } catch (error) {
       console.log('Error loading current page:', error);
+      setCurrentPage(initialPage);
     }
   };
 
@@ -311,12 +314,12 @@ const QuranReaderScreen = ({ navigation, route }) => {
       Animated.timing(fadeAnimation, {
         toValue: 0.8,
         duration: 80,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(fadeAnimation, {
         toValue: 1,
         duration: 80,
-        useNativeDriver: true,
+        useNativeDriver: false,
       })
     ]).start(() => {
       setIsAnimating(false);

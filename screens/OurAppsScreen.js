@@ -339,7 +339,7 @@ const OurAppsScreen = ({ navigation }) => {
       
       <View style={styles.featuresContainer}>
         {app.features.map((feature, index) => (
-          <View key={index} style={styles.featureItem}>
+          <View key={`${app.id}-feature-${index}`} style={styles.featureItem}>
             <Text style={styles.featureBullet}>•</Text>
             <ResponsiveText style={styles.featureText}>{feature}</ResponsiveText>
           </View>

@@ -7,15 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "statusBar": {
-      "style": "light",
-      "backgroundColor": "#1a237e",
-      "hidden": true,
-      "translucent": true
-    },
     "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "cover",
       "backgroundColor": "#1a237e"
     },
     "assetBundlePatterns": [
@@ -23,39 +15,13 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "statusBar": {
-        "style": "light",
-        "backgroundColor": "#1a237e",
-        "hidden": true,
-        "translucent": true
-      },
       "splash": {
-        "image": "./assets/splash-icon.png",
-        "resizeMode": "cover",
         "backgroundColor": "#1a237e"
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a237e"
-      },
-      "statusBar": {
-        "style": "light",
-        "backgroundColor": "#1a237e",
-        "hidden": true,
-        "translucent": true
-      },
-      "splash": {
-        "image": "./assets/splash-icon.png",
-        "resizeMode": "cover",
-        "backgroundColor": "#1a237e"
-      },
-      "edgeToEdgeEnabled": true,
       "package": "com.anonymous.QuranAppExpo",
-      "softwareKeyboardLayoutMode": "pan",
-      "splashScreen": {
-        "resizeMode": "cover",
+      "splash": {
         "backgroundColor": "#1a237e"
       }
     },
@@ -63,7 +29,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-splash-screen"
     ]
   }
 }

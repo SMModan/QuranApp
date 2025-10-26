@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- Solid background color as fallback -->
+    <item android:drawable="@color/splashscreen_background" />
+    
+    <!-- Background Pattern -->
+    <item android:drawable="@drawable/splash_bg" />
+    
+    <!-- Top Icon/Arch - Positioned at top -->
+    <item 
+        android:drawable="@drawable/splash_top_icon"
+        android:gravity="top|center_horizontal"
+        android:top="40dp" />
+    
+    <!-- Center Icon (Mosque and Book) - Positioned in center -->
+    <item 
+        android:drawable="@drawable/splash_center_icon"
+        android:gravity="center" />
+        
+</layer-list>
+
