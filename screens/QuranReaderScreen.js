@@ -452,7 +452,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
         onMomentumScrollEnd={handleScrollEnd}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        scrollEventThrottle={16}
+        scrollEventThrottle={1}
         bounces={false}
         bouncesZoom={false}
         alwaysBounceHorizontal={false}
@@ -461,6 +461,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
         maxToRenderPerBatch={3}
         windowSize={5}
         initialNumToRender={3}
+        decelerationRate="fast"
       >
         {Array.from({ length: totalPages }, (_, index) => {
           const pageNumber = index + 1;
@@ -530,18 +531,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       )}
 
-      {/* Floating Full Screen Toggle Button */}
-      {showControls && (
-        <TouchableOpacity 
-          style={styles.floatingFullScreenButton}
-          onPress={toggleFullScreen}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.fullScreenIcon}>
-            {isFullScreen ? '⤢' : '⤡'}
-          </Text>
-        </TouchableOpacity>
-      )}
 
 
       {/* Page Slider */}
@@ -571,33 +560,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
               />
             </View>
             
-            {/* Quick Page Buttons */}
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              style={styles.pageButtonsContainer}
-            >
-              {Array.from({ length: Math.min(20, totalPages) }, (_, i) => {
-                const pageNum = i + 1;
-                return (
-                  <TouchableOpacity
-                    key={pageNum}
-                    style={[
-                      styles.pageButton,
-                      currentPage === pageNum && styles.pageButtonActive
-                    ]}
-                    onPress={() => onSliderChange(pageNum)}
-                  >
-                    <Text style={[
-                      styles.pageButtonText,
-                      currentPage === pageNum && styles.pageButtonTextActive
-                    ]}>
-                      {pageNum}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
           </View>
           
         </View>
@@ -724,23 +686,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
   },
-  floatingFullScreenButton: {
-    position: 'absolute',
-    top: getSpacing(20),
-    right: getSpacing(15),
-    width: getSpacing(40),
-    height: getSpacing(40),
-    borderRadius: getSpacing(20),
-    backgroundColor: 'rgba(26, 35, 126, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 9999,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-  },
   backIconImage: {
     width: 18,
     height: 18,
@@ -753,11 +698,6 @@ const styles = StyleSheet.create({
   },
   bookmarkedIcon: {
     tintColor: '#FFD700', // Gold color when bookmarked
-  },
-  fullScreenIcon: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(18),
-    fontWeight: 'bold',
   },
   pageInfo: {
     position: 'absolute',
@@ -841,31 +781,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a237e',
     borderRadius: getSpacing(10),
     marginLeft: -getSpacing(10),
-  },
-  pageButtonsContainer: {
-    marginTop: getSpacing(10),
-  },
-  pageButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: getSpacing(12),
-    paddingVertical: getSpacing(8),
-    borderRadius: getSpacing(15),
-    marginRight: getSpacing(8),
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  pageButtonActive: {
-    backgroundColor: '#1a237e',
-    borderColor: '#1a237e',
-  },
-  pageButtonText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(14),
-    fontWeight: '600',
-  },
-  pageButtonTextActive: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
   },
   sliderText: {
     color: '#FFFFFF',
