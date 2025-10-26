@@ -9,6 +9,7 @@ import { getFavorites, removeFavorite } from '../utils/FavoritesStorage';
 const FavoritesScreen = ({ navigation }) => {
   const [favorites, setFavorites] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleBackPress = () => {
     navigation.goBack();
@@ -26,9 +27,11 @@ const FavoritesScreen = ({ navigation }) => {
     try {
       setIsLoading(true);
       const favs = await getFavorites();
+      console.log('Loaded favorites:', favs.length, 'items');
       setFavorites(favs);
     } catch (error) {
       console.error('Error loading favorites:', error);
+      Alert.alert('Error', 'Failed to load favorites');
     } finally {
       setIsLoading(false);
     }
@@ -64,6 +67,12 @@ const FavoritesScreen = ({ navigation }) => {
       type: favorite.type,
       itemId: favorite.itemId
     });
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadFavorites();
+    setRefreshing(false);
   };
 
   const renderFavoriteItem = ({ item }) => (
@@ -129,10 +138,12 @@ const FavoritesScreen = ({ navigation }) => {
           <FlatList
             data={favorites}
             renderItem={renderFavoriteItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => `favorite-${item.id}-${index}`}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={renderEmptyState}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
         )}
       </View>
