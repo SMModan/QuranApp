@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ImageBackground, Image, TextInput, Alert, KeyboardAvoidingView, Platform, Linking, Share } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ImageBackground, Image, TextInput, Alert, KeyboardAvoidingView, Platform, Linking, Share, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
 import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
@@ -12,6 +12,7 @@ const HomeScreen = ({ navigation }) => {
   const [pageNumber, setPageNumber] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+  const scrollViewRef = useRef(null);
 
   const menuItems = [
     {
@@ -90,6 +91,9 @@ const HomeScreen = ({ navigation }) => {
       return;
     }
     
+    // Dismiss keyboard before navigation
+    Keyboard.dismiss();
+    
     // Navigate to QuranReaderScreen with the specified page
     if (navigation) {
       navigation.navigate('quran-reader', { 
@@ -100,6 +104,15 @@ const HomeScreen = ({ navigation }) => {
         juzNumber: 'الجزء'
       });
     }
+  };
+
+  const handleInputFocus = () => {
+    // Scroll to the input field when keyboard opens
+    setTimeout(() => {
+      if (scrollViewRef.current) {
+        scrollViewRef.current.scrollToEnd({ animated: true });
+      }
+    }, 100);
   };
 
   // Share app functionality
@@ -185,10 +198,21 @@ const HomeScreen = ({ navigation }) => {
         }
         break;
       case 'go_to_page':
-        // Navigate to go to page screen
-        console.log('Navigating to go-to-page screen');
-        if (navigation) {
-          navigation.navigate('go-to-page');
+        // Navigate directly to Quran reader with current page number
+        if (navigation && pageNumber) {
+          const page = parseInt(pageNumber);
+          if (!isNaN(page) && page >= 1 && page <= 134) {
+            navigation.navigate('quran-reader', { 
+              pageNumber: page,
+              chapterName: `الصفحة ${page}`,
+              verseNumber: '1',
+              sectionNumber: '1',
+              juzNumber: 'الجزء'
+            });
+          } else {
+            // If no valid page number, go to page 1
+            navigation.navigate('quran-reader', { pageNumber: 1 });
+          }
         }
         break;
       case 'change_reading_mode':
@@ -243,7 +267,12 @@ const HomeScreen = ({ navigation }) => {
   const handleCardPress = (itemId) => {
     console.log(`Card pressed: ${itemId}`);
     // Handle card press - same as menu item press
-    handleMenuItemPress(itemId);
+    if (itemId === 'go_to_page') {
+      // For go to page, use the existing handleGoToPage function
+      handleGoToPage();
+    } else {
+      handleMenuItemPress(itemId);
+    }
   };
 
   // Animation effect for home screen
@@ -274,9 +303,18 @@ const HomeScreen = ({ navigation }) => {
       <KeyboardAvoidingView 
         style={styles.content}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        enabled={true}
       >
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView 
+            ref={scrollViewRef}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.scrollContent}
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            keyboardDismissMode="interactive"
+          >
         <Animated.View 
           style={[
             styles.mainContent,
@@ -351,7 +389,11 @@ const HomeScreen = ({ navigation }) => {
                           maxLength={3}
                           value={pageNumber}
                           onChangeText={setPageNumber}
+                          onFocus={handleInputFocus}
                           underlineColorAndroid="transparent"
+                          returnKeyType="done"
+                          blurOnSubmit={true}
+                          onSubmitEditing={handleGoToPage}
                         />
                         <TouchableOpacity
                           style={[
@@ -392,7 +434,8 @@ const HomeScreen = ({ navigation }) => {
             </ResponsiveText>
           </View>
         </Animated.View>
-        </ScrollView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
       <SideMenu
@@ -411,6 +454,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: getSpacing(100), // Extra padding for keyboard
   },
   mainContent: {
     paddingTop: getSpacing(20),

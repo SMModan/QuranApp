@@ -7,7 +7,6 @@ import FAQsScreen from '../screens/FAQsScreen';
 import ReadingModeScreen from '../screens/ReadingModeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import QuranReaderScreen from '../screens/QuranReaderScreen';
-import GoToPageScreen from '../screens/GoToPageScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import BookmarkScreen from '../screens/BookmarkScreen';
 import OurAppsScreen from '../screens/OurAppsScreen';
@@ -44,9 +43,6 @@ const AppNavigator = () => {
         return <SettingsScreen navigation={navigation} />;
       case 'quran-reader':
         return <QuranReaderScreen navigation={navigation} route={{ params: routeParams }} />;
-      case 'go-to-page':
-        console.log('Rendering GoToPageScreen');
-        return <GoToPageScreen navigation={navigation} route={{ params: routeParams }} />;
       case 'favorites':
         return <FavoritesScreen navigation={navigation} />;
       case 'bookmarks':

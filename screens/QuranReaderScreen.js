@@ -572,7 +572,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
                       styles.pageButtonText,
                       currentPage === pageNum && styles.pageButtonTextActive
                     ]}>
-                      {pageNum}
+                      {/* {pageNum} */}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -635,19 +635,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
-    paddingTop: Platform.OS === 'ios' ? 0 : 0,
   },
   scrollView: {
     flex: 1,
     backgroundColor: '#000000',
+    margin: 0,
+    padding: 0,
   },
   scrollContent: {
     flexDirection: 'row',
     minHeight: screenHeight,
+    margin: 0,
+    padding: 0,
   },
   pageContainer: {
     width: screenWidth,
     height: screenHeight,
+    margin: 0,
+    padding: 0,
   },
   gestureContainer: {
     flex: 1,
@@ -657,10 +662,14 @@ const styles = StyleSheet.create({
     height: screenHeight,
     justifyContent: 'center',
     alignItems: 'center',
+    margin: 0,
+    padding: 0,
   },
   quranImage: {
     width: screenWidth,
     height: screenHeight,
+    margin: 0,
+    padding: 0,
   },
   floatingBackButton: {
     position: 'absolute',
