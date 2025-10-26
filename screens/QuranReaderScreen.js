@@ -30,6 +30,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
   // Get initial page from route params, default to 1
   const initialPage = route?.params?.pageNumber || route?.params?.page || 1;
   
+  console.log('QuranReaderScreen - Route params:', route?.params);
+  console.log('QuranReaderScreen - Initial page:', initialPage);
+  
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(134);
   const [showControls, setShowControls] = useState(true);
@@ -222,6 +225,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
     loadBookmarks();
   }, [currentPage]);
 
+  // Load saved page on component mount
+  useEffect(() => {
+    loadCurrentPage();
+  }, []);
+
   // Log memory usage when page changes
   useEffect(() => {
     logMemoryUsage();
@@ -264,10 +272,24 @@ const QuranReaderScreen = ({ navigation, route }) => {
   // Load current page from local storage
   const loadCurrentPage = async () => {
     try {
+      // Only load from AsyncStorage if no specific page was passed in route params
+      const hasSpecificPage = route?.params?.pageNumber || route?.params?.page;
+      
+      if (hasSpecificPage) {
+        console.log('Specific page requested, using route params:', initialPage);
+        setCurrentPage(initialPage);
+        return;
+      }
+      
       const savedData = await AsyncStorage.getItem('quran_resume_data');
       if (savedData) {
         const resumeData = JSON.parse(savedData);
-        setCurrentPage(resumeData.page || initialPage);
+        const savedPage = resumeData.page || initialPage;
+        console.log('Loading saved page:', savedPage, 'Initial page:', initialPage);
+        setCurrentPage(savedPage);
+      } else {
+        console.log('No saved data, using initial page:', initialPage);
+        setCurrentPage(initialPage);
       }
     } catch (error) {
       console.log('Error loading current page:', error);
@@ -280,24 +302,24 @@ const QuranReaderScreen = ({ navigation, route }) => {
     
     setIsAnimating(true);
     
-    // Simple fade out, change page, fade in
-    Animated.timing(fadeAnimation, {
-      toValue: 0,
-      duration: 150,
-      useNativeDriver: true,
-    }).start(() => {
-      // Update page
-      setCurrentPage(newPage);
-      saveCurrentPage(newPage);
-      
-      // Fade in new page
+    // Update page immediately to prevent black screen
+    setCurrentPage(newPage);
+    saveCurrentPage(newPage);
+    
+    // Smooth fade animation with white background
+    Animated.sequence([
+      Animated.timing(fadeAnimation, {
+        toValue: 0.8,
+        duration: 80,
+        useNativeDriver: true,
+      }),
       Animated.timing(fadeAnimation, {
         toValue: 1,
-        duration: 150,
+        duration: 80,
         useNativeDriver: true,
-      }).start(() => {
-        setIsAnimating(false);
-      });
+      })
+    ]).start(() => {
+      setIsAnimating(false);
     });
   };
 
@@ -414,7 +436,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
     if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
       saveCurrentPage(newPage);
-      scrollToPage(newPage);
     }
   };
 
@@ -444,15 +465,15 @@ const QuranReaderScreen = ({ navigation, route }) => {
           if (event.nativeEvent.state === State.END) {
             const { translationX, velocityX } = event.nativeEvent;
             
-            // Simple reset
-            fadeAnimation.setValue(1);
-            
-            // RTL Navigation: Swipe right = next page, Swipe left = previous page
-            if (translationX > 50 || velocityX > 500) {
-              goToNextPage(); // Swipe right = next page in RTL
-            }
-            else if (translationX < -50 || velocityX < -500) {
-              goToPreviousPage(); // Swipe left = previous page in RTL
+            // Only process gesture if not currently animating
+            if (!isAnimating) {
+              // RTL Navigation: Swipe right = next page, Swipe left = previous page
+              if (translationX > 50 || velocityX > 500) {
+                goToNextPage(); // Swipe right = next page in RTL
+              }
+              else if (translationX < -50 || velocityX < -500) {
+                goToPreviousPage(); // Swipe left = previous page in RTL
+              }
             }
           }
         }}
@@ -478,12 +499,15 @@ const QuranReaderScreen = ({ navigation, route }) => {
                 resizeMode="stretch"
                 onError={(error) => {
                   console.log('Image load error for page', currentPage, error);
+                  // Fallback to page 1 if current page fails to load
+                  if (currentPage !== 1) {
+                    setCurrentPage(1);
+                  }
                 }}
                 onLoad={() => {
                   console.log('Image loaded successfully for page', currentPage);
                 }}
-                fadeDuration={300}
-                loadingIndicatorSource={null}
+                fadeDuration={200}
                 defaultSource={require('../assets/quran_safa/quran_safa_1.jpg')}
               />
             </Animated.View>
@@ -607,12 +631,12 @@ const QuranReaderScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     direction: 'rtl',
   },
   scrollView: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     margin: 0,
     padding: 0,
   },
@@ -627,6 +651,7 @@ const styles = StyleSheet.create({
     height: screenHeight,
     margin: 0,
     padding: 0,
+    backgroundColor: '#FFFFFF',
     direction: 'rtl',
   },
   gestureContainer: {
@@ -639,7 +664,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     margin: 0,
     padding: 0,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     direction: 'rtl',
   },
   animatedImageContainer: {
@@ -647,6 +672,7 @@ const styles = StyleSheet.create({
     height: screenHeight,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
   quranImage: {
     width: screenWidth,

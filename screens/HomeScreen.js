@@ -81,6 +81,9 @@ const HomeScreen = ({ navigation }) => {
   const handleGoToPage = () => {
     const page = parseInt(pageNumber);
     
+    console.log('Go to page - Input pageNumber:', pageNumber);
+    console.log('Go to page - Parsed page:', page);
+    
     if (!pageNumber.trim()) {
       Alert.alert('خطأ', 'يرجى إدخال رقم الصفحة');
       return;
@@ -94,15 +97,19 @@ const HomeScreen = ({ navigation }) => {
     // Dismiss keyboard before navigation
     Keyboard.dismiss();
     
+    console.log('Navigating to page:', page);
+    
     // Navigate to QuranReaderScreen with the specified page
     if (navigation) {
-      navigation.navigate('quran-reader', { 
+      const navigationParams = { 
         pageNumber: page,
         chapterName: `الصفحة ${page}`,
         verseNumber: '1',
         sectionNumber: '1',
         juzNumber: 'الجزء'
-      });
+      };
+      console.log('Navigation params:', navigationParams);
+      navigation.navigate('quran-reader', navigationParams);
     }
   };
 
@@ -116,7 +123,7 @@ const HomeScreen = ({ navigation }) => {
     try {
       const result = await Share.share({
         message: 'Check out this amazing Quran app! Download it now.',
-        url: 'https://play.google.com/store/apps/details?id=com.yourcompany.quranapp', // Replace with actual app store URL
+        url: 'https://play.google.com/store/apps/details?id=com.anonymous.QuranAppExpo', // Using the actual package name from app.json
         title: 'Quran App'
       });
       
@@ -132,8 +139,8 @@ const HomeScreen = ({ navigation }) => {
   // Rate app functionality
   const rateApp = () => {
     const appStoreUrl = Platform.OS === 'ios' 
-      ? 'https://apps.apple.com/app/id123456789' // Replace with actual iOS app ID
-      : 'https://play.google.com/store/apps/details?id=com.yourcompany.quranapp'; // Replace with actual package name
+      ? 'https://apps.apple.com/app/id123456789' // Replace with actual iOS app ID when available
+      : 'https://play.google.com/store/apps/details?id=com.anonymous.QuranAppExpo'; // Using the actual package name from app.json
     
     Linking.openURL(appStoreUrl).catch(err => {
       Alert.alert('Error', 'Could not open app store');

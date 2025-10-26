@@ -1,13 +1,41 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Animated, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
 import { saveFavorite, isFavorite } from '../utils/FavoritesStorage';
 
 const AllSurahsScreen = ({ navigation }) => {
-  const [favorites, setFavorites] = useState(new Set(['07'])); // Item 07 is favorited by default
+  const [favorites, setFavorites] = useState(new Set());
   const starAnimations = useRef({});
+  const isMounted = useRef(true);
+
+  // Load favorites from storage on component mount
+  useEffect(() => {
+    loadFavorites();
+    
+    // Cleanup function
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const loadFavorites = async () => {
+    try {
+      const savedFavorites = await AsyncStorage.getItem('quran_favorites');
+      if (savedFavorites) {
+        const parsedFavorites = JSON.parse(savedFavorites);
+        const favoriteIds = parsedFavorites
+          .filter(fav => fav.type === 'surah')
+          .map(fav => fav.id);
+        setFavorites(new Set(favoriteIds));
+        console.log('Loaded favorites:', favoriteIds);
+      }
+    } catch (error) {
+      console.log('Error loading favorites:', error);
+    }
+  };
 
   const surahsData = [
     { id: '01', arabic: 'الفاتحة', english: 'Al-Fatihah', pageNumber: 1, isFavorite: false },
@@ -16,7 +44,7 @@ const AllSurahsScreen = ({ navigation }) => {
     { id: '04', arabic: 'النساء', english: 'An-Nisa', pageNumber: 19, isFavorite: false },
     { id: '05', arabic: 'المائدة', english: 'Al-Maidah', pageNumber: 24, isFavorite: false },
     { id: '06', arabic: 'الأنعام', english: 'Al-Anam', pageNumber: 29, isFavorite: false },
-    { id: '07', arabic: 'الأعراف', english: 'Al-Araf', pageNumber: 33, isFavorite: true },
+    { id: '07', arabic: 'الأعراف', english: 'Al-Araf', pageNumber: 33, isFavorite: false },
     { id: '08', arabic: 'الأنفال', english: 'Al-Anfal', pageNumber: 39, isFavorite: false },
     { id: '09', arabic: 'التوبة', english: 'At-Tawbah', pageNumber: 41, isFavorite: false },
     { id: '10', arabic: 'يونس', english: 'Yunus', pageNumber: 45, isFavorite: false },
@@ -132,6 +160,16 @@ const AllSurahsScreen = ({ navigation }) => {
     }
   };
 
+  // Refresh favorites when component updates
+  useEffect(() => {
+    const refreshFavorites = () => {
+      loadFavorites();
+    };
+    
+    // Refresh favorites every time the component mounts or updates
+    refreshFavorites();
+  }, []);
+
   const handleSurahPress = (surah) => {
     console.log('Sending page number:', surah.pageNumber);
     // Navigate to Quran reader with surah info
@@ -188,28 +226,65 @@ const AllSurahsScreen = ({ navigation }) => {
         ]),
       ]).start();
 
-      const result = await saveFavorite({
-        type: 'surah',
-        id: surah.id,
-        arabic: surah.arabic,
-        english: surah.english,
-        pageNumber: surah.pageNumber
-      });
-
-      if (result.success) {
-        // Update local state
-        setFavorites(prev => {
-          const newFavorites = new Set(prev);
-          newFavorites.add(surah.id);
-          return newFavorites;
-        });
-        Alert.alert('Success', result.message);
+      const isCurrentlyFavorite = favorites.has(surah.id);
+      
+      if (isCurrentlyFavorite) {
+        // Remove from favorites
+        try {
+          const savedFavorites = await AsyncStorage.getItem('quran_favorites');
+          if (savedFavorites) {
+            const parsedFavorites = JSON.parse(savedFavorites);
+            const updatedFavorites = parsedFavorites.filter(fav => !(fav.type === 'surah' && fav.id === surah.id));
+            await AsyncStorage.setItem('quran_favorites', JSON.stringify(updatedFavorites));
+            
+            // Update local state
+            setFavorites(prev => {
+              const newFavorites = new Set(prev);
+              newFavorites.delete(surah.id);
+              return newFavorites;
+            });
+            // Only show alert if component is still mounted
+            if (isMounted.current && navigation) {
+              Alert.alert('Success', 'Removed from favorites');
+            }
+          }
+        } catch (error) {
+          console.error('Error removing favorite:', error);
+          if (isMounted.current && navigation) {
+            Alert.alert('Error', 'Failed to remove favorite');
+          }
+        }
       } else {
-        Alert.alert('Info', result.message);
+        // Add to favorites
+        const result = await saveFavorite({
+          type: 'surah',
+          id: surah.id,
+          arabic: surah.arabic,
+          english: surah.english,
+          pageNumber: surah.pageNumber
+        });
+
+        if (result.success) {
+          // Update local state
+          setFavorites(prev => {
+            const newFavorites = new Set(prev);
+            newFavorites.add(surah.id);
+            return newFavorites;
+          });
+          if (isMounted.current && navigation) {
+            Alert.alert('Success', result.message);
+          }
+        } else {
+          if (isMounted.current && navigation) {
+            Alert.alert('Info', result.message);
+          }
+        }
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      Alert.alert('Error', 'Failed to save favorite');
+      if (isMounted.current && navigation) {
+        Alert.alert('Error', 'Failed to toggle favorite');
+      }
     }
   };
 

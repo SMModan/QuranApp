@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, BackHandler, StatusBar, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
@@ -7,6 +8,7 @@ import { saveFavorite, isFavorite } from '../utils/FavoritesStorage';
 
 const AllParasScreen = ({ navigation }) => {
   const [favorites, setFavorites] = useState(new Set());
+  const isMounted = useRef(true);
   
   const parasData = [
     { id: '01', arabic: 'الم', english: 'Alif Lam Meem', pageNumber: 2 },
@@ -56,20 +58,31 @@ const AllParasScreen = ({ navigation }) => {
     };
   }, []);
 
+  // Load favorites from storage on component mount
   useEffect(() => {
-    // Load existing favorites
-    const loadFavorites = async () => {
-      const favoriteSet = new Set();
-      for (const para of parasData) {
-        const isFav = await isFavorite(para.id, 'para');
-        if (isFav) {
-          favoriteSet.add(para.id);
-        }
-      }
-      setFavorites(favoriteSet);
-    };
     loadFavorites();
+    
+    // Cleanup function
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
+
+  const loadFavorites = async () => {
+    try {
+      const savedFavorites = await AsyncStorage.getItem('quran_favorites');
+      if (savedFavorites) {
+        const parsedFavorites = JSON.parse(savedFavorites);
+        const favoriteIds = parsedFavorites
+          .filter(fav => fav.type === 'para')
+          .map(fav => fav.id);
+        setFavorites(new Set(favoriteIds));
+        console.log('Loaded para favorites:', favoriteIds);
+      }
+    } catch (error) {
+      console.log('Error loading para favorites:', error);
+    }
+  };
 
   const handleParaPress = (para) => {
     // Navigate to Quran reader with the specific para
@@ -83,23 +96,59 @@ const AllParasScreen = ({ navigation }) => {
 
   const handleFavoritePress = async (para) => {
     try {
-      const result = await saveFavorite({
-        type: 'para',
-        id: para.id,
-        arabic: para.arabic,
-        english: para.english,
-        pageNumber: para.pageNumber
-      });
-
-      if (result.success) {
-        setFavorites(prev => new Set([...prev, para.id]));
-        Alert.alert('Success', result.message);
+      const isCurrentlyFavorite = favorites.has(para.id);
+      
+      if (isCurrentlyFavorite) {
+        // Remove from favorites
+        try {
+          const savedFavorites = await AsyncStorage.getItem('quran_favorites');
+          if (savedFavorites) {
+            const parsedFavorites = JSON.parse(savedFavorites);
+            const updatedFavorites = parsedFavorites.filter(fav => !(fav.type === 'para' && fav.id === para.id));
+            await AsyncStorage.setItem('quran_favorites', JSON.stringify(updatedFavorites));
+            
+            // Update local state
+            setFavorites(prev => {
+              const newFavorites = new Set(prev);
+              newFavorites.delete(para.id);
+              return newFavorites;
+            });
+            if (isMounted.current && navigation) {
+              Alert.alert('Success', 'Removed from favorites');
+            }
+          }
+        } catch (error) {
+          console.error('Error removing favorite:', error);
+          if (isMounted.current && navigation) {
+            Alert.alert('Error', 'Failed to remove favorite');
+          }
+        }
       } else {
-        Alert.alert('Info', result.message);
+        // Add to favorites
+        const result = await saveFavorite({
+          type: 'para',
+          id: para.id,
+          arabic: para.arabic,
+          english: para.english,
+          pageNumber: para.pageNumber
+        });
+
+        if (result.success) {
+          setFavorites(prev => new Set([...prev, para.id]));
+          if (isMounted.current && navigation) {
+            Alert.alert('Success', result.message);
+          }
+        } else {
+          if (isMounted.current && navigation) {
+            Alert.alert('Info', result.message);
+          }
+        }
       }
     } catch (error) {
-      console.error('Error saving favorite:', error);
-      Alert.alert('Error', 'Failed to save favorite');
+      console.error('Error toggling favorite:', error);
+      if (isMounted.current && navigation) {
+        Alert.alert('Error', 'Failed to toggle favorite');
+      }
     }
   };
 

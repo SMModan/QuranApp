@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert, Platform, Share } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
 import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
@@ -249,6 +249,12 @@ const OurAppsScreen = ({ navigation }) => {
     );
   };
 
+  const handleBackPress = () => {
+    if (navigation && navigation.goBack) {
+      navigation.goBack();
+    }
+  };
+
   const handleMenuPress = () => {
     setIsMenuVisible(true);
   };
@@ -271,10 +277,37 @@ const OurAppsScreen = ({ navigation }) => {
         navigation.navigate('contact-us');
         break;
       case 'share_app':
-        Alert.alert('Share App', 'Share functionality will be implemented');
+        // Share app functionality
+        const shareApp = async () => {
+          try {
+            const result = await Share.share({
+              message: 'Check out this amazing Quran app! Download it now.',
+              url: 'https://play.google.com/store/apps/details?id=com.anonymous.QuranAppExpo',
+              title: 'Quran App'
+            });
+            
+            if (result.action === Share.sharedAction) {
+              console.log('App shared successfully');
+            }
+          } catch (error) {
+            console.log('Error sharing app:', error);
+            Alert.alert('Error', 'Could not share the app');
+          }
+        };
+        shareApp();
         break;
       case 'rate_app':
-        Alert.alert('Rate App', 'Rate app functionality will be implemented');
+        // Rate app functionality
+        const rateApp = () => {
+          const appStoreUrl = Platform.OS === 'ios' 
+            ? 'https://apps.apple.com/app/id123456789' // Replace with actual iOS app ID when available
+            : 'https://play.google.com/store/apps/details?id=com.anonymous.QuranAppExpo'; // Using the actual package name from app.json
+          
+          Linking.openURL(appStoreUrl).catch(err => {
+            Alert.alert('Error', 'Could not open app store');
+          });
+        };
+        rateApp();
         break;
       case 'faqs':
         navigation.navigate('faqs');
@@ -323,9 +356,9 @@ const OurAppsScreen = ({ navigation }) => {
     <View style={styles.container}>
       <CommonHeader 
         title="Our Apps"
-        onMenuPress={handleMenuPress}
-        showMenu={true}
-        showBackButton={false}
+        onBackPress={handleBackPress}
+        showBackButton={true}
+        showMenu={false}
       />
       
       <ScrollView style={styles.scrollContainer}>
