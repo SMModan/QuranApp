@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Platform, Image } from 'react-native';
 import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
 
 const CommonHeader = ({ 
@@ -42,7 +42,11 @@ const CommonHeader = ({
             onPress={onBackPress}
             activeOpacity={0.7}
           >
-            <Text style={[styles.backIcon, { color: textColor }]}>←</Text>
+            <Image 
+              source={require('../assets/icons/ic_back.png')} 
+              style={[styles.backIcon, { tintColor: textColor }]}
+              resizeMode="contain"
+            />
           </TouchableOpacity>
         )}
         
@@ -122,8 +126,8 @@ const styles = StyleSheet.create({
     borderRadius: getSpacing(4),
   },
   backIcon: {
-    fontSize: getFontSize(24),
-    fontWeight: 'bold',
+    width: getSpacing(24),
+    height: getSpacing(24),
   },
 });
 
