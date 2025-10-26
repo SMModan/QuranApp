@@ -53,7 +53,11 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.QuranAppExpo",
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "pan",
+      "splashScreen": {
+        "resizeMode": "cover",
+        "backgroundColor": "#1a237e"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

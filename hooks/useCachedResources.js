@@ -17,8 +17,8 @@ export default function useCachedResources() {
           // 'custom-font': require('../assets/fonts/CustomFont.ttf'),
         });
 
-        // Simulate loading time for splash screen visibility
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Shorter loading time to avoid double splash
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
         console.log('All resources loaded successfully');
       } catch (e) {

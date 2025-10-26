@@ -87,7 +87,7 @@ const BookmarkScreen = ({ navigation }) => {
   }, []);
 
   const renderBookmarkItem = (bookmark) => (
-    <View key={bookmark.id} style={styles.bookmarkItem}>
+    <View style={styles.bookmarkItem}>
       <TouchableOpacity
         style={styles.bookmarkContent}
         onPress={() => navigateToPage(bookmark.page)}
@@ -156,7 +156,11 @@ const BookmarkScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
             
-            {bookmarks.map(renderBookmarkItem)}
+            {bookmarks.map((bookmark) => (
+              <View key={bookmark.id}>
+                {renderBookmarkItem(bookmark)}
+              </View>
+            ))}
           </ScrollView>
         )}
       </View>

@@ -292,7 +292,6 @@ const OurAppsScreen = ({ navigation }) => {
 
   const renderAppCard = (app) => (
     <TouchableOpacity
-      key={app.id}
       style={styles.appCard}
       onPress={() => handleAppPress(app)}
       activeOpacity={0.8}
@@ -340,7 +339,11 @@ const OurAppsScreen = ({ navigation }) => {
           </ResponsiveText>
 
           <View style={styles.appsContainer}>
-            {apps.map(renderAppCard)}
+            {apps.map((app) => (
+              <View key={app.id}>
+                {renderAppCard(app)}
+              </View>
+            ))}
           </View>
 
           <View style={styles.footerSection}>

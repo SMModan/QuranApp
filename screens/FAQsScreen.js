@@ -122,7 +122,7 @@ const FAQsScreen = ({ navigation }) => {
     const anim = getAnimation(item.id);
     
     return (
-      <View key={item.id} style={styles.faqItem}>
+      <View style={styles.faqItem}>
         <TouchableOpacity
           style={styles.questionContainer}
           onPress={() => toggleExpanded(item.id)}
@@ -189,7 +189,11 @@ const FAQsScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.faqList}>
-          {faqData.map(renderFAQItem)}
+          {faqData.map((item) => (
+            <View key={item.id}>
+              {renderFAQItem(item)}
+            </View>
+          ))}
         </View>
       </ScrollView>
 

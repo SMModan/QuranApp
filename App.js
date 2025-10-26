@@ -1,15 +1,15 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
-import CustomSplashScreen from './components/CustomSplashScreen';
 import useCachedResources from './hooks/useCachedResources';
 import AppNavigator from './components/AppNavigator';
 
 export default function App() {
   const isLoadingComplete = useCachedResources();
 
+  // Don't show custom splash - let native splash handle it
   if (!isLoadingComplete) {
-    return <CustomSplashScreen />;
+    return null; // This will show the native splash screen
   }
 
   return (
