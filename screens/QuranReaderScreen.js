@@ -11,7 +11,8 @@ import {
   TextInput,
   ScrollView,
   Image,
-  I18nManager
+  I18nManager,
+  Animated
 } from 'react-native';
 import { 
   PanGestureHandler,
@@ -43,6 +44,10 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [translateY, setTranslateY] = useState(0);
   const [isZooming, setIsZooming] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(true);
+  
+  // Animation state
+  const [isAnimating, setIsAnimating] = useState(false);
+  const fadeAnimation = useRef(new Animated.Value(1)).current;
   
   const pinchRef = useRef(null);
   const panRef = useRef(null);
@@ -269,22 +274,47 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
-  // Navigate to next page
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      const newPage = currentPage + 1;
+  // Simple book-like page transition
+  const animatePageTransition = (direction, newPage) => {
+    if (isAnimating) return;
+    
+    setIsAnimating(true);
+    
+    // Simple fade out, change page, fade in
+    Animated.timing(fadeAnimation, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      // Update page
       setCurrentPage(newPage);
       saveCurrentPage(newPage);
+      
+      // Fade in new page
+      Animated.timing(fadeAnimation, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }).start(() => {
+        setIsAnimating(false);
+      });
+    });
+  };
+
+  // Navigate to next page with animation
+  const goToNextPage = () => {
+    if (currentPage < totalPages && !isAnimating) {
+      const newPage = currentPage + 1;
+      animatePageTransition('next', newPage);
       console.log('Navigating to next page:', newPage);
     }
   };
 
-  // Navigate to previous page
+  // Navigate to previous page with animation
   const goToPreviousPage = () => {
-    if (currentPage > 1) {
+    if (currentPage > 1 && !isAnimating) {
       const newPage = currentPage - 1;
-      setCurrentPage(newPage);
-      saveCurrentPage(newPage);
+      animatePageTransition('previous', newPage);
       console.log('Navigating to previous page:', newPage);
     }
   };
@@ -408,12 +438,14 @@ const QuranReaderScreen = ({ navigation, route }) => {
       {/* Image Slider */}
       <PanGestureHandler
         onGestureEvent={(event) => {
-          const { translationX } = event.nativeEvent;
-          // Handle swipe gestures for navigation
+          // Simple gesture handling - no complex feedback
         }}
         onHandlerStateChange={(event) => {
           if (event.nativeEvent.state === State.END) {
             const { translationX, velocityX } = event.nativeEvent;
+            
+            // Simple reset
+            fadeAnimation.setValue(1);
             
             // RTL Navigation: Swipe right = next page, Swipe left = previous page
             if (translationX > 50 || velocityX > 500) {
@@ -432,20 +464,29 @@ const QuranReaderScreen = ({ navigation, route }) => {
             onLongPress={toggleFullScreen}
             activeOpacity={1}
           >
-            <Image
-              source={getImageSource(currentPage)}
-              style={styles.quranImage}
-              resizeMode="stretch"
-              onError={(error) => {
-                console.log('Image load error for page', currentPage, error);
-              }}
-              onLoad={() => {
-                console.log('Image loaded successfully for page', currentPage);
-              }}
-              fadeDuration={300}
-              loadingIndicatorSource={null}
-              defaultSource={require('../assets/quran_safa/quran_safa_1.jpg')}
-            />
+            <Animated.View
+              style={[
+                styles.animatedImageContainer,
+                {
+                  opacity: fadeAnimation,
+                }
+              ]}
+            >
+              <Image
+                source={getImageSource(currentPage)}
+                style={styles.quranImage}
+                resizeMode="stretch"
+                onError={(error) => {
+                  console.log('Image load error for page', currentPage, error);
+                }}
+                onLoad={() => {
+                  console.log('Image loaded successfully for page', currentPage);
+                }}
+                fadeDuration={300}
+                loadingIndicatorSource={null}
+                defaultSource={require('../assets/quran_safa/quran_safa_1.jpg')}
+              />
+            </Animated.View>
           </TouchableOpacity>
         </View>
       </PanGestureHandler>
@@ -600,6 +641,12 @@ const styles = StyleSheet.create({
     padding: 0,
     backgroundColor: '#000000',
     direction: 'rtl',
+  },
+  animatedImageContainer: {
+    width: screenWidth,
+    height: screenHeight,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   quranImage: {
     width: screenWidth,
