@@ -220,7 +220,15 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   // Scroll to current page when it changes
   useEffect(() => {
-    scrollToPage(currentPage);
+    if (scrollViewRef.current) {
+      // Use a small delay to ensure ScrollView is ready
+      setTimeout(() => {
+        scrollViewRef.current.scrollTo({
+          x: (currentPage - 1) * screenWidth,
+          animated: true
+        });
+      }, 100);
+    }
     logMemoryUsage();
   }, [currentPage]);
 
@@ -232,6 +240,18 @@ const QuranReaderScreen = ({ navigation, route }) => {
         clearTimeout(hideTimer);
       }
     };
+  }, []);
+
+  // Initial scroll to current page when component mounts
+  useEffect(() => {
+    if (scrollViewRef.current && initialPage) {
+      setTimeout(() => {
+        scrollViewRef.current.scrollTo({
+          x: (initialPage - 1) * screenWidth,
+          animated: false // No animation for initial load
+        });
+      }, 200);
+    }
   }, []);
 
   // Memory cleanup effect
@@ -572,7 +592,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
                       styles.pageButtonText,
                       currentPage === pageNum && styles.pageButtonTextActive
                     ]}>
-                      {/* {pageNum} */}
+                      {pageNum}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -580,7 +600,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
             </ScrollView>
           </View>
           
-          <Text style={styles.sliderText}>Page {currentPage} of {totalPages}</Text>
         </View>
       )}
 
