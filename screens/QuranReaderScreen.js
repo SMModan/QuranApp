@@ -10,11 +10,13 @@ import {
   StatusBar,
   TextInput,
   ScrollView,
-  Image,
+  Image
+} from 'react-native';
+import { 
   PanGestureHandler,
   PinchGestureHandler,
   State
-} from 'react-native';
+} from 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -351,8 +353,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar hidden={true} />
+    <GestureHandlerRootView style={styles.container}>
+      <View style={styles.container}>
+        <StatusBar hidden={true} />
       
       {/* Image Slider */}
       <ScrollView
@@ -363,64 +366,22 @@ const QuranReaderScreen = ({ navigation, route }) => {
         onMomentumScrollEnd={handleScrollEnd}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        scrollEventThrottle={16}
+        bounces={false}
+        bouncesZoom={false}
+        alwaysBounceHorizontal={false}
+        alwaysBounceVertical={false}
       >
         {Array.from({ length: totalPages }, (_, index) => (
           <View key={index + 1} style={styles.pageContainer}>
-            <GestureHandlerRootView style={styles.gestureContainer}>
-              <PinchGestureHandler
-                ref={pinchRef}
-                onGestureEvent={(event) => {
-                  const newScale = Math.max(1, Math.min(3, scale * event.nativeEvent.scale));
-                  setScale(newScale);
-                  setIsZooming(newScale > 1);
-                }}
-                onHandlerStateChange={(event) => {
-                  if (event.nativeEvent.state === State.END) {
-                    if (scale < 1.1) {
-                      setScale(1);
-                      setTranslateX(0);
-                      setTranslateY(0);
-                      setIsZooming(false);
-                    }
-                  }
-                }}
-              >
-                <PanGestureHandler
-                  ref={panRef}
-                  enabled={isZooming}
-                  onGestureEvent={(event) => {
-                    if (isZooming) {
-                      setTranslateX(event.nativeEvent.translationX);
-                      setTranslateY(event.nativeEvent.translationY);
-                    }
-                  }}
-                  onHandlerStateChange={(event) => {
-                    if (event.nativeEvent.state === State.END && !isZooming) {
-                      setTranslateX(0);
-                      setTranslateY(0);
-                    }
-                  }}
-                >
-                  <View style={styles.imageContainer}>
-                    <Image
-                      source={getImageSource(index + 1)}
-                      style={[
-                        styles.quranImage,
-                        {
-                          transform: [
-                            { scale: scale },
-                            { translateX: translateX },
-                            { translateY: translateY }
-                          ]
-                        }
-                      ]}
-                      resizeMode="stretch"
-                      onPress={toggleControls}
-                    />
-                  </View>
-                </PanGestureHandler>
-              </PinchGestureHandler>
-            </GestureHandlerRootView>
+            <View style={styles.imageContainer}>
+              <Image
+                source={getImageSource(index + 1)}
+                style={styles.quranImage}
+                resizeMode="stretch"
+                onPress={toggleControls}
+              />
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -551,7 +512,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
           </View>
         </View>
       )}
-    </View>
+      </View>
+    </GestureHandlerRootView>
   );
 };
 
