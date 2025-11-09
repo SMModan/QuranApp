@@ -236,7 +236,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
         
         console.log('Scrolling to page:', targetPage, 'index:', pageIndex);
         
-        // Use scrollToOffset for vertical scroll
+        // Use scrollToOffset for vertical scroll - fix: use exact page index
         const offset = pageIndex * screenHeight;
         flatListRef.current.scrollToOffset({
           offset: offset,
@@ -323,8 +323,10 @@ const QuranReaderScreen = ({ navigation, route }) => {
       if (savedData) {
         const resumeData = JSON.parse(savedData);
         const savedPage = resumeData.page || initialPage;
-        console.log('Loading saved page:', savedPage, 'Initial page:', initialPage);
-        setCurrentPage(savedPage);
+        // Fix: Ensure savedPage is valid and not off by one
+        const validPage = Math.max(1, Math.min(totalPages, savedPage));
+        console.log('Loading saved page:', validPage, 'Initial page:', initialPage);
+        setCurrentPage(validPage);
       } else {
         console.log('No saved data, using initial page:', initialPage);
         setCurrentPage(initialPage);
@@ -552,8 +554,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
           }}
           onScroll={(event) => {
             const offsetY = event.nativeEvent.contentOffset.y;
-            const pageIndex = Math.floor(offsetY / screenHeight);
-            const newPage = pageIndex + 1;
+            // Fix: Use Math.round instead of Math.floor to get correct page
+            const pageIndex = Math.round(offsetY / screenHeight);
+            const newPage = Math.max(1, Math.min(totalPages, pageIndex + 1));
             if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
               setCurrentPage(newPage);
               saveCurrentPage(newPage);
@@ -623,43 +626,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
 
 
-      {/* Page Slider */}
-      {showSlider && (
-        <View style={styles.sliderContainer}>
-          <View style={styles.sliderHeader}>
-            <Text style={styles.sliderTitle}>Go to Page</Text>
-            <TouchableOpacity onPress={toggleSlider}>
-              <Text style={styles.closeSliderText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {/* Custom Slider Implementation */}
-          <View style={styles.customSliderContainer}>
-            <TouchableOpacity 
-              style={styles.sliderTrack}
-              onPress={handleSliderTrackPress}
-              activeOpacity={1}
-            >
-              <View 
-                style={[
-                  styles.sliderProgress, 
-                  { width: `${((currentPage - 1) / (totalPages - 1)) * 100}%` }
-                ]} 
-              />
-              <View 
-                style={[
-                  styles.sliderThumb,
-                  { left: `${((currentPage - 1) / (totalPages - 1)) * 100}%` }
-                ]}
-              />
-            </TouchableOpacity>
-            <Text style={styles.sliderText}>
-              Page {currentPage} of {totalPages}
-            </Text>
-          </View>
-          
-        </View>
-      )}
 
       {/* Page Info - Removed header as requested */}
 
@@ -721,30 +687,35 @@ const styles = StyleSheet.create({
     height: screenHeight,
     margin: 0,
     padding: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
     direction: 'rtl',
   },
   flatList: {
     flex: 1,
     width: screenWidth,
     height: screenHeight,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
   },
   flatListContent: {
-    // Empty - no special styling needed
+    width: screenWidth,
   },
   pageItemContainer: {
     width: screenWidth,
     height: screenHeight,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
     overflow: 'hidden',
+    position: 'relative',
   },
   quranImage: {
     width: screenWidth,
     height: screenHeight,
     margin: 0,
     padding: 0,
-    resizeMode: 'stretch',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   floatingBackButton: {
     position: 'absolute',
