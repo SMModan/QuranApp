@@ -718,10 +718,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
   };
   
   return (
-    <GestureHandlerRootView style={[styles.container, { direction: 'rtl' }]}>
-      <View style={[styles.container, { direction: 'rtl' }]}>
-      
-       <StatusBar hidden={true} />
+    <GestureHandlerRootView style={styles.container}>
+      <StatusBar hidden={true} />
       
       {/* Continuous Reading FlatList - Vertical Scroll */}
       <View style={styles.pageContainer}>
@@ -862,7 +860,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
           </View>
         </View>
       )}
-      </View>
     </GestureHandlerRootView>
   );
 };
@@ -870,10 +867,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
     direction: 'rtl',
   },
   pageContainer: {
+    flex: 1,
     width: screenWidth,
     height: screenHeight,
     margin: 0,
