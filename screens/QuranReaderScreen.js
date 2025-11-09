@@ -177,6 +177,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [bookmarkComment, setBookmarkComment] = useState('');
   const [showSlider, setShowSlider] = useState(false);
   const [hideTimer, setHideTimer] = useState(null);
+  const gestureStartX = useRef(null);
   
   // Animation state
   const [isAnimating, setIsAnimating] = useState(false);
@@ -320,19 +321,31 @@ const QuranReaderScreen = ({ navigation, route }) => {
     });
   };
 
-  // Navigate to next page with animation
+  // Navigate to next page with animation (circular navigation)
   const goToNextPage = () => {
-    if (currentPage < totalPages && !isAnimating) {
-      const newPage = currentPage + 1;
+    if (!isAnimating) {
+      let newPage;
+      if (currentPage >= totalPages) {
+        // If on last page, go to first page (circular)
+        newPage = 1;
+      } else {
+        newPage = currentPage + 1;
+      }
       animatePageTransition('next', newPage);
       console.log('Navigating to next page:', newPage);
     }
   };
 
-  // Navigate to previous page with animation
+  // Navigate to previous page with animation (circular navigation)
   const goToPreviousPage = () => {
-    if (currentPage > 1 && !isAnimating) {
-      const newPage = currentPage - 1;
+    if (!isAnimating) {
+      let newPage;
+      if (currentPage <= 1) {
+        // If on first page, go to last page (circular)
+        newPage = totalPages;
+      } else {
+        newPage = currentPage - 1;
+      }
       animatePageTransition('previous', newPage);
       console.log('Navigating to previous page:', newPage);
     }
@@ -464,20 +477,31 @@ const QuranReaderScreen = ({ navigation, route }) => {
       {/* Image Slider */}
       <PanGestureHandler
         onGestureEvent={(event) => {
-          // Simple gesture handling - no complex feedback
+          // Track initial touch position for edge detection
+          if (event.nativeEvent.state === State.BEGAN) {
+            gestureStartX.current = event.nativeEvent.x;
+          }
         }}
         onHandlerStateChange={(event) => {
-          if (event.nativeEvent.state === State.END) {
+          if (event.nativeEvent.state === State.BEGAN) {
+            // Store initial position when gesture begins
+            gestureStartX.current = event.nativeEvent.x;
+          } else if (event.nativeEvent.state === State.END) {
             const { translationX, velocityX } = event.nativeEvent;
+            const startX = gestureStartX.current;
             
             // Only process gesture if not currently animating
-            if (!isAnimating) {
-              // RTL Navigation: Swipe right = next page, Swipe left = previous page
-              // If swipe left is very strong (back gesture), navigate to home
-              if (translationX < -150 || velocityX < -800) {
-                // Strong left swipe = back to home
+            if (!isAnimating && startX !== null) {
+              // Check for back to home gesture first (must be very strong AND from left edge)
+              // Require both strong swipe AND starting from left edge (first 20% of screen)
+              const isFromLeftEdge = startX < screenWidth * 0.2;
+              const isVeryStrongLeftSwipe = translationX < -250 && velocityX < -1200;
+              
+              if (isFromLeftEdge && isVeryStrongLeftSwipe) {
+                // Very strong left swipe from left edge = back to home
                 handleBackPress();
               }
+              // RTL Navigation: Swipe right = next page, Swipe left = previous page
               else if (translationX > 50 || velocityX > 500) {
                 goToNextPage(); // Swipe right = next page in RTL
               }
@@ -485,6 +509,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
                 goToPreviousPage(); // Swipe left = previous page in RTL
               }
             }
+            
+            // Reset gesture start position
+            gestureStartX.current = null;
           }
         }}
       >
