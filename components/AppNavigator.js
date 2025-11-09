@@ -4,7 +4,6 @@ import HomeScreen from '../screens/HomeScreen';
 import AllParasScreen from '../screens/AllParasScreen';
 import AllSurahsScreen from '../screens/AllSurahsScreen';
 import FAQsScreen from '../screens/FAQsScreen';
-import ReadingModeScreen from '../screens/ReadingModeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import QuranReaderScreen from '../screens/QuranReaderScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
@@ -37,8 +36,6 @@ const AppNavigator = () => {
         return <AllSurahsScreen navigation={navigation} />;
       case 'faqs':
         return <FAQsScreen navigation={navigation} />;
-      case 'reading-mode':
-        return <ReadingModeScreen navigation={navigation} />;
       case 'settings':
         return <SettingsScreen navigation={navigation} />;
       case 'quran-reader':

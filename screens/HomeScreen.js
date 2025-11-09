@@ -218,12 +218,6 @@ const HomeScreen = ({ navigation }) => {
           }
         }
         break;
-      case 'change_reading_mode':
-        // Navigate to reading mode screen
-        if (navigation) {
-          navigation.navigate('reading-mode');
-        }
-        break;
       case 'backup_restore':
         // Navigate to backup/restore screen
         if (navigation) {

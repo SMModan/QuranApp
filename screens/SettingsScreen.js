@@ -7,12 +7,6 @@ import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SettingsScreen = ({ navigation }) => {
-  const handleMenuPress = () => {
-    if (navigation && navigation.goBack) {
-      navigation.goBack();
-    }
-  };
-
   const handleBackup = async () => {
     try {
       // Get all data to backup
