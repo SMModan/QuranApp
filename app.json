@@ -8,6 +8,8 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#1a237e"
     },
     "assetBundlePatterns": [
@@ -16,12 +18,16 @@
     "ios": {
       "supportsTablet": true,
       "splash": {
+        "image": "./assets/icon.png",
+        "resizeMode": "contain",
         "backgroundColor": "#1a237e"
       }
     },
     "android": {
       "package": "com.anonymous.QuranAppExpo",
       "splash": {
+        "image": "./assets/icon.png",
+        "resizeMode": "contain",
         "backgroundColor": "#1a237e"
       }
     },
