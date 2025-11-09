@@ -354,9 +354,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
   // Get initial page from route params, default to 1
   const initialPage = route?.params?.pageNumber || route?.params?.page || 1;
   
-  console.log('QuranReaderScreen - Route params:', route?.params);
-  console.log('QuranReaderScreen - Initial page:', initialPage);
-  
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(134);
   const [showControls, setShowControls] = useState(true);
@@ -376,7 +373,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
   });
   
   // Validate navigation object
-  const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
+  const safeNavigation = navigation || { goBack: () => {} };
   
   // Generate array of page numbers for FlatList
   const pagesArray = Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -400,7 +397,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
         setIsBookmarked(isCurrentPageBookmarked);
       }
     } catch (error) {
-      console.log('Error loading bookmarks:', error);
+      // Error loading bookmarks
     }
   };
 
@@ -439,8 +436,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
       if (flatListRef.current) {
         const targetPage = route?.params?.pageNumber || route?.params?.page || initialPage;
         const pageIndex = Math.max(0, Math.min(totalPages - 1, targetPage - 1));
-        
-        console.log('Scrolling to page:', targetPage, 'index:', pageIndex);
         
         // Use scrollToOffset for vertical scroll - fix: use exact page index
         const offset = pageIndex * screenHeight;
@@ -505,11 +500,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
         page: page,
         timestamp: new Date().toISOString()
       };
-      console.log('Saving current page:', page, 'Data:', resumeData);
       await AsyncStorage.setItem('quran_resume_data', JSON.stringify(resumeData));
-      console.log('Page saved successfully');
     } catch (error) {
-      console.log('Error saving current page:', error);
+      // Error saving current page
     }
   };
 
@@ -520,7 +513,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
       const hasSpecificPage = route?.params?.pageNumber || route?.params?.page;
       
       if (hasSpecificPage) {
-        console.log('Specific page requested, using route params:', initialPage);
         setCurrentPage(initialPage);
         return;
       }
@@ -531,14 +523,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
         const savedPage = resumeData.page || initialPage;
         // Fix: Ensure savedPage is valid and not off by one
         const validPage = Math.max(1, Math.min(totalPages, savedPage));
-        console.log('Loading saved page:', validPage, 'Initial page:', initialPage);
         setCurrentPage(validPage);
       } else {
-        console.log('No saved data, using initial page:', initialPage);
         setCurrentPage(initialPage);
       }
     } catch (error) {
-      console.log('Error loading current page:', error);
       setCurrentPage(initialPage);
     }
   };
@@ -576,29 +565,19 @@ const QuranReaderScreen = ({ navigation, route }) => {
     const pageNumber = item; // item is the page number from pagesArray
     const imageSource = getImageSource(pageNumber);
     
-    // Debug logging
-    console.log('=== renderPageItem DEBUG ===');
-    console.log('item:', item);
-    console.log('index:', index);
-    console.log('pageNumber:', pageNumber);
-    console.log('imageSource:', imageSource);
-    console.log('imageSource type:', typeof imageSource);
-    console.log('imageSource value:', JSON.stringify(imageSource));
-    console.log('===========================');
-    
     return (
       <View style={styles.pageItemContainer}>
         <ZoomableImage
           source={imageSource}
           style={styles.quranImage}
-          onError={(error) => {
-            console.error('Image load error for page', pageNumber, error);
+          onError={() => {
+            // Image load error
           }}
           onLoad={() => {
-            console.log('Image loaded successfully for page', pageNumber);
+            // Image loaded successfully
           }}
           onLoadStart={() => {
-            console.log('Image loading started for page', pageNumber);
+            // Image loading started
           }}
           fadeDuration={200}
         />
@@ -677,7 +656,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
       await AsyncStorage.setItem('quran_bookmarks', JSON.stringify(updatedBookmarks));
       Alert.alert('Success', 'Bookmark added successfully!');
     } catch (error) {
-      console.log('Error saving bookmark:', error);
       Alert.alert('Error', 'Failed to save bookmark');
     }
   };
@@ -692,7 +670,6 @@ const QuranReaderScreen = ({ navigation, route }) => {
       await AsyncStorage.setItem('quran_bookmarks', JSON.stringify(updatedBookmarks));
       Alert.alert('Success', 'Bookmark removed successfully!');
     } catch (error) {
-      console.log('Error removing bookmark:', error);
       Alert.alert('Error', 'Failed to remove bookmark');
     }
   };
@@ -727,17 +704,10 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
-
-  console.log('QuranReaderScreen rendering - currentPage:', currentPage, 'totalPages:', totalPages);
   
   // Memory monitoring
   const logMemoryUsage = () => {
-    if (__DEV__) {
-      console.log('Memory usage - Current page:', currentPage, 'Rendering pages:', 
-        Array.from({ length: totalPages }, (_, i) => i + 1)
-          .filter(page => Math.abs(page - currentPage) <= 1)
-      );
-    }
+    // Memory usage tracking (disabled)
   };
   
   return (

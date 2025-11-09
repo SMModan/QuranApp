@@ -31,7 +31,6 @@ const SettingsScreen = ({ navigation }) => {
         Alert.alert('Success', 'Backup data has been shared. Save it to restore later.');
       }
     } catch (error) {
-      console.error('Backup error:', error);
       Alert.alert('Error', 'Failed to create backup');
     }
   };
@@ -78,10 +77,9 @@ const SettingsScreen = ({ navigation }) => {
       });
       
       if (result.action === Share.sharedAction) {
-        console.log('App shared successfully');
+        // App shared successfully
       }
     } catch (error) {
-      console.log('Error sharing app:', error);
       Alert.alert('Error', 'Could not share the app');
     }
   };

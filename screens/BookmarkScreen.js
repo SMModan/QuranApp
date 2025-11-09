@@ -31,7 +31,6 @@ const BookmarkScreen = ({ navigation }) => {
         setBookmarks([]);
       }
     } catch (error) {
-      console.log('Error loading bookmarks:', error);
       Alert.alert('Error', 'Failed to load bookmarks');
     } finally {
       setIsLoading(false);
@@ -48,14 +47,12 @@ const BookmarkScreen = ({ navigation }) => {
       });
       Alert.alert('Success', 'Bookmark deleted successfully');
     } catch (error) {
-      console.log('Error deleting bookmark:', error);
       Alert.alert('Error', 'Failed to delete bookmark');
     }
   }, []);
 
   // Navigate to bookmarked page
   const navigateToPage = useCallback((pageNumber) => {
-    console.log('Navigating to page:', pageNumber);
     navigation.navigate('quran-reader', { pageNumber: pageNumber });
   }, [navigation]);
 
@@ -75,7 +72,6 @@ const BookmarkScreen = ({ navigation }) => {
               setBookmarks([]);
               Alert.alert('Success', 'All bookmarks cleared');
             } catch (error) {
-              console.log('Error clearing bookmarks:', error);
               Alert.alert('Error', 'Failed to clear bookmarks');
             }
           },

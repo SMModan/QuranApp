@@ -93,10 +93,9 @@ const AllParasScreen = ({ navigation }) => {
           .filter(fav => fav.type === 'para')
           .map(fav => fav.id);
         setFavorites(new Set(favoriteIds));
-        console.log('Loaded para favorites:', favoriteIds);
       }
     } catch (error) {
-      console.log('Error loading para favorites:', error);
+      // Error loading para favorites
     }
   };
 
@@ -134,7 +133,6 @@ const AllParasScreen = ({ navigation }) => {
             }
           }
         } catch (error) {
-          console.error('Error removing favorite:', error);
           if (isMounted.current && navigation) {
             Alert.alert('Error', 'Failed to remove favorite');
           }
@@ -161,7 +159,6 @@ const AllParasScreen = ({ navigation }) => {
         }
       }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
       if (isMounted.current && navigation) {
         Alert.alert('Error', 'Failed to toggle favorite');
       }

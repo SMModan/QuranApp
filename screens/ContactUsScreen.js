@@ -111,10 +111,9 @@ const ContactUsScreen = ({ navigation }) => {
             });
             
             if (result.action === Share.sharedAction) {
-              console.log('App shared successfully');
+              // App shared successfully
             }
           } catch (error) {
-            console.log('Error sharing app:', error);
             Alert.alert('Error', 'Could not share the app');
           }
         })();

@@ -19,10 +19,8 @@ export default function useCachedResources() {
 
         // Shorter loading time to avoid double splash
         await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        console.log('All resources loaded successfully');
       } catch (e) {
-        console.warn('Error loading resources:', e);
+        // Error loading resources
       } finally {
         setLoadingComplete(true);
         // Hide the splash screen

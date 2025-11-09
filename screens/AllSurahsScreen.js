@@ -40,10 +40,9 @@ const AllSurahsScreen = ({ navigation }) => {
           .filter(fav => fav.type === 'surah')
           .map(fav => fav.id);
         setFavorites(new Set(favoriteIds));
-        console.log('Loaded favorites:', favoriteIds);
       }
     } catch (error) {
-      console.log('Error loading favorites:', error);
+      // Error loading favorites
     }
   };
 
@@ -180,7 +179,6 @@ const AllSurahsScreen = ({ navigation }) => {
   }, [navigation]);
 
   const handleSurahPress = useCallback((surah) => {
-    console.log('Sending page number:', surah.pageNumber);
     // Navigate to Quran reader with surah info
     if (navigation) {
       const navigationParams = {
@@ -190,7 +188,6 @@ const AllSurahsScreen = ({ navigation }) => {
         sectionNumber: '1',
         juzNumber: 'الجزء'
       };
-      console.log('Navigation params:', navigationParams);
       navigation.navigate('quran-reader', navigationParams);
     }
   }, [navigation]);
@@ -258,7 +255,6 @@ const AllSurahsScreen = ({ navigation }) => {
             }
           }
         } catch (error) {
-          console.error('Error removing favorite:', error);
           if (isMounted.current && navigation) {
             Alert.alert('Error', 'Failed to remove favorite');
           }
@@ -290,7 +286,6 @@ const AllSurahsScreen = ({ navigation }) => {
         }
       }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
       if (isMounted.current && navigation) {
         Alert.alert('Error', 'Failed to toggle favorite');
       }

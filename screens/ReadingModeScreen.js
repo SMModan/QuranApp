@@ -25,7 +25,7 @@ const ReadingModeScreen = ({ navigation }) => {
       if (savedFontSize) setFontSize(savedFontSize);
       if (savedTheme) setTheme(savedTheme);
     } catch (error) {
-      console.error('Error loading reading preferences:', error);
+      // Error loading reading preferences
     }
   };
 
@@ -33,7 +33,6 @@ const ReadingModeScreen = ({ navigation }) => {
     try {
       await AsyncStorage.setItem(key, value);
     } catch (error) {
-      console.error('Error saving reading preferences:', error);
       Alert.alert('Error', 'Failed to save preferences');
     }
   };

@@ -81,9 +81,6 @@ const HomeScreen = ({ navigation }) => {
   const handleGoToPage = () => {
     const page = parseInt(pageNumber);
     
-    console.log('Go to page - Input pageNumber:', pageNumber);
-    console.log('Go to page - Parsed page:', page);
-    
     if (!pageNumber.trim()) {
       Alert.alert('خطأ', 'يرجى إدخال رقم الصفحة');
       return;
@@ -97,8 +94,6 @@ const HomeScreen = ({ navigation }) => {
     // Dismiss keyboard before navigation
     Keyboard.dismiss();
     
-    console.log('Navigating to page:', page);
-    
     // Navigate to QuranReaderScreen with the specified page
     if (navigation) {
       const navigationParams = { 
@@ -108,14 +103,12 @@ const HomeScreen = ({ navigation }) => {
         sectionNumber: '1',
         juzNumber: 'الجزء'
       };
-      console.log('Navigation params:', navigationParams);
       navigation.navigate('quran-reader', navigationParams);
     }
   };
 
   const handleInputFocus = () => {
     // Optional: Add any focus handling if needed
-    console.log('Input focused');
   };
 
   // Share app functionality
@@ -128,10 +121,9 @@ const HomeScreen = ({ navigation }) => {
       });
       
       if (result.action === Share.sharedAction) {
-        console.log('App shared successfully');
+        // App shared successfully
       }
     } catch (error) {
-      console.log('Error sharing app:', error);
       Alert.alert('Error', 'Could not share the app');
     }
   };
@@ -153,21 +145,17 @@ const HomeScreen = ({ navigation }) => {
       const savedResumeData = await AsyncStorage.getItem('quran_resume_data');
       if (savedResumeData) {
         const resumeData = JSON.parse(savedResumeData);
-        console.log('Loading resume page:', resumeData.page);
         navigation.navigate('quran-reader', { pageNumber: resumeData.page });
       } else {
-        console.log('No saved page found, navigating to page 1');
         navigation.navigate('quran-reader', { pageNumber: 1 });
       }
     } catch (error) {
-      console.log('Error loading resume page:', error);
       // Fallback to page 1 if there's an error
       navigation.navigate('quran-reader', { pageNumber: 1 });
     }
   };
 
   const handleMenuItemPress = (itemId) => {
-    console.log(`Menu item pressed: ${itemId}`);
     // Handle navigation to different screens based on itemId
     switch (itemId) {
       case 'resume':
@@ -257,12 +245,12 @@ const HomeScreen = ({ navigation }) => {
         }
         break;
       default:
-        console.log(`Unknown menu item: ${itemId}`);
+        // Unknown menu item
+        break;
     }
   };
 
   const handleCardPress = (itemId) => {
-    console.log(`Card pressed: ${itemId}`);
     // Handle card press - same as menu item press
     if (itemId === 'go_to_page') {
       // Do nothing for go to page card - only input field and button work

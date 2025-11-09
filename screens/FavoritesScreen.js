@@ -26,10 +26,8 @@ const FavoritesScreen = ({ navigation }) => {
     try {
       setIsLoading(true);
       const favs = await getFavorites();
-      console.log('Loaded favorites:', favs.length, 'items');
       setFavorites(favs);
     } catch (error) {
-      console.error('Error loading favorites:', error);
       Alert.alert('Error', 'Failed to load favorites');
     } finally {
       setIsLoading(false);
