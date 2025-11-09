@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, BackHandler, Alert, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommonHeader from '../components/CommonHeader';
@@ -100,7 +100,7 @@ const AllParasScreen = ({ navigation }) => {
     }
   };
 
-  const handleParaPress = (para) => {
+  const handleParaPress = useCallback((para) => {
     // Navigate to Quran reader with the specific para
     const navigationParams = { 
       pageNumber: para.pageNumber,
@@ -108,7 +108,7 @@ const AllParasScreen = ({ navigation }) => {
       paraName: para.arabic
     };
     navigation.navigate('quran-reader', navigationParams);
-  };
+  }, [navigation]);
 
   const handleFavoritePress = async (para) => {
     try {
@@ -168,7 +168,7 @@ const AllParasScreen = ({ navigation }) => {
     }
   };
 
-  const renderParaItem = ({ item }) => {
+  const renderParaItem = useCallback(({ item }) => {
     const isFavorite = favorites.has(item.id);
     
     return (
@@ -212,7 +212,7 @@ const AllParasScreen = ({ navigation }) => {
         </View>
       </TouchableOpacity>
     );
-  };
+  }, [favorites, handleParaPress, handleFavoritePress]);
 
   return (
     <View style={styles.container}>
@@ -230,6 +230,11 @@ const AllParasScreen = ({ navigation }) => {
           keyExtractor={(item, index) => `para-${item.id}-${index}`}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          updateCellsBatchingPeriod={50}
         />
       </View>
     </View>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Animated, Alert, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommonHeader from '../components/CommonHeader';
@@ -179,7 +179,7 @@ const AllSurahsScreen = ({ navigation }) => {
     return unsubscribe;
   }, [navigation]);
 
-  const handleSurahPress = (surah) => {
+  const handleSurahPress = useCallback((surah) => {
     console.log('Sending page number:', surah.pageNumber);
     // Navigate to Quran reader with surah info
     if (navigation) {
@@ -193,7 +193,7 @@ const AllSurahsScreen = ({ navigation }) => {
       console.log('Navigation params:', navigationParams);
       navigation.navigate('quran-reader', navigationParams);
     }
-  };
+  }, [navigation]);
 
   const toggleFavorite = async (surah) => {
     try {
@@ -297,7 +297,7 @@ const AllSurahsScreen = ({ navigation }) => {
     }
   };
 
-  const renderSurahItem = ({ item }) => {
+  const renderSurahItem = useCallback(({ item }) => {
     const isFavorite = favorites.has(item.id);
     
     return (
@@ -378,7 +378,7 @@ const AllSurahsScreen = ({ navigation }) => {
         </View>
       </TouchableOpacity>
     );
-  };
+  }, [favorites, handleSurahPress, toggleFavorite]);
 
   return (
     <View style={styles.container}>
@@ -396,6 +396,11 @@ const AllSurahsScreen = ({ navigation }) => {
           keyExtractor={(item, index) => `surah-${item.id}-${index}`}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
+          removeClippedSubviews={true}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          updateCellsBatchingPeriod={50}
         />
       </View>
     </View>

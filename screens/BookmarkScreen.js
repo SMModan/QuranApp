@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
+  FlatList,
   Alert,
   Dimensions,
   Platform,
@@ -39,23 +39,25 @@ const BookmarkScreen = ({ navigation }) => {
   };
 
   // Delete bookmark
-  const deleteBookmark = async (bookmarkId) => {
+  const deleteBookmark = useCallback(async (bookmarkId) => {
     try {
-      const updatedBookmarks = bookmarks.filter(bookmark => bookmark.id !== bookmarkId);
-      await AsyncStorage.setItem('quran_bookmarks', JSON.stringify(updatedBookmarks));
-      setBookmarks(updatedBookmarks);
+      setBookmarks(prevBookmarks => {
+        const updatedBookmarks = prevBookmarks.filter(bookmark => bookmark.id !== bookmarkId);
+        AsyncStorage.setItem('quran_bookmarks', JSON.stringify(updatedBookmarks));
+        return updatedBookmarks;
+      });
       Alert.alert('Success', 'Bookmark deleted successfully');
     } catch (error) {
       console.log('Error deleting bookmark:', error);
       Alert.alert('Error', 'Failed to delete bookmark');
     }
-  };
+  }, []);
 
   // Navigate to bookmarked page
-  const navigateToPage = (pageNumber) => {
+  const navigateToPage = useCallback((pageNumber) => {
     console.log('Navigating to page:', pageNumber);
     navigation.navigate('quran-reader', { pageNumber: pageNumber });
-  };
+  }, [navigation]);
 
   // Clear all bookmarks
   const clearAllBookmarks = () => {
@@ -86,7 +88,7 @@ const BookmarkScreen = ({ navigation }) => {
     loadBookmarks();
   }, []);
 
-  const renderBookmarkItem = (bookmark) => (
+  const renderBookmarkItem = useCallback(({ item: bookmark }) => (
     <View style={styles.bookmarkItem}>
       <TouchableOpacity
         style={styles.bookmarkContent}
@@ -119,7 +121,21 @@ const BookmarkScreen = ({ navigation }) => {
         </View>
       </TouchableOpacity>
     </View>
-  );
+  ), [navigateToPage, deleteBookmark]);
+
+  const keyExtractor = useCallback((item, index) => `bookmark-${item.id}-${index}`, []);
+
+  const ListHeaderComponent = useCallback(() => (
+    <View style={styles.headerActions}>
+      <Text style={styles.bookmarkCount}>{bookmarks.length} bookmark{bookmarks.length !== 1 ? 's' : ''}</Text>
+      <TouchableOpacity
+        style={styles.clearAllButton}
+        onPress={clearAllBookmarks}
+      >
+        <Text style={styles.clearAllButtonText}>Clear All</Text>
+      </TouchableOpacity>
+    </View>
+  ), [bookmarks.length]);
 
   return (
     <View style={styles.container}>
@@ -145,23 +161,19 @@ const BookmarkScreen = ({ navigation }) => {
             </Text>
           </View>
         ) : (
-          <ScrollView style={styles.bookmarkList} showsVerticalScrollIndicator={false}>
-            <View style={styles.headerActions}>
-              <Text style={styles.bookmarkCount}>{bookmarks.length} bookmark{bookmarks.length !== 1 ? 's' : ''}</Text>
-              <TouchableOpacity
-                style={styles.clearAllButton}
-                onPress={clearAllBookmarks}
-              >
-                <Text style={styles.clearAllButtonText}>Clear All</Text>
-              </TouchableOpacity>
-            </View>
-            
-            {bookmarks.map((bookmark, index) => (
-              <View key={`bookmark-${bookmark.id}-${index}`}>
-                {renderBookmarkItem(bookmark)}
-              </View>
-            ))}
-          </ScrollView>
+          <FlatList
+            data={bookmarks}
+            renderItem={renderBookmarkItem}
+            keyExtractor={keyExtractor}
+            ListHeaderComponent={ListHeaderComponent}
+            contentContainerStyle={styles.bookmarkList}
+            showsVerticalScrollIndicator={false}
+            removeClippedSubviews={true}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+            updateCellsBatchingPeriod={50}
+          />
         )}
       </View>
     </View>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, BackHandler } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
@@ -20,9 +20,9 @@ const FavoritesScreen = ({ navigation }) => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
     loadFavorites();
     return () => backHandler.remove();
-  }, []);
+  }, [loadFavorites]);
 
-  const loadFavorites = async () => {
+  const loadFavorites = useCallback(async () => {
     try {
       setIsLoading(true);
       const favs = await getFavorites();
@@ -34,9 +34,9 @@ const FavoritesScreen = ({ navigation }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleRemoveFavorite = async (favoriteId, itemName) => {
+  const handleRemoveFavorite = useCallback(async (favoriteId, itemName) => {
     Alert.alert(
       'Remove Favorite',
       `Remove "${itemName}" from favorites?`,
@@ -56,9 +56,9 @@ const FavoritesScreen = ({ navigation }) => {
         }
       ]
     );
-  };
+  }, [loadFavorites]);
 
-  const handleFavoritePress = (favorite) => {
+  const handleFavoritePress = useCallback((favorite) => {
     // Navigate to Quran reader with the specific page
     navigation.navigate('quran-reader', {
       pageNumber: favorite.pageNumber,
@@ -66,15 +66,15 @@ const FavoritesScreen = ({ navigation }) => {
       type: favorite.type,
       itemId: favorite.itemId
     });
-  };
+  }, [navigation]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadFavorites();
     setRefreshing(false);
-  };
+  }, [loadFavorites]);
 
-  const renderFavoriteItem = ({ item }) => (
+  const renderFavoriteItem = useCallback(({ item }) => (
     <View style={styles.favoriteItem}>
       <TouchableOpacity
         style={styles.mainContent}
@@ -107,9 +107,9 @@ const FavoritesScreen = ({ navigation }) => {
         <Text style={styles.deleteIcon}>−</Text>
       </TouchableOpacity>
     </View>
-  );
+  ), [handleFavoritePress, handleRemoveFavorite]);
 
-  const renderEmptyState = () => (
+  const renderEmptyState = useCallback(() => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>⭐</Text>
       <Text style={styles.emptyTitle}>No Favorites Yet</Text>
@@ -117,7 +117,7 @@ const FavoritesScreen = ({ navigation }) => {
         Tap the star icon on any Surah or Para to add it to your favorites
       </Text>
     </View>
-  );
+  ), []);
 
   return (
     <View style={styles.container}>
@@ -143,6 +143,11 @@ const FavoritesScreen = ({ navigation }) => {
             ListEmptyComponent={renderEmptyState}
             refreshing={refreshing}
             onRefresh={onRefresh}
+            removeClippedSubviews={true}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+            updateCellsBatchingPeriod={50}
           />
         )}
       </View>
