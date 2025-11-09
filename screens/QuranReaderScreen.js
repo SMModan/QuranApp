@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { 
   View, 
   Text, 
@@ -16,17 +16,15 @@ import {
 } from 'react-native';
 import { 
   GestureHandlerRootView,
-  PinchGestureHandler,
-  PanGestureHandler,
-  TapGestureHandler,
-  State
+  Gesture,
+  GestureDetector
 } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-// ZoomableImage component for pinch zoom and double tap reset
+// ZoomableImage component for pinch zoom and double tap reset - Memoized for performance
 const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDuration }) => {
   const scale = useRef(new Animated.Value(1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
@@ -35,10 +33,6 @@ const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDurati
   const lastScale = useRef(1);
   const lastTranslateX = useRef(0);
   const lastTranslateY = useRef(0);
-  
-  const doubleTapRef = useRef(null);
-  const pinchRef = useRef(null);
-  const panRef = useRef(null);
   
   const MIN_SCALE = 1;
   const MAX_SCALE = 5;
@@ -71,146 +65,131 @@ const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDurati
     });
   };
   
-  // Pinch gesture handler
-  const onPinchGestureEvent = (event) => {
-    const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, lastScale.current * event.nativeEvent.scale));
-    scale.setValue(newScale);
-  };
+  // Double tap gesture
+  const doubleTap = Gesture.Tap()
+    .numberOfTaps(2)
+    .onEnd(() => {
+      resetZoom();
+    });
   
-  const onPinchHandlerStateChange = (event) => {
-    if (event.nativeEvent.oldState === State.ACTIVE) {
-      const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, lastScale.current * event.nativeEvent.scale));
-      lastScale.current = newScale;
+  // Single tap gesture (waits for double tap)
+  const singleTap = Gesture.Tap()
+    .numberOfTaps(1)
+    .maxDuration(250)
+    .onEnd(() => {
+      // Do nothing on single tap, just prevent it from interfering
+    });
+  
+  // Pinch gesture
+  const pinchStartScale = useRef(1);
+  const pinchGesture = Gesture.Pinch()
+    .onStart(() => {
+      // Store the starting scale
+      pinchStartScale.current = lastScale.current;
+    })
+    .onUpdate((event) => {
+      const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale.current * event.scale));
       scale.setValue(newScale);
+    })
+    .onEnd((event) => {
+      // Update last scale with the final value from the event
+      const finalScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale.current * event.scale));
+      lastScale.current = finalScale;
+      scale.setValue(finalScale);
       
       // Reset translation if scale is back to 1
-      if (newScale === 1) {
+      if (finalScale === 1) {
         translateX.setValue(0);
         translateY.setValue(0);
         lastTranslateX.current = 0;
         lastTranslateY.current = 0;
       }
-    } else if (event.nativeEvent.state === State.BEGAN) {
-      // Reset the scale value to last scale when gesture begins
-      scale.setValue(lastScale.current);
-    }
-  };
+    });
   
-  // Pan gesture handler - only allow panning when zoomed
-  const onPanGestureEvent = (event) => {
-    if (lastScale.current > 1) {
-      const newTranslateX = lastTranslateX.current + event.nativeEvent.translationX;
-      const newTranslateY = lastTranslateY.current + event.nativeEvent.translationY;
-      
-      // Clamp translation based on scale
-      const maxTranslateX = (screenWidth * (lastScale.current - 1)) / 2;
-      const maxTranslateY = (screenHeight * (lastScale.current - 1)) / 2;
-      
-      translateX.setValue(Math.max(-maxTranslateX, Math.min(maxTranslateX, newTranslateX)));
-      translateY.setValue(Math.max(-maxTranslateY, Math.min(maxTranslateY, newTranslateY)));
-    }
-  };
-  
-  const onPanHandlerStateChange = (event) => {
-    if (event.nativeEvent.oldState === State.ACTIVE) {
+  // Pan gesture - only allow panning when zoomed
+  const panStartX = useRef(0);
+  const panStartY = useRef(0);
+  const panGesture = Gesture.Pan()
+    .minPointers(1)
+    .maxPointers(1)
+    .activeOffsetX([-5, 5])
+    .activeOffsetY([-20, 20])
+    .onStart(() => {
+      // Store starting position
+      panStartX.current = lastTranslateX.current;
+      panStartY.current = lastTranslateY.current;
+    })
+    .onUpdate((event) => {
       if (lastScale.current > 1) {
-        lastTranslateX.current += event.nativeEvent.translationX;
-        lastTranslateY.current += event.nativeEvent.translationY;
+        const newTranslateX = panStartX.current + event.translationX;
+        const newTranslateY = panStartY.current + event.translationY;
         
         // Clamp translation based on scale
         const maxTranslateX = (screenWidth * (lastScale.current - 1)) / 2;
         const maxTranslateY = (screenHeight * (lastScale.current - 1)) / 2;
         
-        lastTranslateX.current = Math.max(-maxTranslateX, Math.min(maxTranslateX, lastTranslateX.current));
-        lastTranslateY.current = Math.max(-maxTranslateY, Math.min(maxTranslateY, lastTranslateY.current));
+        translateX.setValue(Math.max(-maxTranslateX, Math.min(maxTranslateX, newTranslateX)));
+        translateY.setValue(Math.max(-maxTranslateY, Math.min(maxTranslateY, newTranslateY)));
+      }
+    })
+    .onEnd((event) => {
+      if (lastScale.current > 1) {
+        // Update last position with the final translation
+        const finalTranslateX = panStartX.current + event.translationX;
+        const finalTranslateY = panStartY.current + event.translationY;
+        
+        // Clamp translation based on scale
+        const maxTranslateX = (screenWidth * (lastScale.current - 1)) / 2;
+        const maxTranslateY = (screenHeight * (lastScale.current - 1)) / 2;
+        
+        lastTranslateX.current = Math.max(-maxTranslateX, Math.min(maxTranslateX, finalTranslateX));
+        lastTranslateY.current = Math.max(-maxTranslateY, Math.min(maxTranslateY, finalTranslateY));
         
         translateX.setValue(lastTranslateX.current);
         translateY.setValue(lastTranslateY.current);
       }
-    } else if (event.nativeEvent.state === State.BEGAN) {
-      // Reset translation values to last position when gesture begins
-      translateX.setValue(lastTranslateX.current);
-      translateY.setValue(lastTranslateY.current);
-    }
-  };
+    })
+    .simultaneousWithExternalGesture(pinchGesture);
   
-  // Double tap handler
-  const onDoubleTap = (event) => {
-    if (event.nativeEvent.state === State.ACTIVE) {
-      resetZoom();
-    }
-  };
-  
-  // Single tap handler (to prevent conflicts)
-  const onSingleTap = (event) => {
-    if (event.nativeEvent.state === State.ACTIVE) {
-      // Do nothing on single tap, just prevent it from interfering
-    }
-  };
+  // Compose gestures
+  const composedGesture = Gesture.Race(
+    doubleTap,
+    Gesture.Simultaneous(pinchGesture, panGesture)
+  );
   
   return (
-    <TapGestureHandler
-      ref={doubleTapRef}
-      numberOfTaps={2}
-      onHandlerStateChange={onDoubleTap}
-    >
-      <Animated.View style={{ flex: 1 }}>
-        <TapGestureHandler
-          numberOfTaps={1}
-          waitFor={doubleTapRef}
-          onHandlerStateChange={onSingleTap}
-        >
-          <Animated.View style={{ flex: 1 }}>
-            <PinchGestureHandler
-              ref={pinchRef}
-              onGestureEvent={onPinchGestureEvent}
-              onHandlerStateChange={onPinchHandlerStateChange}
-            >
-              <Animated.View style={{ flex: 1 }}>
-                <PanGestureHandler
-                  ref={panRef}
-                  onGestureEvent={onPanGestureEvent}
-                  onHandlerStateChange={onPanHandlerStateChange}
-                  minPointers={1}
-                  maxPointers={1}
-                  simultaneousHandlers={pinchRef}
-                  activeOffsetX={[-5, 5]}
-                  activeOffsetY={[-20, 20]}
-                  failOffsetX={[-100, 100]}
-                  failOffsetY={[-100, 100]}
-                  avgTouches
-                >
-                  <Animated.View
-                    style={[
-                      style,
-                      {
-                        transform: [
-                          { translateX },
-                          { translateY },
-                          { scale },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Image
-                      source={source}
-                      style={[style, { width: '100%', height: '100%' }]}
-                      resizeMode="stretch"
-                      onError={onError}
-                      onLoad={onLoad}
-                      onLoadStart={onLoadStart}
-                      fadeDuration={fadeDuration}
-                    />
-                  </Animated.View>
-                </PanGestureHandler>
-              </Animated.View>
-            </PinchGestureHandler>
-          </Animated.View>
-        </TapGestureHandler>
+    <GestureDetector gesture={composedGesture}>
+      <Animated.View
+        style={[
+          style,
+          {
+            transform: [
+              { translateX },
+              { translateY },
+              { scale },
+            ],
+          },
+        ]}
+      >
+        <Image
+          source={source}
+          style={[style, { width: '100%', height: '100%' }]}
+          resizeMode="stretch"
+          onError={onError}
+          onLoad={onLoad}
+          onLoadStart={onLoadStart}
+          fadeDuration={fadeDuration}
+        />
       </Animated.View>
-    </TapGestureHandler>
+    </GestureDetector>
   );
 };
+
+// Memoize ZoomableImage with custom comparison
+const MemoizedZoomableImage = memo(ZoomableImage, (prevProps, nextProps) => {
+  // Custom comparison function - only re-render if source changes
+  return prevProps.source === nextProps.source;
+});
 
 // Image map moved outside component for better performance - only created once
 const IMAGE_MAP = {
@@ -367,6 +346,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
   // FlatList refs and state
   const flatListRef = useRef(null);
   const hasScrolledToInitialPage = useRef(false);
+  const scrollThrottleRef = useRef(null);
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
     minimumViewTime: 100,
@@ -480,6 +460,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
       if (hideTimer) {
         clearTimeout(hideTimer);
       }
+      // Cleanup scroll throttle timeout
+      if (scrollThrottleRef.current) {
+        clearTimeout(scrollThrottleRef.current);
+        scrollThrottleRef.current = null;
+      }
     };
   }, []);
 
@@ -560,30 +545,37 @@ const QuranReaderScreen = ({ navigation, route }) => {
     []
   );
 
-  // Render each page item
-  const renderPageItem = useCallback(({ item, index }) => {
+  // Stable callbacks for ZoomableImage to prevent re-renders
+  const handleImageError = useCallback(() => {
+    // Image load error
+  }, []);
+  
+  const handleImageLoad = useCallback(() => {
+    // Image loaded successfully
+  }, []);
+  
+  const handleImageLoadStart = useCallback(() => {
+    // Image loading started
+  }, []);
+
+  // Render each page item - optimized with memoization
+  const renderPageItem = useCallback(({ item }) => {
     const pageNumber = item; // item is the page number from pagesArray
     const imageSource = getImageSource(pageNumber);
     
     return (
       <View style={styles.pageItemContainer}>
-        <ZoomableImage
+        <MemoizedZoomableImage
           source={imageSource}
           style={styles.quranImage}
-          onError={() => {
-            // Image load error
-          }}
-          onLoad={() => {
-            // Image loaded successfully
-          }}
-          onLoadStart={() => {
-            // Image loading started
-          }}
+          onError={handleImageError}
+          onLoad={handleImageLoad}
+          onLoadStart={handleImageLoadStart}
           fadeDuration={200}
         />
       </View>
     );
-  }, [getImageSource]);
+  }, [getImageSource, handleImageError, handleImageLoad, handleImageLoadStart]);
 
 
 
@@ -744,11 +736,20 @@ const QuranReaderScreen = ({ navigation, route }) => {
             // Fix: Use Math.round instead of Math.floor to get correct page
             const pageIndex = Math.round(offsetY / screenHeight);
             const newPage = Math.max(1, Math.min(totalPages, pageIndex + 1));
+            
+            // Throttle state updates for better performance
             if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
-              setCurrentPage(newPage);
-              saveCurrentPage(newPage);
+              if (scrollThrottleRef.current) {
+                clearTimeout(scrollThrottleRef.current);
+              }
+              scrollThrottleRef.current = setTimeout(() => {
+                setCurrentPage(newPage);
+                saveCurrentPage(newPage);
+                scrollThrottleRef.current = null;
+              }, 150);
             }
           }}
+          scrollEventThrottle={50}
           onScrollBeginDrag={() => {
             // Show controls when user starts scrolling
             setShowControls(true);
@@ -758,11 +759,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
           inverted={false}
           directionalLockEnabled={true}
           scrollEnabled={true}
-          removeClippedSubviews={false}
-          maxToRenderPerBatch={10}
-          windowSize={21}
-          initialNumToRender={10}
-          updateCellsBatchingPeriod={50}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={5}
+          windowSize={11}
+          initialNumToRender={3}
+          updateCellsBatchingPeriod={100}
           style={styles.flatList}
           contentContainerStyle={styles.flatListContent}
           nestedScrollEnabled={false}
@@ -867,7 +868,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     direction: 'rtl',
   },
   pageContainer: {
@@ -876,22 +877,23 @@ const styles = StyleSheet.create({
     height: screenHeight,
     margin: 0,
     padding: 0,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     direction: 'rtl',
   },
   flatList: {
     flex: 1,
     width: screenWidth,
     height: screenHeight,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
   },
   flatListContent: {
     width: screenWidth,
+    backgroundColor: '#FFFFFF',
   },
   pageItemContainer: {
     width: screenWidth,
     height: screenHeight,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
     position: 'relative',
   },
