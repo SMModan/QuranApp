@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -11,12 +11,9 @@ import {
   TextInput,
   Image,
   Animated,
-  BackHandler
+  BackHandler,
+  FlatList
 } from 'react-native';
-import { 
-  PanGestureHandler,
-  State
-} from 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
@@ -177,20 +174,26 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [bookmarkComment, setBookmarkComment] = useState('');
   const [showSlider, setShowSlider] = useState(false);
   const [hideTimer, setHideTimer] = useState(null);
-  const gestureStartX = useRef(null);
   
-  // Animation state
-  const [isAnimating, setIsAnimating] = useState(false);
-  const fadeAnimation = useRef(new Animated.Value(1)).current;
+  // FlatList refs and state
+  const flatListRef = useRef(null);
+  const hasScrolledToInitialPage = useRef(false);
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+    minimumViewTime: 100,
+  });
   
   // Validate navigation object
   const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
+  
+  // Generate array of page numbers for FlatList
+  const pagesArray = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  // Get image source for current page - optimized
-  const getImageSource = (pageNumber) => {
+  // Get image source for page - optimized
+  const getImageSource = useCallback((pageNumber) => {
     const validPage = Math.max(1, Math.min(134, pageNumber || 1));
     return IMAGE_MAP[validPage] || IMAGE_MAP[1]; // Fallback to page 1 if not found
-  };
+  }, []);
 
   // Load bookmarks from AsyncStorage
   const loadBookmarks = async () => {
@@ -220,6 +223,44 @@ const QuranReaderScreen = ({ navigation, route }) => {
   useEffect(() => {
     loadCurrentPage();
   }, [route?.params]);
+
+  // Scroll to initial page when component mounts or route params change
+  useEffect(() => {
+    // Reset scroll flag when route params change
+    hasScrolledToInitialPage.current = false;
+    
+    const scrollToPage = () => {
+      if (flatListRef.current) {
+        const targetPage = route?.params?.pageNumber || route?.params?.page || initialPage;
+        const pageIndex = Math.max(0, Math.min(totalPages - 1, targetPage - 1));
+        
+        console.log('Scrolling to page:', targetPage, 'index:', pageIndex);
+        
+        // Use scrollToOffset for vertical scroll
+        const offset = pageIndex * screenHeight;
+        flatListRef.current.scrollToOffset({
+          offset: offset,
+          animated: false,
+        });
+        
+        // Also try scrollToIndex as backup
+        setTimeout(() => {
+          flatListRef.current?.scrollToIndex({
+            index: pageIndex,
+            animated: false,
+            viewPosition: 0,
+          });
+          setCurrentPage(targetPage);
+          hasScrolledToInitialPage.current = true;
+        }, 100);
+      }
+    };
+    
+    // Delay to ensure FlatList is fully mounted
+    const timer = setTimeout(scrollToPage, 500);
+    
+    return () => clearTimeout(timer);
+  }, [route?.params?.pageNumber, route?.params?.page, initialPage, totalPages, screenHeight]);
 
   // Handle back press - navigate to home screen
   const handleBackPress = () => {
@@ -294,62 +335,69 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
-  // Simple book-like page transition
-  const animatePageTransition = (direction, newPage) => {
-    if (isAnimating) return;
-    
-    setIsAnimating(true);
-    
-    // Update page immediately to prevent black screen
-    setCurrentPage(newPage);
-    saveCurrentPage(newPage);
-    
-    // Smooth fade animation with white background
-    Animated.sequence([
-      Animated.timing(fadeAnimation, {
-        toValue: 0.8,
-        duration: 80,
-        useNativeDriver: false,
-      }),
-      Animated.timing(fadeAnimation, {
-        toValue: 1,
-        duration: 80,
-        useNativeDriver: false,
-      })
-    ]).start(() => {
-      setIsAnimating(false);
-    });
-  };
-
-  // Navigate to next page with animation (circular navigation)
-  const goToNextPage = () => {
-    if (!isAnimating) {
-      let newPage;
-      if (currentPage >= totalPages) {
-        // If on last page, go to first page (circular)
-        newPage = 1;
-      } else {
-        newPage = currentPage + 1;
+  // Handle viewable items change to track current page - Vertical scroll
+  const onViewableItemsChanged = useCallback(({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      // Get the most visible item (highest visibility percentage)
+      const mostVisible = viewableItems.reduce((prev, current) => 
+        (current.isViewable && (current.percentVisible || 0) > (prev.percentVisible || 0)) ? current : prev
+      );
+      
+      if (mostVisible && mostVisible.index !== null && mostVisible.index !== undefined) {
+        const newPage = mostVisible.index + 1; // index is 0-based, page is 1-based
+        if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages) {
+          setCurrentPage(newPage);
+          saveCurrentPage(newPage);
+        }
       }
-      animatePageTransition('next', newPage);
-      console.log('Navigating to next page:', newPage);
     }
-  };
+  }, [currentPage, totalPages]);
 
-  // Navigate to previous page with animation (circular navigation)
-  const goToPreviousPage = () => {
-    if (!isAnimating) {
-      let newPage;
-      if (currentPage <= 1) {
-        // If on first page, go to last page (circular)
-        newPage = totalPages;
-      } else {
-        newPage = currentPage - 1;
-      }
-      animatePageTransition('previous', newPage);
-      console.log('Navigating to previous page:', newPage);
-    }
-  };
+  // Get item layout for FlatList performance - Vertical
+  const getItemLayoutVertical = useCallback(
+    (data, index) => ({
+      length: screenHeight,
+      offset: screenHeight * index,
+      index,
+    }),
+    []
+  );
+
+  // Render each page item
+  const renderPageItem = useCallback(({ item, index }) => {
+    const pageNumber = item; // item is the page number from pagesArray
+    const imageSource = getImageSource(pageNumber);
+    
+    // Debug logging
+    console.log('=== renderPageItem DEBUG ===');
+    console.log('item:', item);
+    console.log('index:', index);
+    console.log('pageNumber:', pageNumber);
+    console.log('imageSource:', imageSource);
+    console.log('imageSource type:', typeof imageSource);
+    console.log('imageSource value:', JSON.stringify(imageSource));
+    console.log('===========================');
+    
+    return (
+      <View style={styles.pageItemContainer}>
+        <Image
+          source={imageSource}
+          style={styles.quranImage}
+          resizeMode="stretch"
+          onError={(error) => {
+            console.error('Image load error for page', pageNumber, error);
+          }}
+          onLoad={() => {
+            console.log('Image loaded successfully for page', pageNumber);
+          }}
+          onLoadStart={() => {
+            console.log('Image loading started for page', pageNumber);
+          }}
+          fadeDuration={200}
+        />
+      </View>
+    );
+  }, [getImageSource]);
 
 
 
@@ -443,7 +491,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
-  // Handle slider track press
+  // Handle slider track press - scroll to specific page (vertical)
   const handleSliderTrackPress = (event) => {
     const { locationX } = event.nativeEvent;
     const sliderContainerWidth = screenWidth - (getSpacing(20) * 2); // Left and right padding
@@ -451,11 +499,18 @@ const QuranReaderScreen = ({ navigation, route }) => {
     const percentage = Math.max(0, Math.min(1, locationX / trackWidth));
     const newPage = Math.round(1 + (percentage * (totalPages - 1)));
     
-    if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages) {
+    if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages && flatListRef.current) {
+      const pageIndex = newPage - 1; // Convert to 0-based index
+      const offset = pageIndex * screenHeight;
+      flatListRef.current.scrollToOffset({
+        offset: offset,
+        animated: true,
+      });
       setCurrentPage(newPage);
       saveCurrentPage(newPage);
     }
   };
+
 
   console.log('QuranReaderScreen rendering - currentPage:', currentPage, 'totalPages:', totalPages);
   
@@ -474,83 +529,55 @@ const QuranReaderScreen = ({ navigation, route }) => {
       <View style={[styles.container, { direction: 'rtl' }]}>
       
        <StatusBar hidden={true} />
-      {/* Image Slider */}
-      <PanGestureHandler
-        onGestureEvent={(event) => {
-          // Track initial touch position for edge detection
-          if (event.nativeEvent.state === State.BEGAN) {
-            gestureStartX.current = event.nativeEvent.x;
-          }
-        }}
-        onHandlerStateChange={(event) => {
-          if (event.nativeEvent.state === State.BEGAN) {
-            // Store initial position when gesture begins
-            gestureStartX.current = event.nativeEvent.x;
-          } else if (event.nativeEvent.state === State.END) {
-            const { translationX, velocityX } = event.nativeEvent;
-            const startX = gestureStartX.current;
-            
-            // Only process gesture if not currently animating
-            if (!isAnimating && startX !== null) {
-              // Check for back to home gesture first (must be very strong AND from left edge)
-              // Require both strong swipe AND starting from left edge (first 20% of screen)
-              const isFromLeftEdge = startX < screenWidth * 0.2;
-              const isVeryStrongLeftSwipe = translationX < -250 && velocityX < -1200;
-              
-              if (isFromLeftEdge && isVeryStrongLeftSwipe) {
-                // Very strong left swipe from left edge = back to home
-                handleBackPress();
-              }
-              // RTL Navigation: Swipe right = next page, Swipe left = previous page
-              else if (translationX > 50 || velocityX > 500) {
-                goToNextPage(); // Swipe right = next page in RTL
-              }
-              else if (translationX < -50 || velocityX < -500) {
-                goToPreviousPage(); // Swipe left = previous page in RTL
-              }
+      
+      {/* Continuous Reading FlatList - Vertical Scroll */}
+      <View style={styles.pageContainer}>
+        <FlatList
+          ref={flatListRef}
+          data={pagesArray}
+          renderItem={renderPageItem}
+          keyExtractor={(item) => `page-${item}`}
+          horizontal={false}
+          pagingEnabled={false}
+          showsVerticalScrollIndicator={false}
+          getItemLayout={getItemLayoutVertical}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig.current}
+          onScrollToIndexFailed={(info) => {
+            // Handle scroll to index failure
+            const wait = new Promise(resolve => setTimeout(resolve, 500));
+            wait.then(() => {
+              flatListRef.current?.scrollToIndex({ index: info.index, animated: false });
+            });
+          }}
+          onScroll={(event) => {
+            const offsetY = event.nativeEvent.contentOffset.y;
+            const pageIndex = Math.floor(offsetY / screenHeight);
+            const newPage = pageIndex + 1;
+            if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
+              setCurrentPage(newPage);
+              saveCurrentPage(newPage);
             }
-            
-            // Reset gesture start position
-            gestureStartX.current = null;
-          }
-        }}
-      >
-        <View style={styles.pageContainer}>
-          <TouchableOpacity 
-            style={styles.imageContainer}
-            onPress={toggleControls}
-            onLongPress={toggleFullScreen}
-            activeOpacity={1}
-          >
-            <Animated.View
-              style={[
-                styles.animatedImageContainer,
-                {
-                  opacity: fadeAnimation,
-                }
-              ]}
-            >
-              <Image
-                source={getImageSource(currentPage)}
-                style={styles.quranImage}
-                resizeMode="stretch"
-                onError={(error) => {
-                  console.log('Image load error for page', currentPage, error);
-                  // Fallback to page 1 if current page fails to load
-                  if (currentPage !== 1) {
-                    setCurrentPage(1);
-                  }
-                }}
-                onLoad={() => {
-                  console.log('Image loaded successfully for page', currentPage);
-                }}
-                fadeDuration={200}
-                {...(Platform.OS === 'android' && { defaultSource: require('../assets/quran_safa/quran_safa_1.jpg') })}
-              />
-            </Animated.View>
-          </TouchableOpacity>
-        </View>
-      </PanGestureHandler>
+          }}
+          onScrollBeginDrag={() => {
+            // Show controls when user starts scrolling
+            setShowControls(true);
+            startHideTimer();
+          }}
+          onTouchStart={toggleControls}
+          inverted={false}
+          directionalLockEnabled={true}
+          scrollEnabled={true}
+          removeClippedSubviews={false}
+          maxToRenderPerBatch={10}
+          windowSize={21}
+          initialNumToRender={10}
+          updateCellsBatchingPeriod={50}
+          style={styles.flatList}
+          contentContainerStyle={styles.flatListContent}
+          nestedScrollEnabled={false}
+        />
+      </View>
 
       {/* Floating Back Button */}
       {/* {showControls && (
@@ -697,28 +724,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     direction: 'rtl',
   },
-  imageContainer: {
+  flatList: {
+    flex: 1,
     width: screenWidth,
     height: screenHeight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: 0,
-    padding: 0,
     backgroundColor: '#FFFFFF',
-    direction: 'rtl',
   },
-  animatedImageContainer: {
+  flatListContent: {
+    // Empty - no special styling needed
+  },
+  pageItemContainer: {
     width: screenWidth,
     height: screenHeight,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
   },
   quranImage: {
     width: screenWidth,
     height: screenHeight,
     margin: 0,
     padding: 0,
+    resizeMode: 'stretch',
   },
   floatingBackButton: {
     position: 'absolute',
