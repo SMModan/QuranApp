@@ -404,6 +404,20 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
+  // Keep StatusBar hidden at all times
+  useEffect(() => {
+    StatusBar.setHidden(true, 'none');
+    return () => {
+      // Keep it hidden even on unmount
+      StatusBar.setHidden(true, 'none');
+    };
+  }, []);
+
+  // Ensure StatusBar stays hidden when bookmark dialog opens/closes
+  useEffect(() => {
+    StatusBar.setHidden(true, 'none');
+  }, [showBookmarkDialog]);
+
   // Consolidated useEffect hooks for better performance
   useEffect(() => {
     loadBookmarks();
@@ -608,6 +622,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   // Toggle controls visibility
   const toggleControls = () => {
+    StatusBar.setHidden(true, 'none');
     setShowControls(!showControls);
     if (!showControls) {
       startHideTimer();
@@ -626,8 +641,15 @@ const QuranReaderScreen = ({ navigation, route }) => {
     startHideTimer();
   };
 
+  // Close bookmark dialog
+  const closeBookmarkDialog = () => {
+    StatusBar.setHidden(true, 'none');
+    setShowBookmarkDialog(false);
+  };
+
   // Toggle bookmark
   const toggleBookmark = () => {
+    StatusBar.setHidden(true, 'none');
     if (isBookmarked) {
       removeBookmark();
     } else {
@@ -637,6 +659,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
 
   // Add bookmark
   const addBookmark = async () => {
+    StatusBar.setHidden(true, 'none');
     try {
       const newBookmark = {
         id: Date.now(),
@@ -648,8 +671,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
       const updatedBookmarks = [...bookmarks, newBookmark];
       setBookmarks(updatedBookmarks);
       setIsBookmarked(true);
-      setShowBookmarkDialog(false);
       setBookmarkComment('');
+      closeBookmarkDialog();
       
       await AsyncStorage.setItem('quran_bookmarks', JSON.stringify(updatedBookmarks));
       Alert.alert('Success', 'Bookmark added successfully!');
@@ -719,7 +742,12 @@ const QuranReaderScreen = ({ navigation, route }) => {
   
   return (
     <GestureHandlerRootView style={styles.container}>
-      <StatusBar hidden={true} />
+      <StatusBar 
+        hidden={true} 
+        translucent={true}
+        backgroundColor="transparent"
+        barStyle="light-content"
+      />
       
       {/* Continuous Reading FlatList - Vertical Scroll */}
       <View style={styles.pageContainer}>
@@ -824,7 +852,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
           <View style={styles.bookmarkModalContent}>
             <View style={styles.bookmarkModalHeader}>
               <Text style={styles.bookmarkModalTitle}>Add Bookmark</Text>
-              <TouchableOpacity onPress={() => setShowBookmarkDialog(false)}>
+              <TouchableOpacity onPress={closeBookmarkDialog}>
                 <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -836,6 +864,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
               placeholder="Add a comment (optional)"
               value={bookmarkComment}
               onChangeText={setBookmarkComment}
+              onFocus={() => StatusBar.setHidden(true, 'none')}
+              onBlur={() => StatusBar.setHidden(true, 'none')}
               multiline
               maxLength={100}
               textAlign="left" // RTL text alignment
@@ -845,7 +875,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
             <View style={styles.bookmarkModalButtons}>
               <TouchableOpacity 
                 style={styles.cancelButton}
-                onPress={() => setShowBookmarkDialog(false)}
+                onPress={closeBookmarkDialog}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
