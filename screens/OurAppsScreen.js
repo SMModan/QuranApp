@@ -394,6 +394,7 @@ const OurAppsScreen = ({ navigation }) => {
         visible={isMenuVisible}
         onClose={handleMenuClose}
         onMenuItemPress={handleMenuItemPress}
+        excludedItems={['visit_website']}
       />
     </View>
   );

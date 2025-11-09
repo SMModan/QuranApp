@@ -19,7 +19,8 @@ const SideMenu = ({
   onClose, 
   onMenuItemPress,
   backgroundColor = '#1a237e',
-  textColor = '#FFFFFF'
+  textColor = '#FFFFFF',
+  excludedItems = []
 }) => {
   const slideAnim = React.useRef(new Animated.Value(-screenWidth)).current;
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -62,16 +63,8 @@ const SideMenu = ({
       title: 'Bookmarks',
       icon: require('../assets/icons/menu_icon/Book.png'),
     },
-    {
-      id: 'our_apps',
-      title: 'Our Apps',
-      icon: require('../assets/icons/menu_icon/Apps.png'),
-    },
-    {
-      id: 'visit_website',
-      title: 'Visit Website',
-      icon: require('../assets/icons/menu_icon/Earth.png'),
-    },
+   
+  
     {
       id: 'contact_us',
       title: 'Contact Us',
@@ -136,25 +129,27 @@ const SideMenu = ({
 
             {/* Menu Items */}
             <View style={styles.menuItems}>
-              {menuItems.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.menuItem}
-                  onPress={() => handleMenuItemPress(item.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.menuItemContent}>
-                    <Image 
-                      source={item.icon}
-                      style={styles.menuItemIcon}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.menuItemTitle}>
-                      {item.title}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+              {menuItems
+                .filter(item => !excludedItems.includes(item.id))
+                .map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.menuItem}
+                    onPress={() => handleMenuItemPress(item.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.menuItemContent}>
+                      <Image 
+                        source={item.icon}
+                        style={styles.menuItemIcon}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.menuItemTitle}>
+                        {item.title}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
             </View>
 
           </ScrollView>
