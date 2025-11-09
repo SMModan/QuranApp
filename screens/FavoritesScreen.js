@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, BackHandler } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
-import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 import { getFavorites, removeFavorite } from '../utils/FavoritesStorage';
 
 const FavoritesScreen = ({ navigation }) => {

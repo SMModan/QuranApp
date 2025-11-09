@@ -4,7 +4,7 @@ import CommonHeader from '../components/CommonHeader';
 import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
 import ResponsiveText from '../components/ResponsiveText';
-import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = ({ navigation }) => {
@@ -17,7 +17,7 @@ const HomeScreen = ({ navigation }) => {
   const menuItems = [
     {
       id: 'resume',
-      title: 'سيرة ذاتية',
+      title: 'ریزیومے',
       subtitle: 'RESUME',
       icon: '📖',
       iconImage: require('../assets/icons/ic_home_item_resume.png'),
@@ -25,7 +25,7 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 'bookmarks',
-      title: 'العلامات المرجعية',
+      title: 'بک مارکس',
       subtitle: 'BOOKMARKS',
       icon: '🔖',
       iconImage: require('../assets/icons/ic_home_item_bookmark.png'),
@@ -33,7 +33,7 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 'favourites',
-      title: 'المفضلة',
+      title: 'پسندیدہ',
       subtitle: 'FAVOURITES',
       icon: '⭐',
       iconImage: require('../assets/icons/ic_home_favourites.png'),
@@ -41,7 +41,7 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 'surah_index',
-      title: 'فهرس السور',
+      title: 'سورتوں کی فہرست',
       subtitle: 'SURAH INDEX',
       icon: '📋',
       iconImage: require('../assets/icons/ic_home_surah_index.png'),
@@ -49,7 +49,7 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 'juz_index',
-      title: 'فهرس الأجزاء / الفقرات',
+      title: 'جزو/پارہ کی فہرست',
       subtitle: 'JUZ/PARA INDEX',
       icon: '📚',
       iconImage: require('../assets/icons/home_juz_para_index.png'),
@@ -57,7 +57,7 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 'go_to_page',
-      title: 'انتقل إلى الصفحة',
+      title: 'صفحہ پر جائیں',
       subtitle: 'GO TO PAGE',
       icon: '📄',
       iconImage: require('../assets/icons/ic_home_go_to_page.png'),

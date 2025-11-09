@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, Share, Platform } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
 import ResponsiveContainer from '../components/ResponsiveContainer';
-import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SettingsScreen = ({ navigation }) => {
   const handleMenuPress = () => {
@@ -12,81 +13,111 @@ const SettingsScreen = ({ navigation }) => {
     }
   };
 
-  const handleBackup = () => {
-    Alert.alert(
-      'Backup Data',
-      'Your bookmarks and reading progress will be backed up to the cloud.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Backup', onPress: () => console.log('Backup started') }
-      ]
-    );
+  const handleBackup = async () => {
+    try {
+      // Get all data to backup
+      const bookmarks = await AsyncStorage.getItem('quran_bookmarks');
+      const favorites = await AsyncStorage.getItem('quran_favorites');
+      const resumeData = await AsyncStorage.getItem('quran_resume_data');
+      
+      const backupData = {
+        bookmarks: bookmarks ? JSON.parse(bookmarks) : [],
+        favorites: favorites ? JSON.parse(favorites) : [],
+        resumeData: resumeData ? JSON.parse(resumeData) : null,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Share as JSON file
+      const result = await Share.share({
+        message: JSON.stringify(backupData, null, 2),
+        title: 'Quran App Backup'
+      });
+      
+      if (result.action === Share.sharedAction) {
+        Alert.alert('Success', 'Backup data has been shared. Save it to restore later.');
+      }
+    } catch (error) {
+      console.error('Backup error:', error);
+      Alert.alert('Error', 'Failed to create backup');
+    }
   };
 
   const handleRestore = () => {
     Alert.alert(
       'Restore Data',
-      'This will restore your bookmarks and reading progress from the cloud.',
+      'To restore your data, paste the backup JSON content. This will replace your current data.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Restore', onPress: () => console.log('Restore started') }
+        { 
+          text: 'Restore', 
+          onPress: () => {
+            Alert.alert(
+              'Restore Data',
+              'Please paste your backup JSON data in the next dialog.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Continue', 
+                  onPress: () => {
+                    // In a real app, you'd have a text input here
+                    // For now, show instructions
+                    Alert.alert(
+                      'Restore Instructions',
+                      'Restore functionality requires a text input. This feature will be enhanced in a future update.'
+                    );
+                  }
+                }
+              ]
+            );
+          }
+        }
       ]
     );
   };
 
-  const handleShareApp = () => {
-    Alert.alert(
-      'Share App',
-      'Share this amazing Quran app with your friends and family!',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Share', onPress: () => console.log('Share app') }
-      ]
-    );
+  const handleShareApp = async () => {
+    try {
+      const result = await Share.share({
+        message: 'Check out this amazing Quran app! Download it now.',
+        url: 'https://play.google.com/store/apps/details?id=com.anonymous.QuranAppExpo',
+        title: 'Quran App'
+      });
+      
+      if (result.action === Share.sharedAction) {
+        console.log('App shared successfully');
+      }
+    } catch (error) {
+      console.log('Error sharing app:', error);
+      Alert.alert('Error', 'Could not share the app');
+    }
   };
 
   const handleRateApp = () => {
-    Alert.alert(
-      'Rate App',
-      'Please rate our app on the app store to help us improve!',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Rate', onPress: () => console.log('Rate app') }
-      ]
-    );
+    const appStoreUrl = Platform.OS === 'ios' 
+      ? 'https://apps.apple.com/app/id123456789'
+      : 'https://play.google.com/store/apps/details?id=com.anonymous.QuranAppExpo';
+    
+    Linking.openURL(appStoreUrl).catch(err => {
+      Alert.alert('Error', 'Could not open app store');
+    });
   };
 
   const handleContactUs = () => {
-    Alert.alert(
-      'Contact Us',
-      'Get in touch with us for support or feedback.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Contact', onPress: () => console.log('Contact us') }
-      ]
-    );
+    if (navigation) {
+      navigation.navigate('contact-us');
+    }
   };
 
   const handleVisitWebsite = () => {
-    Alert.alert(
-      'Visit Website',
-      'Opening our website in your browser...',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Open', onPress: () => console.log('Visit website') }
-      ]
-    );
+    Linking.openURL('https://www.peerbits.com/').catch(err => {
+      Alert.alert('Error', 'Could not open website');
+    });
   };
 
   const handleOurApps = () => {
-    Alert.alert(
-      'Our Apps',
-      'Check out our other amazing Islamic apps!',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'View Apps', onPress: () => console.log('View our apps') }
-      ]
-    );
+    if (navigation) {
+      navigation.navigate('our-apps');
+    }
   };
 
   const settingsOptions = [

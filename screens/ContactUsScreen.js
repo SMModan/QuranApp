@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Linking, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Linking, Alert, KeyboardAvoidingView, Platform, Share } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
-import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
 import ResponsiveText from '../components/ResponsiveText';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
@@ -12,7 +11,6 @@ const ContactUsScreen = ({ navigation }) => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isMenuVisible, setIsMenuVisible] = useState(false);
 
   const contactInfo = [
     {
@@ -85,14 +83,6 @@ const ContactUsScreen = ({ navigation }) => {
     }
   };
 
-  const handleMenuPress = () => {
-    setIsMenuVisible(true);
-  };
-
-  const handleMenuClose = () => {
-    setIsMenuVisible(false);
-  };
-
   const handleBackPress = () => {
     navigation.goBack();
   };
@@ -111,12 +101,35 @@ const ContactUsScreen = ({ navigation }) => {
         // Already on contact us page
         break;
       case 'share_app':
-        // Handle share functionality
-        Alert.alert('Share App', 'Share functionality will be implemented');
+        // Share app functionality
+        (async () => {
+          try {
+            const result = await Share.share({
+              message: 'Check out this amazing Quran app! Download it now.',
+              url: 'https://play.google.com/store/apps/details?id=com.anonymous.QuranAppExpo',
+              title: 'Quran App'
+            });
+            
+            if (result.action === Share.sharedAction) {
+              console.log('App shared successfully');
+            }
+          } catch (error) {
+            console.log('Error sharing app:', error);
+            Alert.alert('Error', 'Could not share the app');
+          }
+        })();
         break;
       case 'rate_app':
-        // Handle rate app functionality
-        Alert.alert('Rate App', 'Rate app functionality will be implemented');
+        // Rate app functionality
+        (() => {
+          const appStoreUrl = Platform.OS === 'ios' 
+            ? 'https://apps.apple.com/app/id123456789'
+            : 'https://play.google.com/store/apps/details?id=com.anonymous.QuranAppExpo';
+          
+          Linking.openURL(appStoreUrl).catch(err => {
+            Alert.alert('Error', 'Could not open app store');
+          });
+        })();
         break;
       case 'faqs':
         navigation.navigate('faqs');
@@ -141,8 +154,6 @@ const ContactUsScreen = ({ navigation }) => {
     <View style={styles.container}>
       <CommonHeader 
         title="Contact Us"
-        onMenuPress={handleMenuPress}
-        showMenu={true}
         showBackButton={true}
         onBackPress={handleBackPress}
       />
@@ -287,12 +298,6 @@ const ContactUsScreen = ({ navigation }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      <SideMenu
-        visible={isMenuVisible}
-        onClose={handleMenuClose}
-        onMenuItemPress={handleMenuItemPress}
-      />
     </View>
   );
 };

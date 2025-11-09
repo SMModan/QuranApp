@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from '
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
 import ResponsiveContainer from '../components/ResponsiveContainer';
-import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 
 const ReadingModeScreen = ({ navigation }) => {
   const [selectedMode, setSelectedMode] = useState('normal');

@@ -156,8 +156,8 @@ const BookmarkScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
             
-            {bookmarks.map((bookmark) => (
-              <View key={bookmark.id}>
+            {bookmarks.map((bookmark, index) => (
+              <View key={`bookmark-${bookmark.id}-${index}`}>
                 {renderBookmarkItem(bookmark)}
               </View>
             ))}

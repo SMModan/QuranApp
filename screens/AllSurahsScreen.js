@@ -1,23 +1,33 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Animated, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Animated, Alert, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
-import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 import { saveFavorite, isFavorite } from '../utils/FavoritesStorage';
 
 const AllSurahsScreen = ({ navigation }) => {
   const [favorites, setFavorites] = useState(new Set());
   const starAnimations = useRef({});
   const isMounted = useRef(true);
+  const appState = useRef(AppState.currentState);
 
-  // Load favorites from storage on component mount
+  // Load favorites from storage on component mount and when screen comes into focus
   useEffect(() => {
     loadFavorites();
+    
+    // Reload favorites when app comes to foreground
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        loadFavorites();
+      }
+      appState.current = nextAppState;
+    });
     
     // Cleanup function
     return () => {
       isMounted.current = false;
+      subscription?.remove();
     };
   }, []);
 
@@ -160,15 +170,14 @@ const AllSurahsScreen = ({ navigation }) => {
     }
   };
 
-  // Refresh favorites when component updates
+  // Reload favorites when navigation focus changes (handles back navigation)
   useEffect(() => {
-    const refreshFavorites = () => {
+    const unsubscribe = navigation?.addListener?.('focus', () => {
       loadFavorites();
-    };
-    
-    // Refresh favorites every time the component mounts or updates
-    refreshFavorites();
-  }, []);
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const handleSurahPress = (surah) => {
     console.log('Sending page number:', surah.pageNumber);

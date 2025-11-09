@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, BackHandler, StatusBar, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, BackHandler, Alert, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
-import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 import { saveFavorite, isFavorite } from '../utils/FavoritesStorage';
 
 const AllParasScreen = ({ navigation }) => {
   const [favorites, setFavorites] = useState(new Set());
   const isMounted = useRef(true);
+  const appState = useRef(AppState.currentState);
   
   const parasData = [
     { id: '01', arabic: 'الم', english: 'Alif Lam Meem', pageNumber: 2 },
@@ -58,15 +59,30 @@ const AllParasScreen = ({ navigation }) => {
     };
   }, []);
 
-  // Load favorites from storage on component mount
+  // Load favorites from storage on component mount and when screen comes into focus
   useEffect(() => {
     loadFavorites();
+    
+    // Reload favorites when app comes to foreground
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        loadFavorites();
+      }
+      appState.current = nextAppState;
+    });
+    
+    // Reload favorites when navigation focus changes
+    const unsubscribe = navigation?.addListener?.('focus', () => {
+      loadFavorites();
+    });
     
     // Cleanup function
     return () => {
       isMounted.current = false;
+      subscription?.remove();
+      unsubscribe?.();
     };
-  }, []);
+  }, [navigation]);
 
   const loadFavorites = async () => {
     try {

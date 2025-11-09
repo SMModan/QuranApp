@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Linking, Alert } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
-import SideMenu from '../components/SideMenu';
 import ResponsiveText from '../components/ResponsiveText';
-import BottomPlayerBar from '../components/BottomPlayerBar';
-import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 
 const FAQsScreen = ({ navigation }) => {
   const [expandedItems, setExpandedItems] = useState({});
-  const [isMenuVisible, setIsMenuVisible] = useState(false);
   const animations = React.useRef({});
   
   // Create animated values for each FAQ item
@@ -61,12 +58,6 @@ const FAQsScreen = ({ navigation }) => {
     }
   ];
 
-  const handleMenuPress = () => {
-    if (navigation && navigation.goBack) {
-      navigation.goBack();
-    }
-  };
-
   const toggleExpanded = (id) => {
     const isExpanded = expandedItems[id];
     const anim = getAnimation(id);
@@ -91,10 +82,10 @@ const FAQsScreen = ({ navigation }) => {
         }),
       ]).start();
     } else {
-      // Expand animation
+      // Expand animation - use maxHeight for flexible content
       Animated.parallel([
         Animated.timing(anim.height, {
-          toValue: 100, // Approximate height for content
+          toValue: 500, // Max height to accommodate varying content lengths
           duration: 300,
           useNativeDriver: false,
         }),
@@ -158,8 +149,9 @@ const FAQsScreen = ({ navigation }) => {
           style={[
             styles.answerContainer,
             {
-              height: anim.height,
+              maxHeight: anim.height,
               opacity: anim.opacity,
+              overflow: 'hidden',
             }
           ]}
         >

@@ -9,22 +9,157 @@ import {
   Alert,
   StatusBar,
   TextInput,
-  ScrollView,
   Image,
-  I18nManager,
-  Animated
+  Animated,
+  BackHandler
 } from 'react-native';
 import { 
   PanGestureHandler,
-  PinchGestureHandler,
   State
 } from 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// Image map moved outside component for better performance - only created once
+const IMAGE_MAP = {
+  1: require('../assets/quran_safa/quran_safa_1.jpg'),
+  2: require('../assets/quran_safa/quran_safa_2.jpg'),
+  3: require('../assets/quran_safa/quran_safa_3.jpg'),
+  4: require('../assets/quran_safa/quran_safa_4.jpg'),
+  5: require('../assets/quran_safa/quran_safa_5.jpg'),
+  6: require('../assets/quran_safa/quran_safa_6.jpg'),
+  7: require('../assets/quran_safa/quran_safa_7.jpg'),
+  8: require('../assets/quran_safa/quran_safa_8.jpg'),
+  9: require('../assets/quran_safa/quran_safa_9.jpg'),
+  10: require('../assets/quran_safa/quran_safa_10.jpg'),
+  11: require('../assets/quran_safa/quran_safa_11.jpg'),
+  12: require('../assets/quran_safa/quran_safa_12.jpg'),
+  13: require('../assets/quran_safa/quran_safa_13.jpg'),
+  14: require('../assets/quran_safa/quran_safa_14.jpg'),
+  15: require('../assets/quran_safa/quran_safa_15.jpg'),
+  16: require('../assets/quran_safa/quran_safa_16.jpg'),
+  17: require('../assets/quran_safa/quran_safa_17.jpg'),
+  18: require('../assets/quran_safa/quran_safa_18.jpg'),
+  19: require('../assets/quran_safa/quran_safa_19.jpg'),
+  20: require('../assets/quran_safa/quran_safa_20.jpg'),
+  21: require('../assets/quran_safa/quran_safa_21.jpg'),
+  22: require('../assets/quran_safa/quran_safa_22.jpg'),
+  23: require('../assets/quran_safa/quran_safa_23.jpg'),
+  24: require('../assets/quran_safa/quran_safa_24.jpg'),
+  25: require('../assets/quran_safa/quran_safa_25.jpg'),
+  26: require('../assets/quran_safa/quran_safa_26.jpg'),
+  27: require('../assets/quran_safa/quran_safa_27.jpg'),
+  28: require('../assets/quran_safa/quran_safa_28.jpg'),
+  29: require('../assets/quran_safa/quran_safa_29.jpg'),
+  30: require('../assets/quran_safa/quran_safa_30.jpg'),
+  31: require('../assets/quran_safa/quran_safa_31.jpg'),
+  32: require('../assets/quran_safa/quran_safa_32.jpg'),
+  33: require('../assets/quran_safa/quran_safa_33.jpg'),
+  34: require('../assets/quran_safa/quran_safa_34.jpg'),
+  35: require('../assets/quran_safa/quran_safa_35.jpg'),
+  36: require('../assets/quran_safa/quran_safa_36.jpg'),
+  37: require('../assets/quran_safa/quran_safa_37.jpg'),
+  38: require('../assets/quran_safa/quran_safa_38.jpg'),
+  39: require('../assets/quran_safa/quran_safa_39.jpg'),
+  40: require('../assets/quran_safa/quran_safa_40.jpg'),
+  41: require('../assets/quran_safa/quran_safa_41.jpg'),
+  42: require('../assets/quran_safa/quran_safa_42.jpg'),
+  43: require('../assets/quran_safa/quran_safa_43.jpg'),
+  44: require('../assets/quran_safa/quran_safa_44.jpg'),
+  45: require('../assets/quran_safa/quran_safa_45.jpg'),
+  46: require('../assets/quran_safa/quran_safa_46.jpg'),
+  47: require('../assets/quran_safa/quran_safa_47.jpg'),
+  48: require('../assets/quran_safa/quran_safa_48.jpg'),
+  49: require('../assets/quran_safa/quran_safa_49.jpg'),
+  50: require('../assets/quran_safa/quran_safa_50.jpg'),
+  51: require('../assets/quran_safa/quran_safa_51.jpg'),
+  52: require('../assets/quran_safa/quran_safa_52.jpg'),
+  53: require('../assets/quran_safa/quran_safa_53.jpg'),
+  54: require('../assets/quran_safa/quran_safa_54.jpg'),
+  55: require('../assets/quran_safa/quran_safa_55.jpg'),
+  56: require('../assets/quran_safa/quran_safa_56.jpg'),
+  57: require('../assets/quran_safa/quran_safa_57.jpg'),
+  58: require('../assets/quran_safa/quran_safa_58.jpg'),
+  59: require('../assets/quran_safa/quran_safa_59.jpg'),
+  60: require('../assets/quran_safa/quran_safa_60.jpg'),
+  61: require('../assets/quran_safa/quran_safa_61.jpg'),
+  62: require('../assets/quran_safa/quran_safa_62.jpg'),
+  63: require('../assets/quran_safa/quran_safa_63.jpg'),
+  64: require('../assets/quran_safa/quran_safa_64.jpg'),
+  65: require('../assets/quran_safa/quran_safa_65.jpg'),
+  66: require('../assets/quran_safa/quran_safa_66.jpg'),
+  67: require('../assets/quran_safa/quran_safa_67.jpg'),
+  68: require('../assets/quran_safa/quran_safa_68.jpg'),
+  69: require('../assets/quran_safa/quran_safa_69.jpg'),
+  70: require('../assets/quran_safa/quran_safa_70.jpg'),
+  71: require('../assets/quran_safa/quran_safa_71.jpg'),
+  72: require('../assets/quran_safa/quran_safa_72.jpg'),
+  73: require('../assets/quran_safa/quran_safa_73.jpg'),
+  74: require('../assets/quran_safa/quran_safa_74.jpg'),
+  75: require('../assets/quran_safa/quran_safa_75.jpg'),
+  76: require('../assets/quran_safa/quran_safa_76.jpg'),
+  77: require('../assets/quran_safa/quran_safa_77.jpg'),
+  78: require('../assets/quran_safa/quran_safa_78.jpg'),
+  79: require('../assets/quran_safa/quran_safa_79.jpg'),
+  80: require('../assets/quran_safa/quran_safa_80.jpg'),
+  81: require('../assets/quran_safa/quran_safa_81.jpg'),
+  82: require('../assets/quran_safa/quran_safa_82.jpg'),
+  83: require('../assets/quran_safa/quran_safa_83.jpg'),
+  84: require('../assets/quran_safa/quran_safa_84.jpg'),
+  85: require('../assets/quran_safa/quran_safa_85.jpg'),
+  86: require('../assets/quran_safa/quran_safa_86.jpg'),
+  87: require('../assets/quran_safa/quran_safa_87.jpg'),
+  88: require('../assets/quran_safa/quran_safa_88.jpg'),
+  89: require('../assets/quran_safa/quran_safa_89.jpg'),
+  90: require('../assets/quran_safa/quran_safa_90.jpg'),
+  91: require('../assets/quran_safa/quran_safa_91.jpg'),
+  92: require('../assets/quran_safa/quran_safa_92.jpg'),
+  93: require('../assets/quran_safa/quran_safa_93.jpg'),
+  94: require('../assets/quran_safa/quran_safa_94.jpg'),
+  95: require('../assets/quran_safa/quran_safa_95.jpg'),
+  96: require('../assets/quran_safa/quran_safa_96.jpg'),
+  97: require('../assets/quran_safa/quran_safa_97.jpg'),
+  98: require('../assets/quran_safa/quran_safa_98.jpg'),
+  99: require('../assets/quran_safa/quran_safa_99.jpg'),
+  100: require('../assets/quran_safa/quran_safa_100.jpg'),
+  101: require('../assets/quran_safa/quran_safa_101.jpg'),
+  102: require('../assets/quran_safa/quran_safa_102.jpg'),
+  103: require('../assets/quran_safa/quran_safa_103.jpg'),
+  104: require('../assets/quran_safa/quran_safa_104.jpg'),
+  105: require('../assets/quran_safa/quran_safa_105.jpg'),
+  106: require('../assets/quran_safa/quran_safa_106.jpg'),
+  107: require('../assets/quran_safa/quran_safa_107.jpg'),
+  108: require('../assets/quran_safa/quran_safa_108.jpg'),
+  109: require('../assets/quran_safa/quran_safa_109.jpg'),
+  110: require('../assets/quran_safa/quran_safa_110.jpg'),
+  111: require('../assets/quran_safa/quran_safa_111.jpg'),
+  112: require('../assets/quran_safa/quran_safa_112.jpg'),
+  113: require('../assets/quran_safa/quran_safa_113.jpg'),
+  114: require('../assets/quran_safa/quran_safa_114.jpg'),
+  115: require('../assets/quran_safa/quran_safa_115.jpg'),
+  116: require('../assets/quran_safa/quran_safa_116.jpg'),
+  117: require('../assets/quran_safa/quran_safa_117.jpg'),
+  118: require('../assets/quran_safa/quran_safa_118.jpg'),
+  119: require('../assets/quran_safa/quran_safa_119.jpg'),
+  120: require('../assets/quran_safa/quran_safa_120.jpg'),
+  121: require('../assets/quran_safa/quran_safa_121.jpg'),
+  122: require('../assets/quran_safa/quran_safa_122.jpg'),
+  123: require('../assets/quran_safa/quran_safa_123.jpg'),
+  124: require('../assets/quran_safa/quran_safa_124.jpg'),
+  125: require('../assets/quran_safa/quran_safa_125.jpg'),
+  126: require('../assets/quran_safa/quran_safa_126.jpg'),
+  127: require('../assets/quran_safa/quran_safa_127.jpg'),
+  128: require('../assets/quran_safa/quran_safa_128.jpg'),
+  129: require('../assets/quran_safa/quran_safa_129.jpg'),
+  130: require('../assets/quran_safa/quran_safa_130.jpg'),
+  131: require('../assets/quran_safa/quran_safa_131.jpg'),
+  132: require('../assets/quran_safa/quran_safa_132.jpg'),
+  133: require('../assets/quran_safa/quran_safa_133.jpg'),
+  134: require('../assets/quran_safa/quran_safa_134.jpg'),
+};
 
 const QuranReaderScreen = ({ navigation, route }) => {
   // Get initial page from route params, default to 1
@@ -42,166 +177,18 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const [bookmarkComment, setBookmarkComment] = useState('');
   const [showSlider, setShowSlider] = useState(false);
   const [hideTimer, setHideTimer] = useState(null);
-  const [scale, setScale] = useState(1);
-  const [translateX, setTranslateX] = useState(0);
-  const [translateY, setTranslateY] = useState(0);
-  const [isZooming, setIsZooming] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(true);
   
   // Animation state
   const [isAnimating, setIsAnimating] = useState(false);
   const fadeAnimation = useRef(new Animated.Value(1)).current;
   
-  const pinchRef = useRef(null);
-  const panRef = useRef(null);
-  
   // Validate navigation object
   const safeNavigation = navigation || { goBack: () => console.log('Navigation not available') };
 
-  // Get image source for current page
+  // Get image source for current page - optimized
   const getImageSource = (pageNumber) => {
-    console.log('Getting image source for page:', pageNumber);
-    // Create a mapping of page numbers to image sources
-    const imageMap = {
-      1: require('../assets/quran_safa/quran_safa_1.jpg'),
-      2: require('../assets/quran_safa/quran_safa_2.jpg'),
-      3: require('../assets/quran_safa/quran_safa_3.jpg'),
-      4: require('../assets/quran_safa/quran_safa_4.jpg'),
-      5: require('../assets/quran_safa/quran_safa_5.jpg'),
-      6: require('../assets/quran_safa/quran_safa_6.jpg'),
-      7: require('../assets/quran_safa/quran_safa_7.jpg'),
-      8: require('../assets/quran_safa/quran_safa_8.jpg'),
-      9: require('../assets/quran_safa/quran_safa_9.jpg'),
-      10: require('../assets/quran_safa/quran_safa_10.jpg'),
-      11: require('../assets/quran_safa/quran_safa_11.jpg'),
-      12: require('../assets/quran_safa/quran_safa_12.jpg'),
-      13: require('../assets/quran_safa/quran_safa_13.jpg'),
-      14: require('../assets/quran_safa/quran_safa_14.jpg'),
-      15: require('../assets/quran_safa/quran_safa_15.jpg'),
-      16: require('../assets/quran_safa/quran_safa_16.jpg'),
-      17: require('../assets/quran_safa/quran_safa_17.jpg'),
-      18: require('../assets/quran_safa/quran_safa_18.jpg'),
-      19: require('../assets/quran_safa/quran_safa_19.jpg'),
-      20: require('../assets/quran_safa/quran_safa_20.jpg'),
-      21: require('../assets/quran_safa/quran_safa_21.jpg'),
-      22: require('../assets/quran_safa/quran_safa_22.jpg'),
-      23: require('../assets/quran_safa/quran_safa_23.jpg'),
-      24: require('../assets/quran_safa/quran_safa_24.jpg'),
-      25: require('../assets/quran_safa/quran_safa_25.jpg'),
-      26: require('../assets/quran_safa/quran_safa_26.jpg'),
-      27: require('../assets/quran_safa/quran_safa_27.jpg'),
-      28: require('../assets/quran_safa/quran_safa_28.jpg'),
-      29: require('../assets/quran_safa/quran_safa_29.jpg'),
-      30: require('../assets/quran_safa/quran_safa_30.jpg'),
-      31: require('../assets/quran_safa/quran_safa_31.jpg'),
-      32: require('../assets/quran_safa/quran_safa_32.jpg'),
-      33: require('../assets/quran_safa/quran_safa_33.jpg'),
-      34: require('../assets/quran_safa/quran_safa_34.jpg'),
-      35: require('../assets/quran_safa/quran_safa_35.jpg'),
-      36: require('../assets/quran_safa/quran_safa_36.jpg'),
-      37: require('../assets/quran_safa/quran_safa_37.jpg'),
-      38: require('../assets/quran_safa/quran_safa_38.jpg'),
-      39: require('../assets/quran_safa/quran_safa_39.jpg'),
-      40: require('../assets/quran_safa/quran_safa_40.jpg'),
-      41: require('../assets/quran_safa/quran_safa_41.jpg'),
-      42: require('../assets/quran_safa/quran_safa_42.jpg'),
-      43: require('../assets/quran_safa/quran_safa_43.jpg'),
-      44: require('../assets/quran_safa/quran_safa_44.jpg'),
-      45: require('../assets/quran_safa/quran_safa_45.jpg'),
-      46: require('../assets/quran_safa/quran_safa_46.jpg'),
-      47: require('../assets/quran_safa/quran_safa_47.jpg'),
-      48: require('../assets/quran_safa/quran_safa_48.jpg'),
-      49: require('../assets/quran_safa/quran_safa_49.jpg'),
-      50: require('../assets/quran_safa/quran_safa_50.jpg'),
-      51: require('../assets/quran_safa/quran_safa_51.jpg'),
-      52: require('../assets/quran_safa/quran_safa_52.jpg'),
-      53: require('../assets/quran_safa/quran_safa_53.jpg'),
-      54: require('../assets/quran_safa/quran_safa_54.jpg'),
-      55: require('../assets/quran_safa/quran_safa_55.jpg'),
-      56: require('../assets/quran_safa/quran_safa_56.jpg'),
-      57: require('../assets/quran_safa/quran_safa_57.jpg'),
-      58: require('../assets/quran_safa/quran_safa_58.jpg'),
-      59: require('../assets/quran_safa/quran_safa_59.jpg'),
-      60: require('../assets/quran_safa/quran_safa_60.jpg'),
-      61: require('../assets/quran_safa/quran_safa_61.jpg'),
-      62: require('../assets/quran_safa/quran_safa_62.jpg'),
-      63: require('../assets/quran_safa/quran_safa_63.jpg'),
-      64: require('../assets/quran_safa/quran_safa_64.jpg'),
-      65: require('../assets/quran_safa/quran_safa_65.jpg'),
-      66: require('../assets/quran_safa/quran_safa_66.jpg'),
-      67: require('../assets/quran_safa/quran_safa_67.jpg'),
-      68: require('../assets/quran_safa/quran_safa_68.jpg'),
-      69: require('../assets/quran_safa/quran_safa_69.jpg'),
-      70: require('../assets/quran_safa/quran_safa_70.jpg'),
-      71: require('../assets/quran_safa/quran_safa_71.jpg'),
-      72: require('../assets/quran_safa/quran_safa_72.jpg'),
-      73: require('../assets/quran_safa/quran_safa_73.jpg'),
-      74: require('../assets/quran_safa/quran_safa_74.jpg'),
-      75: require('../assets/quran_safa/quran_safa_75.jpg'),
-      76: require('../assets/quran_safa/quran_safa_76.jpg'),
-      77: require('../assets/quran_safa/quran_safa_77.jpg'),
-      78: require('../assets/quran_safa/quran_safa_78.jpg'),
-      79: require('../assets/quran_safa/quran_safa_79.jpg'),
-      80: require('../assets/quran_safa/quran_safa_80.jpg'),
-      81: require('../assets/quran_safa/quran_safa_81.jpg'),
-      82: require('../assets/quran_safa/quran_safa_82.jpg'),
-      83: require('../assets/quran_safa/quran_safa_83.jpg'),
-      84: require('../assets/quran_safa/quran_safa_84.jpg'),
-      85: require('../assets/quran_safa/quran_safa_85.jpg'),
-      86: require('../assets/quran_safa/quran_safa_86.jpg'),
-      87: require('../assets/quran_safa/quran_safa_87.jpg'),
-      88: require('../assets/quran_safa/quran_safa_88.jpg'),
-      89: require('../assets/quran_safa/quran_safa_89.jpg'),
-      90: require('../assets/quran_safa/quran_safa_90.jpg'),
-      91: require('../assets/quran_safa/quran_safa_91.jpg'),
-      92: require('../assets/quran_safa/quran_safa_92.jpg'),
-      93: require('../assets/quran_safa/quran_safa_93.jpg'),
-      94: require('../assets/quran_safa/quran_safa_94.jpg'),
-      95: require('../assets/quran_safa/quran_safa_95.jpg'),
-      96: require('../assets/quran_safa/quran_safa_96.jpg'),
-      97: require('../assets/quran_safa/quran_safa_97.jpg'),
-      98: require('../assets/quran_safa/quran_safa_98.jpg'),
-      99: require('../assets/quran_safa/quran_safa_99.jpg'),
-      100: require('../assets/quran_safa/quran_safa_100.jpg'),
-      101: require('../assets/quran_safa/quran_safa_101.jpg'),
-      102: require('../assets/quran_safa/quran_safa_102.jpg'),
-      103: require('../assets/quran_safa/quran_safa_103.jpg'),
-      104: require('../assets/quran_safa/quran_safa_104.jpg'),
-      105: require('../assets/quran_safa/quran_safa_105.jpg'),
-      106: require('../assets/quran_safa/quran_safa_106.jpg'),
-      107: require('../assets/quran_safa/quran_safa_107.jpg'),
-      108: require('../assets/quran_safa/quran_safa_108.jpg'),
-      109: require('../assets/quran_safa/quran_safa_109.jpg'),
-      110: require('../assets/quran_safa/quran_safa_110.jpg'),
-      111: require('../assets/quran_safa/quran_safa_111.jpg'),
-      112: require('../assets/quran_safa/quran_safa_112.jpg'),
-      113: require('../assets/quran_safa/quran_safa_113.jpg'),
-      114: require('../assets/quran_safa/quran_safa_114.jpg'),
-      115: require('../assets/quran_safa/quran_safa_115.jpg'),
-      116: require('../assets/quran_safa/quran_safa_116.jpg'),
-      117: require('../assets/quran_safa/quran_safa_117.jpg'),
-      118: require('../assets/quran_safa/quran_safa_118.jpg'),
-      119: require('../assets/quran_safa/quran_safa_119.jpg'),
-      120: require('../assets/quran_safa/quran_safa_120.jpg'),
-      121: require('../assets/quran_safa/quran_safa_121.jpg'),
-      122: require('../assets/quran_safa/quran_safa_122.jpg'),
-      123: require('../assets/quran_safa/quran_safa_123.jpg'),
-      124: require('../assets/quran_safa/quran_safa_124.jpg'),
-      125: require('../assets/quran_safa/quran_safa_125.jpg'),
-      126: require('../assets/quran_safa/quran_safa_126.jpg'),
-      127: require('../assets/quran_safa/quran_safa_127.jpg'),
-      128: require('../assets/quran_safa/quran_safa_128.jpg'),
-      129: require('../assets/quran_safa/quran_safa_129.jpg'),
-      130: require('../assets/quran_safa/quran_safa_130.jpg'),
-      131: require('../assets/quran_safa/quran_safa_131.jpg'),
-      132: require('../assets/quran_safa/quran_safa_132.jpg'),
-      133: require('../assets/quran_safa/quran_safa_133.jpg'),
-      134: require('../assets/quran_safa/quran_safa_134.jpg'),
-    };
-    
-    const imageSource = imageMap[pageNumber] || imageMap[1]; // Fallback to page 1 if not found
-    console.log('Image source found:', !!imageSource);
-    return imageSource;
+    const validPage = Math.max(1, Math.min(134, pageNumber || 1));
+    return IMAGE_MAP[validPage] || IMAGE_MAP[1]; // Fallback to page 1 if not found
   };
 
   // Load bookmarks from AsyncStorage
@@ -221,8 +208,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
+  // Consolidated useEffect hooks for better performance
   useEffect(() => {
     loadBookmarks();
+    logMemoryUsage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   // Load saved page on component mount and when route params change
@@ -230,12 +220,17 @@ const QuranReaderScreen = ({ navigation, route }) => {
     loadCurrentPage();
   }, [route?.params]);
 
-  // Log memory usage when page changes
-  useEffect(() => {
-    logMemoryUsage();
-  }, [currentPage]);
+  // Handle back press - navigate to home screen
+  const handleBackPress = () => {
+    if (navigation && navigation.navigate) {
+      navigation.navigate('home');
+    } else if (safeNavigation.goBack) {
+      safeNavigation.goBack();
+    }
+    return true;
+  };
 
-  // Start auto-hide timer when component mounts
+  // Start auto-hide timer when component mounts and cleanup
   useEffect(() => {
     startHideTimer();
     return () => {
@@ -245,16 +240,15 @@ const QuranReaderScreen = ({ navigation, route }) => {
     };
   }, []);
 
-
-  // Memory cleanup effect
+  // Handle back button press - navigate to home screen
   useEffect(() => {
-    return () => {
-      // Clear any pending timers
-      if (hideTimer) {
-        clearTimeout(hideTimer);
-      }
-    };
-  }, [hideTimer]);
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleBackPress();
+      return true; // Prevent default back behavior
+    });
+
+    return () => backHandler.remove();
+  }, [navigation]);
 
   // Save current page to local storage for resume functionality
   const saveCurrentPage = async (page) => {
@@ -371,13 +365,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
-  // Toggle full screen mode
+  // Toggle full screen mode - hide status bar and controls
   const toggleFullScreen = () => {
-    setIsFullScreen(!isFullScreen);
-    // Auto-hide indicator after 2 seconds
-    setTimeout(() => {
-      // Indicator will be hidden by the showControls state
-    }, 2000);
+    setShowControls(false);
+    // Controls will auto-hide after timer
+    startHideTimer();
   };
 
   // Toggle bookmark
@@ -431,11 +423,21 @@ const QuranReaderScreen = ({ navigation, route }) => {
   // Toggle slider
   const toggleSlider = () => {
     setShowSlider(!showSlider);
+    if (!showSlider) {
+      // Show controls when opening slider
+      setShowControls(true);
+      startHideTimer();
+    }
   };
 
-  // Handle slider change
-  const onSliderChange = (value) => {
-    const newPage = Math.round(value);
+  // Handle slider track press
+  const handleSliderTrackPress = (event) => {
+    const { locationX } = event.nativeEvent;
+    const sliderContainerWidth = screenWidth - (getSpacing(20) * 2); // Left and right padding
+    const trackWidth = sliderContainerWidth - (getSpacing(20) * 2); // Container inner padding
+    const percentage = Math.max(0, Math.min(1, locationX / trackWidth));
+    const newPage = Math.round(1 + (percentage * (totalPages - 1)));
+    
     if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
       saveCurrentPage(newPage);
@@ -471,7 +473,12 @@ const QuranReaderScreen = ({ navigation, route }) => {
             // Only process gesture if not currently animating
             if (!isAnimating) {
               // RTL Navigation: Swipe right = next page, Swipe left = previous page
-              if (translationX > 50 || velocityX > 500) {
+              // If swipe left is very strong (back gesture), navigate to home
+              if (translationX < -150 || velocityX < -800) {
+                // Strong left swipe = back to home
+                handleBackPress();
+              }
+              else if (translationX > 50 || velocityX > 500) {
                 goToNextPage(); // Swipe right = next page in RTL
               }
               else if (translationX < -50 || velocityX < -500) {
@@ -511,7 +518,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
                   console.log('Image loaded successfully for page', currentPage);
                 }}
                 fadeDuration={200}
-                defaultSource={require('../assets/quran_safa/quran_safa_1.jpg')}
+                {...(Platform.OS === 'android' && { defaultSource: require('../assets/quran_safa/quran_safa_1.jpg') })}
               />
             </Animated.View>
           </TouchableOpacity>
@@ -519,7 +526,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
       </PanGestureHandler>
 
       {/* Floating Back Button */}
-      {showControls && (
+      {/* {showControls && (
         <TouchableOpacity 
           style={styles.floatingBackButton}
           onPress={() => safeNavigation.goBack()}
@@ -531,22 +538,34 @@ const QuranReaderScreen = ({ navigation, route }) => {
             resizeMode="contain"
           />
         </TouchableOpacity>
-      )}
+      )} */}
 
-      {/* Floating Bookmark Button */}
-      {showControls && (
+      {/* Floating Bookmark Button - Top Right Corner */}
+      <TouchableOpacity 
+        style={styles.floatingBookmarkButtonTopRight}
+        onPress={toggleBookmark}
+        activeOpacity={0.7}
+      >
+        <Image 
+          source={isBookmarked 
+            ? require('../assets/icons/ic_bookmark_already_done.png')
+            : require('../assets/icons/ic_bookmark_quran_reading.png')
+          }
+          style={styles.bookmarkIconImageTopRight}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+
+      {/* Floating Slider Button */}
+      {/* {showControls && (
         <TouchableOpacity 
-          style={styles.floatingBookmarkButton}
-          onPress={toggleBookmark}
+          style={styles.floatingSliderButton}
+          onPress={toggleSlider}
           activeOpacity={0.7}
         >
-          <Image 
-            source={require('../assets/icons/ic_bookmark.png')}
-            style={[styles.bookmarkIconImage, isBookmarked && styles.bookmarkedIcon]}
-            resizeMode="contain"
-          />
+          <Text style={styles.sliderButtonIcon}>📄</Text>
         </TouchableOpacity>
-      )}
+      )} */}
 
 
 
@@ -562,7 +581,11 @@ const QuranReaderScreen = ({ navigation, route }) => {
           
           {/* Custom Slider Implementation */}
           <View style={styles.customSliderContainer}>
-            <View style={styles.sliderTrack}>
+            <TouchableOpacity 
+              style={styles.sliderTrack}
+              onPress={handleSliderTrackPress}
+              activeOpacity={1}
+            >
               <View 
                 style={[
                   styles.sliderProgress, 
@@ -575,8 +598,10 @@ const QuranReaderScreen = ({ navigation, route }) => {
                   { left: `${((currentPage - 1) / (totalPages - 1)) * 100}%` }
                 ]}
               />
-            </View>
-            
+            </TouchableOpacity>
+            <Text style={styles.sliderText}>
+              Page {currentPage} of {totalPages}
+            </Text>
           </View>
           
         </View>
@@ -604,8 +629,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
               onChangeText={setBookmarkComment}
               multiline
               maxLength={100}
-              textAlign="right" // RTL text alignment
-              writingDirection="rtl" // RTL writing direction
+              textAlign="left" // RTL text alignment
+              
             />
             
             <View style={styles.bookmarkModalButtons}>
@@ -637,18 +662,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     direction: 'rtl',
   },
-  scrollView: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    margin: 0,
-    padding: 0,
-  },
-  scrollContent: {
-    flexDirection: 'row',
-    minHeight: screenHeight,
-    margin: 0,
-    padding: 0,
-  },
   pageContainer: {
     width: screenWidth,
     height: screenHeight,
@@ -656,9 +669,6 @@ const styles = StyleSheet.create({
     padding: 0,
     backgroundColor: '#FFFFFF',
     direction: 'rtl',
-  },
-  gestureContainer: {
-    flex: 1,
   },
   imageContainer: {
     width: screenWidth,
@@ -717,6 +727,42 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
   },
+  floatingBookmarkButtonTopRight: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? getSpacing(10) : getSpacing(10),
+    right: 0,
+    width: getSpacing(48),
+    height: getSpacing(48),
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  floatingSliderButton: {
+    position: 'absolute',
+    bottom: getSpacing(80),
+    right: getSpacing(15),
+    width: getSpacing(40),
+    height: getSpacing(40),
+    borderRadius: getSpacing(20),
+    backgroundColor: 'rgba(26, 35, 126, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  sliderButtonIcon: {
+    fontSize: getFontSize(18),
+    color: '#FFFFFF',
+  },
   backIconImage: {
     width: 18,
     height: 18,
@@ -727,38 +773,12 @@ const styles = StyleSheet.create({
     height: 18,
     tintColor: '#FFFFFF',
   },
+  bookmarkIconImageTopRight: {
+    width: getSpacing(40),
+    height: getSpacing(40),
+  },
   bookmarkedIcon: {
     tintColor: '#FFD700', // Gold color when bookmarked
-  },
-  pageInfo: {
-    position: 'absolute',
-    top: getSpacing(50),
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: getSpacing(20),
-    zIndex: 9999,
-  },
-  pageText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(16),
-    fontWeight: '600',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: getSpacing(15),
-    paddingVertical: getSpacing(8),
-    borderRadius: getSpacing(20),
-  },
-  sliderButton: {
-    backgroundColor: 'rgba(26, 35, 126, 0.9)',
-    paddingHorizontal: getSpacing(15),
-    paddingVertical: getSpacing(8),
-    borderRadius: getSpacing(20),
-  },
-  sliderButtonText: {
-    color: '#FFFFFF',
-    fontSize: getFontSize(16),
   },
   sliderContainer: {
     position: 'absolute',
@@ -794,7 +814,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0',
     borderRadius: getSpacing(3),
     position: 'relative',
-    marginBottom: getSpacing(20),
+    marginBottom: getSpacing(10),
+    width: '100%',
   },
   sliderProgress: {
     height: getSpacing(6),
