@@ -12,11 +12,10 @@ import {
   getFontSize, 
   getBorderRadius, 
   getShadowStyle, 
-  screenData 
+  getScreenData 
 } from '../utils/ResponsiveDesign';
 import ResponsiveText from './ResponsiveText';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+import useOrientation from '../hooks/useOrientation';
 
 const ResponsiveModal = ({ 
   visible, 
@@ -29,23 +28,29 @@ const ResponsiveModal = ({
   style,
   ...props 
 }) => {
+  const orientation = useOrientation();
+  const screenWidth = orientation.width;
+  const screenHeight = orientation.height;
+  const screenData = getScreenData();
+  const isLandscape = orientation.isLandscape;
+  
   const getModalSize = () => {
     if (screenData.isTablet) {
       return {
-        width: screenWidth * 0.8,
-        height: screenHeight * 0.8,
+        width: isLandscape ? screenWidth * 0.6 : screenWidth * 0.8,
+        height: isLandscape ? screenHeight * 0.9 : screenHeight * 0.8,
         maxWidth: 600,
         maxHeight: 800,
       };
     } else if (screenData.isLarge) {
       return {
-        width: screenWidth * 0.9,
-        height: screenHeight * 0.85,
+        width: isLandscape ? screenWidth * 0.7 : screenWidth * 0.9,
+        height: isLandscape ? screenHeight * 0.9 : screenHeight * 0.85,
       };
     } else {
       return {
-        width: screenWidth * 0.95,
-        height: screenHeight * 0.9,
+        width: isLandscape ? screenWidth * 0.8 : screenWidth * 0.95,
+        height: isLandscape ? screenHeight * 0.9 : screenHeight * 0.9,
       };
     }
   };

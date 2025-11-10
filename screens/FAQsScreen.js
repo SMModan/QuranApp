@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Linking, Alert } from 'react-native';
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
-import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing, getScreenData } from '../utils/ResponsiveDesign';
+import useOrientation from '../hooks/useOrientation';
 
 const FAQsScreen = ({ navigation }) => {
+  const orientation = useOrientation();
+  const screenData = getScreenData();
+  const isLandscape = orientation.isLandscape;
   const [expandedItems, setExpandedItems] = useState({});
   const animations = React.useRef({});
   

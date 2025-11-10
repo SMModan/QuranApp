@@ -4,10 +4,15 @@ import CommonHeader from '../components/CommonHeader';
 import SideMenu from '../components/SideMenu';
 import ResponsiveContainer from '../components/ResponsiveContainer';
 import ResponsiveText from '../components/ResponsiveText';
-import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing, getScreenData } from '../utils/ResponsiveDesign';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import useOrientation from '../hooks/useOrientation';
 
 const HomeScreen = ({ navigation }) => {
+  const orientation = useOrientation();
+  const screenData = getScreenData();
+  const isLandscape = orientation.isLandscape;
+  
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [pageNumber, setPageNumber] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -309,7 +314,12 @@ const HomeScreen = ({ navigation }) => {
             {menuItems.map((item) => (
               <TouchableOpacity
                 key={item.id}
-                style={styles.card}
+                style={[
+                  styles.card,
+                  isLandscape && {
+                    width: '48%', // 2 columns in landscape
+                  }
+                ]}
                 onPress={() => handleCardPress(item.id)}
                 activeOpacity={0.8}
               >
@@ -457,6 +467,10 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: getSpacing(10),
+    // Adjust for landscape - use grid layout
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   card: {
     marginBottom: getSpacing(15),
@@ -468,6 +482,8 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.3,
     shadowRadius: 4,
+    // In landscape, make cards take up less width for 2-column layout
+    width: '100%',
   },
   cardBackground: {
     borderRadius: getSpacing(12),

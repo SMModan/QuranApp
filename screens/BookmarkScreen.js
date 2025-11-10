@@ -10,12 +10,15 @@ import {
   Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing, getScreenData } from '../utils/ResponsiveDesign';
 import CommonHeader from '../components/CommonHeader';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+import useOrientation from '../hooks/useOrientation';
 
 const BookmarkScreen = ({ navigation }) => {
+  const orientation = useOrientation();
+  const screenData = getScreenData();
+  const isLandscape = orientation.isLandscape;
+  
   const [bookmarks, setBookmarks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 

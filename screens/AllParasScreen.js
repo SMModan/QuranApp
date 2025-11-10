@@ -3,10 +3,14 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, BackHandler, Alert,
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
-import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing, getScreenData } from '../utils/ResponsiveDesign';
 import { saveFavorite, isFavorite } from '../utils/FavoritesStorage';
+import useOrientation from '../hooks/useOrientation';
 
 const AllParasScreen = ({ navigation }) => {
+  const orientation = useOrientation();
+  const screenData = getScreenData();
+  const isLandscape = orientation.isLandscape;
   const [favorites, setFavorites] = useState(new Set());
   const isMounted = useRef(true);
   const appState = useRef(AppState.currentState);

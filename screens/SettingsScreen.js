@@ -3,10 +3,14 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, S
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
 import ResponsiveContainer from '../components/ResponsiveContainer';
-import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing, getScreenData } from '../utils/ResponsiveDesign';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import useOrientation from '../hooks/useOrientation';
 
 const SettingsScreen = ({ navigation }) => {
+  const orientation = useOrientation();
+  const screenData = getScreenData();
+  const isLandscape = orientation.isLandscape;
   const handleBackup = async () => {
     try {
       // Get all data to backup

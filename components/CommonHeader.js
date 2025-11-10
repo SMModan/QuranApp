@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Platform, Image } from 'react-native';
-import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing, getScreenData } from '../utils/ResponsiveDesign';
+import useOrientation from '../hooks/useOrientation';
 
 const CommonHeader = ({ 
   title = "القرآن الكريم", 
@@ -11,6 +12,11 @@ const CommonHeader = ({
   backgroundColor = '#1a237e',
   textColor = '#FFFFFF'
 }) => {
+  const orientation = useOrientation();
+  const screenData = getScreenData();
+  const isLandscape = orientation.isLandscape;
+  const styles = createStyles(isLandscape, screenData);
+  
   return (
     <View style={[styles.header, { backgroundColor }]}>
       <StatusBar 
@@ -66,10 +72,12 @@ const CommonHeader = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (isLandscape, screenData) => StyleSheet.create({
   header: {
-    paddingTop: Platform.OS === 'ios' ? getSpacing(50) : getSpacing(20),
-    paddingBottom: getSpacing(15),
+    paddingTop: Platform.OS === 'ios' 
+      ? (isLandscape ? getSpacing(30) : getSpacing(50))
+      : (isLandscape ? getSpacing(15) : getSpacing(20)),
+    paddingBottom: isLandscape ? getSpacing(10) : getSpacing(15),
     paddingHorizontal: getSpacing(20),
     elevation: 4,
     shadowColor: '#000',
@@ -109,13 +117,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Philosopher',
-    fontSize: 18,
+    fontSize: screenData?.isTablet ? 20 : 18,
     fontWeight: '700',
     textAlign: 'center',
-    // Adjust font size for tablets
-    ...(screenData.isTablet && {
-      fontSize: 20,
-    }),
   },
   rightContainer: {
     width: getSpacing(40), // Same width as menu button for balance

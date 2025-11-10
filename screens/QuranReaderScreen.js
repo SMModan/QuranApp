@@ -21,11 +21,10 @@ import {
 } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+import useOrientation from '../hooks/useOrientation';
 
 // ZoomableImage component for pinch zoom and double tap reset - Memoized for performance
-const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDuration }) => {
+const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDuration, screenWidth, screenHeight, isLandscape }) => {
   const scale = useRef(new Animated.Value(1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -36,6 +35,15 @@ const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDurati
   
   const MIN_SCALE = 1;
   const MAX_SCALE = 5;
+  
+  // Use refs to track current dimensions
+  const currentScreenWidth = useRef(screenWidth);
+  const currentScreenHeight = useRef(screenHeight);
+  
+  useEffect(() => {
+    currentScreenWidth.current = screenWidth;
+    currentScreenHeight.current = screenHeight;
+  }, [screenWidth, screenHeight]);
   
   // Reset to normal state
   const resetZoom = () => {
@@ -80,8 +88,8 @@ const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDurati
       // Do nothing on single tap, just prevent it from interfering
     });
   
-  // Pinch gesture
   const pinchStartScale = useRef(1);
+  
   const pinchGesture = Gesture.Pinch()
     .onStart(() => {
       // Store the starting scale
@@ -105,8 +113,8 @@ const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDurati
         lastTranslateY.current = 0;
       }
     });
-  
-  // Pan gesture - only allow panning when zoomed
+
+  // Pan gesture - only allow panning when zoomed, uses current dimensions
   const panStartX = useRef(0);
   const panStartY = useRef(0);
   const panGesture = Gesture.Pan()
@@ -124,9 +132,9 @@ const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDurati
         const newTranslateX = panStartX.current + event.translationX;
         const newTranslateY = panStartY.current + event.translationY;
         
-        // Clamp translation based on scale
-        const maxTranslateX = (screenWidth * (lastScale.current - 1)) / 2;
-        const maxTranslateY = (screenHeight * (lastScale.current - 1)) / 2;
+        // Clamp translation based on scale using current dimensions from props
+        const maxTranslateX = (currentScreenWidth.current * (lastScale.current - 1)) / 2;
+        const maxTranslateY = (currentScreenHeight.current * (lastScale.current - 1)) / 2;
         
         translateX.setValue(Math.max(-maxTranslateX, Math.min(maxTranslateX, newTranslateX)));
         translateY.setValue(Math.max(-maxTranslateY, Math.min(maxTranslateY, newTranslateY)));
@@ -138,9 +146,9 @@ const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDurati
         const finalTranslateX = panStartX.current + event.translationX;
         const finalTranslateY = panStartY.current + event.translationY;
         
-        // Clamp translation based on scale
-        const maxTranslateX = (screenWidth * (lastScale.current - 1)) / 2;
-        const maxTranslateY = (screenHeight * (lastScale.current - 1)) / 2;
+        // Clamp translation based on scale using current dimensions from props
+        const maxTranslateX = (currentScreenWidth.current * (lastScale.current - 1)) / 2;
+        const maxTranslateY = (currentScreenHeight.current * (lastScale.current - 1)) / 2;
         
         lastTranslateX.current = Math.max(-maxTranslateX, Math.min(maxTranslateX, finalTranslateX));
         lastTranslateY.current = Math.max(-maxTranslateY, Math.min(maxTranslateY, finalTranslateY));
@@ -168,13 +176,18 @@ const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDurati
               { translateY },
               { scale },
             ],
+            // Only center in landscape mode
+            ...(isLandscape && {
+              justifyContent: 'center',
+              alignItems: 'center',
+            }),
           },
         ]}
       >
         <Image
           source={source}
           style={[style, { width: '100%', height: '100%' }]}
-          resizeMode="stretch"
+          resizeMode={isLandscape ? "contain" : "stretch"}
           onError={onError}
           onLoad={onLoad}
           onLoadStart={onLoadStart}
@@ -187,8 +200,11 @@ const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDurati
 
 // Memoize ZoomableImage with custom comparison
 const MemoizedZoomableImage = memo(ZoomableImage, (prevProps, nextProps) => {
-  // Custom comparison function - only re-render if source changes
-  return prevProps.source === nextProps.source;
+  // Custom comparison function - re-render if source or orientation changes
+  return prevProps.source === nextProps.source && 
+         prevProps.isLandscape === nextProps.isLandscape &&
+         prevProps.screenWidth === nextProps.screenWidth &&
+         prevProps.screenHeight === nextProps.screenHeight;
 });
 
 // Image map moved outside component for better performance - only created once
@@ -330,6 +346,12 @@ const IMAGE_MAP = {
 };
 
 const QuranReaderScreen = ({ navigation, route }) => {
+  // Get orientation for dynamic dimensions
+  const orientation = useOrientation();
+  const screenWidth = orientation.width;
+  const screenHeight = orientation.height;
+  const isLandscape = orientation.isLandscape;
+  
   // Get initial page from route params, default to 1
   const initialPage = route?.params?.pageNumber || route?.params?.page || 1;
   
@@ -418,6 +440,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
         const pageIndex = Math.max(0, Math.min(totalPages - 1, targetPage - 1));
         
         // Use scrollToOffset for vertical scroll - fix: use exact page index
+        // Use current screenHeight from orientation
         const offset = pageIndex * screenHeight;
         flatListRef.current.scrollToOffset({
           offset: offset,
@@ -535,14 +558,14 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   }, [currentPage, totalPages]);
 
-  // Get item layout for FlatList performance - Vertical
+  // Get item layout for FlatList performance - Vertical (updates with orientation)
   const getItemLayoutVertical = useCallback(
     (data, index) => ({
       length: screenHeight,
       offset: screenHeight * index,
       index,
     }),
-    []
+    [screenHeight]
   );
 
   // Stable callbacks for ZoomableImage to prevent re-renders
@@ -572,10 +595,13 @@ const QuranReaderScreen = ({ navigation, route }) => {
           onLoad={handleImageLoad}
           onLoadStart={handleImageLoadStart}
           fadeDuration={200}
+          screenWidth={screenWidth}
+          screenHeight={screenHeight}
+          isLandscape={isLandscape}
         />
       </View>
     );
-  }, [getImageSource, handleImageError, handleImageLoad, handleImageLoadStart]);
+  }, [getImageSource, handleImageError, handleImageLoad, handleImageLoadStart, screenWidth, screenHeight, styles]);
 
 
 
@@ -676,8 +702,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   };
 
-  // Handle slider track press - scroll to specific page (vertical)
-  const handleSliderTrackPress = (event) => {
+  // Handle slider track press - scroll to specific page (vertical) - uses current dimensions
+  const handleSliderTrackPress = useCallback((event) => {
     const { locationX } = event.nativeEvent;
     const sliderContainerWidth = screenWidth - (getSpacing(20) * 2); // Left and right padding
     const trackWidth = sliderContainerWidth - (getSpacing(20) * 2); // Container inner padding
@@ -694,13 +720,16 @@ const QuranReaderScreen = ({ navigation, route }) => {
       setCurrentPage(newPage);
       saveCurrentPage(newPage);
     }
-  };
+  }, [screenWidth, screenHeight, currentPage, totalPages]);
 
   
   // Memory monitoring
   const logMemoryUsage = () => {
     // Memory usage tracking (disabled)
   };
+  
+  // Create dynamic styles based on current orientation
+  const styles = createStyles(screenWidth, screenHeight, isLandscape);
   
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -734,6 +763,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
           onScroll={(event) => {
             const offsetY = event.nativeEvent.contentOffset.y;
             // Fix: Use Math.round instead of Math.floor to get correct page
+            // Use current screenHeight from orientation
             const pageIndex = Math.round(offsetY / screenHeight);
             const newPage = Math.max(1, Math.min(totalPages, pageIndex + 1));
             
@@ -865,7 +895,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+// Create styles function that uses current dimensions
+const createStyles = (screenWidth, screenHeight, isLandscape) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -896,17 +927,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
     position: 'relative',
+    // Only center in landscape mode
+    ...(isLandscape && {
+      justifyContent: 'center',
+      alignItems: 'center',
+    }),
   },
   quranImage: {
     width: screenWidth,
     height: screenHeight,
     margin: 0,
     padding: 0,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    // In portrait: stretch to fill (original behavior)
+    // In landscape: contain will maintain aspect ratio and center
   },
   floatingBackButton: {
     position: 'absolute',
@@ -1071,7 +1104,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: getSpacing(15),
     padding: getSpacing(20),
-    width: screenWidth * 0.8,
+    width: Math.min(screenWidth * 0.8, 400),
     maxWidth: 400,
   },
   bookmarkModalHeader: {

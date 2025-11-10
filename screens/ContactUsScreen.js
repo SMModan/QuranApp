@@ -3,9 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Linkin
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveContainer from '../components/ResponsiveContainer';
 import ResponsiveText from '../components/ResponsiveText';
-import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing, getScreenData } from '../utils/ResponsiveDesign';
+import useOrientation from '../hooks/useOrientation';
 
 const ContactUsScreen = ({ navigation }) => {
+  const orientation = useOrientation();
+  const screenData = getScreenData();
+  const isLandscape = orientation.isLandscape;
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');

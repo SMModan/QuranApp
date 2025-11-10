@@ -10,9 +10,8 @@ import {
   ScrollView,
   Image
 } from 'react-native';
-import { getFontSize, getSpacing, screenData } from '../utils/ResponsiveDesign';
-
-const { width: screenWidth } = Dimensions.get('window');
+import { getFontSize, getSpacing, getScreenData } from '../utils/ResponsiveDesign';
+import useOrientation from '../hooks/useOrientation';
 
 const SideMenu = ({ 
   visible, 
@@ -22,8 +21,18 @@ const SideMenu = ({
   textColor = '#FFFFFF',
   excludedItems = []
 }) => {
+  const orientation = useOrientation();
+  const screenWidth = orientation.width;
+  const screenData = getScreenData();
+  const isLandscape = orientation.isLandscape;
+  
   const slideAnim = React.useRef(new Animated.Value(-screenWidth)).current;
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  
+  // Update slide anim initial value when screen width changes
+  React.useEffect(() => {
+    slideAnim.setValue(-screenWidth);
+  }, [screenWidth, slideAnim]);
 
   React.useEffect(() => {
     if (visible) {
@@ -110,7 +119,9 @@ const SideMenu = ({
             styles.menuContainer,
             { 
               transform: [{ translateX: slideAnim }],
-              opacity: fadeAnim
+              opacity: fadeAnim,
+              width: isLandscape ? Math.min(screenWidth * 0.5, 400) : screenWidth * 0.8,
+              maxWidth: isLandscape ? 400 : 320,
             }
           ]}
         >
@@ -172,8 +183,6 @@ const styles = StyleSheet.create({
     left: 0,
     top: getSpacing(40),
     bottom: 0,
-    width: screenWidth * 0.8,
-    maxWidth: 320,
     backgroundColor: '#DBECFF',
     borderTopRightRadius: getSpacing(20),
     borderBottomRightRadius: getSpacing(20),

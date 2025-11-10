@@ -3,10 +3,15 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList, Animated, Alert, Ap
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommonHeader from '../components/CommonHeader';
 import ResponsiveText from '../components/ResponsiveText';
-import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
+import { getFontSize, getSpacing, getScreenData } from '../utils/ResponsiveDesign';
 import { saveFavorite, isFavorite } from '../utils/FavoritesStorage';
+import useOrientation from '../hooks/useOrientation';
 
 const AllSurahsScreen = ({ navigation }) => {
+  const orientation = useOrientation();
+  const screenData = getScreenData();
+  const isLandscape = orientation.isLandscape;
+  
   const [favorites, setFavorites] = useState(new Set());
   const starAnimations = useRef({});
   const isMounted = useRef(true);
@@ -390,12 +395,17 @@ const AllSurahsScreen = ({ navigation }) => {
           renderItem={renderSurahItem}
           keyExtractor={(item, index) => `surah-${item.id}-${index}`}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={[
+            styles.listContainer,
+            isLandscape && { paddingHorizontal: getSpacing(12) }
+          ]}
           removeClippedSubviews={true}
           initialNumToRender={10}
           maxToRenderPerBatch={10}
           windowSize={10}
           updateCellsBatchingPeriod={50}
+          numColumns={isLandscape && screenData.isTablet ? 2 : 1}
+          key={isLandscape && screenData.isTablet ? 'two-column' : 'single-column'}
         />
       </View>
     </View>

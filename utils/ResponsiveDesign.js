@@ -1,6 +1,15 @@
 import { Dimensions, PixelRatio, Platform } from 'react-native';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Get initial dimensions
+let SCREEN_WIDTH = Dimensions.get('window').width;
+let SCREEN_HEIGHT = Dimensions.get('window').height;
+
+// Listen to dimension changes and update (for backward compatibility)
+// Note: In components, use useOrientation hook for reactive updates
+const dimensionSubscription = Dimensions.addEventListener('change', ({ window }) => {
+  SCREEN_WIDTH = window.width;
+  SCREEN_HEIGHT = window.height;
+});
 
 // Base dimensions (iPhone 12 Pro as reference)
 const baseWidth = 390;
@@ -11,28 +20,26 @@ export const scale = (size) => (SCREEN_WIDTH / baseWidth) * size;
 export const verticalScale = (size) => (SCREEN_HEIGHT / baseHeight) * size;
 export const moderateScale = (size, factor = 0.5) => size + (scale(size) - size) * factor;
 
-// Screen size categories
-export const getScreenCategory = () => {
-  const width = SCREEN_WIDTH;
-  const height = SCREEN_HEIGHT;
-  const aspectRatio = height / width;
-
-  if (width < 400) {
+// Screen size categories - now considers orientation
+export const getScreenCategory = (width = SCREEN_WIDTH, height = SCREEN_HEIGHT) => {
+  const isLandscape = width > height;
+  const effectiveWidth = isLandscape ? height : width; // Use smaller dimension for categorization
+  
+  if (effectiveWidth < 400) {
     return 'small'; // iPhone SE, small Android phones
-  } else if (width >= 400 && width < 768) {
+  } else if (effectiveWidth >= 400 && effectiveWidth < 768) {
     return 'medium'; // Regular phones
-  } else if (width >= 768 && width < 1024) {
+  } else if (effectiveWidth >= 768 && effectiveWidth < 1024) {
     return 'large'; // Large phones, small tablets
   } else {
     return 'tablet'; // Tablets, foldables
   }
 };
 
-// Device type detection
-export const getDeviceType = () => {
-  const width = SCREEN_WIDTH;
-  const height = SCREEN_HEIGHT;
+// Device type detection - now considers orientation
+export const getDeviceType = (width = SCREEN_WIDTH, height = SCREEN_HEIGHT) => {
   const aspectRatio = height / width;
+  const isLandscape = width > height;
 
   if (aspectRatio > 2) {
     return 'phone'; // Very tall phones
@@ -45,10 +52,11 @@ export const getDeviceType = () => {
   }
 };
 
-// Responsive font sizes
-export const getFontSize = (size) => {
-  const category = getScreenCategory();
-  const deviceType = getDeviceType();
+// Responsive font sizes - now considers orientation
+export const getFontSize = (size, width = SCREEN_WIDTH, height = SCREEN_HEIGHT) => {
+  const category = getScreenCategory(width, height);
+  const deviceType = getDeviceType(width, height);
+  const isLandscape = width > height;
   
   let multiplier = 1;
   
@@ -71,25 +79,44 @@ export const getFontSize = (size) => {
     multiplier *= 1.2;
   }
   
-  return moderateScale(size * multiplier);
+  // Adjust for landscape - slightly reduce font size in landscape for better fit
+  if (isLandscape) {
+    multiplier *= 0.95;
+  }
+  
+  return moderateScale(size * multiplier, 0.5);
 };
 
-// Responsive spacing
-export const getSpacing = (size) => {
-  const category = getScreenCategory();
+// Responsive spacing - now considers orientation
+export const getSpacing = (size, width = SCREEN_WIDTH, height = SCREEN_HEIGHT) => {
+  const category = getScreenCategory(width, height);
+  const isLandscape = width > height;
+  
+  let baseSize = size;
   
   switch (category) {
     case 'small':
-      return moderateScale(size * 0.8);
+      baseSize = size * 0.8;
+      break;
     case 'medium':
-      return moderateScale(size);
+      baseSize = size;
+      break;
     case 'large':
-      return moderateScale(size * 1.1);
+      baseSize = size * 1.1;
+      break;
     case 'tablet':
-      return moderateScale(size * 1.4);
+      baseSize = size * 1.4;
+      break;
     default:
-      return moderateScale(size);
+      baseSize = size;
   }
+  
+  // In landscape, reduce vertical spacing but keep horizontal spacing
+  if (isLandscape) {
+    baseSize *= 0.9;
+  }
+  
+  return moderateScale(baseSize);
 };
 
 // Responsive image dimensions
@@ -233,26 +260,35 @@ export const getShadowStyle = (elevation = 2) => {
   };
 };
 
-// Screen dimensions
-export const screenData = {
-  width: SCREEN_WIDTH,
-  height: SCREEN_HEIGHT,
-  category: getScreenCategory(),
-  deviceType: getDeviceType(),
-  isTablet: getDeviceType() === 'tablet',
-  isPhone: getDeviceType() === 'phone',
-  isSmall: getScreenCategory() === 'small',
-  isMedium: getScreenCategory() === 'medium',
-  isLarge: getScreenCategory() === 'large',
-  isTabletSize: getScreenCategory() === 'tablet',
-  // New responsive properties
-  isXs: isBreakpoint('xs'),
-  isSm: isBreakpoint('sm'),
-  isMd: isBreakpoint('md'),
-  isLg: isBreakpoint('lg'),
-  isXl: isBreakpoint('xl'),
-  gridColumns: getGridColumns(),
-  aspectRatio: SCREEN_HEIGHT / SCREEN_WIDTH,
-  isLandscape: SCREEN_WIDTH > SCREEN_HEIGHT,
-  isPortrait: SCREEN_HEIGHT > SCREEN_WIDTH,
+// Helper function to get current screen data (updates dynamically)
+export const getScreenData = () => {
+  const width = SCREEN_WIDTH;
+  const height = SCREEN_HEIGHT;
+  const isLandscape = width > height;
+  const isPortrait = height > width;
+  
+  return {
+    width,
+    height,
+    category: getScreenCategory(width, height),
+    deviceType: getDeviceType(width, height),
+    isTablet: getDeviceType(width, height) === 'tablet',
+    isPhone: getDeviceType(width, height) === 'phone',
+    isSmall: getScreenCategory(width, height) === 'small',
+    isMedium: getScreenCategory(width, height) === 'medium',
+    isLarge: getScreenCategory(width, height) === 'large',
+    isTabletSize: getScreenCategory(width, height) === 'tablet',
+    isXs: isBreakpoint('xs'),
+    isSm: isBreakpoint('sm'),
+    isMd: isBreakpoint('md'),
+    isLg: isBreakpoint('lg'),
+    isXl: isBreakpoint('xl'),
+    gridColumns: getGridColumns(),
+    aspectRatio: height / width,
+    isLandscape,
+    isPortrait,
+  };
 };
+
+// Screen dimensions (static for backward compatibility - use getScreenData() for dynamic)
+export const screenData = getScreenData();
