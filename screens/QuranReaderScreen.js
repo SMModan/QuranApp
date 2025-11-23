@@ -767,9 +767,9 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const handleLandscapeSwipe = useCallback((event) => {
     const { translationX, translationY, velocityX } = event;
     
-    // Only process horizontal swipes (more horizontal than vertical movement)
-    if (Math.abs(translationX) > Math.abs(translationY) && Math.abs(translationX) > 50) {
-      if (velocityX < -500 || translationX < -100) {
+    // Process horizontal swipes - lower thresholds for better responsiveness
+    if (Math.abs(translationX) > Math.abs(translationY) && Math.abs(translationX) > 30) {
+      if (velocityX < -300 || translationX < -50) {
         // Swipe left: next page
         if (currentPage < totalPages) {
           const newPage = currentPage + 1;
@@ -800,7 +800,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
             friction: 7,
           }).start();
         }
-      } else if (velocityX > 500 || translationX > 100) {
+      } else if (velocityX > 300 || translationX > 50) {
         // Swipe right: previous page
         if (currentPage > 1) {
           const newPage = currentPage - 1;
@@ -856,24 +856,24 @@ const QuranReaderScreen = ({ navigation, route }) => {
   const landscapeSwipeGesture = Gesture.Pan()
     .minPointers(1)
     .maxPointers(1)
-    .activeOffsetX([-10, 10])
-    .failOffsetY([-15, 15]) // Fail if vertical movement is too large
+    .activeOffsetX([-3, 3])
+    .failOffsetY([-30, 30]) // Allow more vertical movement before failing
     .onStart((event) => {
-      swipeStartX.current = 0;
-      swipeStartY.current = 0;
+      swipeStartX.current = event.translationX;
+      swipeStartY.current = event.translationY;
       isSwiping.current = false;
-      landscapeTranslateX.setOffset(landscapeTranslateX._value);
+      landscapeTranslateX.setOffset(landscapeTranslateX._value || 0);
       landscapeTranslateX.setValue(0);
     })
     .onUpdate((event) => {
-      const deltaX = event.translationX;
-      const deltaY = Math.abs(event.translationY);
+      const deltaX = event.translationX - swipeStartX.current;
+      const deltaY = Math.abs(event.translationY - swipeStartY.current);
       
       // Only consider it a swipe if horizontal movement is significantly greater than vertical
-      if (Math.abs(deltaX) > 20 && Math.abs(deltaX) > deltaY * 1.2) {
+      if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY * 1.2) {
         isSwiping.current = true;
         // Update translateX with smooth following
-        const maxTranslate = screenWidth * 0.25; // Limit how far it can drag
+        const maxTranslate = screenWidth * 0.3; // Limit how far it can drag
         const clampedX = Math.max(-maxTranslate, Math.min(maxTranslate, deltaX));
         landscapeTranslateX.setValue(clampedX);
       }
@@ -892,7 +892,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
         }).start();
       }
       isSwiping.current = false;
-    });
+    })
+    .enabled(true);
   
   // Update landscape animation when screen dimensions change
   useEffect(() => {
@@ -940,6 +941,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
                 showsVerticalScrollIndicator={true}
                 bounces={true}
                 scrollEnabled={true}
+                directionalLockEnabled={false}
                 onScrollBeginDrag={() => {
                   setShowControls(true);
                   startHideTimer();
