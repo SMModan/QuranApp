@@ -18,6 +18,8 @@ const HomeScreen = ({ navigation }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const scrollViewRef = useRef(null);
+  const cardRef = useRef(null);
+  const inputContainerRef = useRef(null);
 
   const menuItems = [
     {
@@ -113,7 +115,17 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const handleInputFocus = () => {
-    // Optional: Add any focus handling if needed
+    // Scroll to show the input field above keyboard
+    if (inputContainerRef.current && scrollViewRef.current) {
+      setTimeout(() => {
+        inputContainerRef.current.measure((x, y, width, height, pageX, pageY) => {
+          // pageY is absolute position on screen
+          // Scroll to position input 120px from top
+          const scrollPosition = Math.max(0, pageY - 120);
+          scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
+        });
+      }, 200);
+    }
   };
 
   // Share app functionality
@@ -281,6 +293,47 @@ const HomeScreen = ({ navigation }) => {
     ]).start();
   }, []);
 
+  // Handle keyboard show/hide events
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
+      // Scroll to show input field above keyboard
+      if (inputContainerRef.current && scrollViewRef.current) {
+        setTimeout(() => {
+          const keyboardHeight = event.endCoordinates.height;
+          const screenHeight = orientation.height;
+          const availableHeight = screenHeight - keyboardHeight;
+          
+          inputContainerRef.current.measure((x, y, width, height, pageX, pageY) => {
+            // pageY is absolute position on screen
+            // Calculate scroll to position input above keyboard with padding
+            // We want input to be 100px from top of available space
+            const targetPosition = 100;
+            const inputBottom = pageY + height;
+            
+            // If input bottom is below available area, scroll to show it
+            if (inputBottom > availableHeight) {
+              const scrollPosition = Math.max(0, pageY - targetPosition);
+              scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
+            } else if (pageY < targetPosition) {
+              // If input is too high, scroll to show it properly
+              const scrollPosition = Math.max(0, pageY - targetPosition);
+              scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
+            }
+          });
+        }, 200);
+      }
+    });
+
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      // Optional: Handle keyboard hide if needed
+    });
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, [orientation.height]);
+
   return (
     <View style={styles.container}>
       <CommonHeader 
@@ -290,7 +343,11 @@ const HomeScreen = ({ navigation }) => {
         backgroundColor="#083569"
       />
       
-      <View style={styles.content}>
+      <KeyboardAvoidingView 
+        style={styles.content}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView 
             ref={scrollViewRef}
@@ -311,9 +368,10 @@ const HomeScreen = ({ navigation }) => {
 
           {/* Menu Cards */}
           <View style={styles.cardsContainer}>
-            {menuItems.map((item) => (
+            {menuItems.map((item, index) => (
               <TouchableOpacity
                 key={item.id}
+                ref={item.id === 'go_to_page' ? cardRef : null}
                 style={[
                   styles.card,
                   isLandscape && {
@@ -360,7 +418,10 @@ const HomeScreen = ({ navigation }) => {
                   </View>
 
                   {item.id === 'go_to_page' && (
-                    <View style={styles.goToPageInputContainer}>
+                    <View 
+                      style={styles.goToPageInputContainer}
+                      ref={inputContainerRef}
+                    >
                       <View style={styles.goToPageInputField}>
                         <TextInput
                           style={[
@@ -425,7 +486,7 @@ const HomeScreen = ({ navigation }) => {
         </Animated.View>
           </ScrollView>
         </TouchableWithoutFeedback>
-      </View>
+      </KeyboardAvoidingView>
 
       <SideMenu
         visible={isMenuVisible}
