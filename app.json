@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "QuranAppExpo",
-    "slug": "QuranAppExpo",
+    "name": "Quran Kareem (4-Page Layout)",
+    "slug": "quran-kareem-4-page-layout",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
@@ -24,7 +24,7 @@
       }
     },
     "android": {
-      "package": "com.anonymous.QuranAppExpo",
+      "package": "com.qurankareem.fourpagelayout",
       "splash": {
         "image": "./assets/icon.png",
         "resizeMode": "contain",

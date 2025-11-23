@@ -1,0 +1,104 @@
+================================================================================
+QURAN KAREEM (4-PAGE LAYOUT) - APP DETAILS
+================================================================================
+
+APP INFORMATION
+================================================================================
+App Name: Quran Kareem (4-Page Layout)
+Package Name: com.qurankareem.fourpagelayout
+Version: 1.0.0
+Version Code: 1
+
+================================================================================
+KEYSTORE INFORMATION
+================================================================================
+Keystore File: android/app/quran-kareem-release.keystore
+Keystore Type: PKCS12
+Key Alias: quran-kareem-key
+Validity: 10000 days (approximately 27 years)
+
+STORE PASSWORD: QuranKareem2024!
+KEY PASSWORD: QuranKareem2024!
+
+IMPORTANT: Keep these passwords secure and do not share them publicly.
+Keep a backup of the keystore file in a secure location.
+
+================================================================================
+KEYSTORE DETAILS
+================================================================================
+CN (Common Name): Quran Kareem
+OU (Organizational Unit): Mobile Development
+O (Organization): Quran App
+L (Locality): City
+ST (State): State
+C (Country): PK
+
+Key Algorithm: RSA
+Key Size: 2048 bits
+
+================================================================================
+APK LOCATION
+================================================================================
+Signed APK: android/app/build/outputs/apk/release/app-release.apk
+
+To install on device:
+  adb install android/app/build/outputs/apk/release/app-release.apk
+
+================================================================================
+KEYSTORE LOCATION
+================================================================================
+Keystore File: android/app/quran-kareem-release.keystore
+
+BACKUP THIS FILE IMMEDIATELY!
+If you lose this keystore file, you will NOT be able to update your app
+on Google Play Store. Keep multiple secure backups.
+
+================================================================================
+KEY.PROPERTIES LOCATION
+================================================================================
+File: android/key.properties
+
+This file contains:
+  storePassword=QuranKareem2024!
+  keyPassword=QuranKareem2024!
+  keyAlias=quran-kareem-key
+  storeFile=quran-kareem-release.keystore
+
+================================================================================
+BUILD COMMANDS
+================================================================================
+To build a new signed APK:
+  cd android
+  ./gradlew assembleRelease
+
+The APK will be generated at:
+  android/app/build/outputs/apk/release/app-release.apk
+
+================================================================================
+GOOGLE PLAY STORE UPLOAD
+================================================================================
+When uploading to Google Play Store:
+1. Use the APK from: android/app/build/outputs/apk/release/app-release.apk
+2. You will need the keystore file and passwords for future updates
+3. Keep the keystore file secure - you cannot recover it if lost
+
+================================================================================
+SECURITY NOTES
+================================================================================
+- Never commit the keystore file or key.properties to version control
+- Keep multiple secure backups of the keystore file
+- Store passwords in a secure password manager
+- Do not share these credentials publicly
+- The keystore is valid for 10,000 days (approximately 27 years)
+
+================================================================================
+GENERATED ON
+================================================================================
+Date: $(date)
+Build: Release
+Signed: Yes
+
+================================================================================
+END OF DOCUMENT
+================================================================================
+
