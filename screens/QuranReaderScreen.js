@@ -20,194 +20,48 @@ import {
   Gesture,
   GestureDetector
 } from 'react-native-gesture-handler';
+import PagerView from 'react-native-pager-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFontSize, getSpacing } from '../utils/ResponsiveDesign';
 import useOrientation from '../hooks/useOrientation';
 
-// ZoomableImage component for pinch zoom and double tap reset - Memoized for performance
+// Simple Image component without zoom - Memoized for performance
 const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDuration, screenWidth, screenHeight, isLandscape }) => {
-  const scale = useRef(new Animated.Value(1)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-  
-  const lastScale = useRef(1);
-  const lastTranslateX = useRef(0);
-  const lastTranslateY = useRef(0);
-  
-  const MIN_SCALE = 1;
-  const MAX_SCALE = 5;
-  
-  // Use refs to track current dimensions
-  const currentScreenWidth = useRef(screenWidth);
-  const currentScreenHeight = useRef(screenHeight);
-  
-  useEffect(() => {
-    currentScreenWidth.current = screenWidth;
-    currentScreenHeight.current = screenHeight;
-  }, [screenWidth, screenHeight]);
-  
-  // Reset to normal state
-  const resetZoom = () => {
-    Animated.parallel([
-      Animated.spring(scale, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 50,
-        friction: 7,
-      }),
-      Animated.spring(translateX, {
-        toValue: 0,
-        useNativeDriver: true,
-        tension: 50,
-        friction: 7,
-      }),
-      Animated.spring(translateY, {
-        toValue: 0,
-        useNativeDriver: true,
-        tension: 50,
-        friction: 7,
-      }),
-    ]).start(() => {
-      lastScale.current = 1;
-      lastTranslateX.current = 0;
-      lastTranslateY.current = 0;
-    });
-  };
-  
-  // Double tap gesture
-  const doubleTap = Gesture.Tap()
-    .numberOfTaps(2)
-    .onEnd(() => {
-      resetZoom();
-    });
-  
-  // Single tap gesture (waits for double tap)
-  const singleTap = Gesture.Tap()
-    .numberOfTaps(1)
-    .maxDuration(250)
-    .onEnd(() => {
-      // Do nothing on single tap, just prevent it from interfering
-    });
-  
-  const pinchStartScale = useRef(1);
-  
-  const pinchGesture = Gesture.Pinch()
-    .onStart(() => {
-      // Store the starting scale
-      pinchStartScale.current = lastScale.current;
-    })
-    .onUpdate((event) => {
-      const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale.current * event.scale));
-      scale.setValue(newScale);
-    })
-    .onEnd((event) => {
-      // Update last scale with the final value from the event
-      const finalScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale.current * event.scale));
-      lastScale.current = finalScale;
-      scale.setValue(finalScale);
-      
-      // Reset translation if scale is back to 1
-      if (finalScale === 1) {
-        translateX.setValue(0);
-        translateY.setValue(0);
-        lastTranslateX.current = 0;
-        lastTranslateY.current = 0;
-      }
-    });
-
-  // Pan gesture - only allow panning when zoomed, uses current dimensions
-  const panStartX = useRef(0);
-  const panStartY = useRef(0);
-  const panGesture = Gesture.Pan()
-    .minPointers(1)
-    .maxPointers(1)
-    .activeOffsetX([-5, 5])
-    .activeOffsetY([-20, 20])
-    .onStart(() => {
-      // Store starting position
-      panStartX.current = lastTranslateX.current;
-      panStartY.current = lastTranslateY.current;
-    })
-    .onUpdate((event) => {
-      if (lastScale.current > 1) {
-        const newTranslateX = panStartX.current + event.translationX;
-        const newTranslateY = panStartY.current + event.translationY;
-        
-        // Clamp translation based on scale using current dimensions from props
-        const maxTranslateX = (currentScreenWidth.current * (lastScale.current - 1)) / 2;
-        const maxTranslateY = (currentScreenHeight.current * (lastScale.current - 1)) / 2;
-        
-        translateX.setValue(Math.max(-maxTranslateX, Math.min(maxTranslateX, newTranslateX)));
-        translateY.setValue(Math.max(-maxTranslateY, Math.min(maxTranslateY, newTranslateY)));
-      }
-    })
-    .onEnd((event) => {
-      if (lastScale.current > 1) {
-        // Update last position with the final translation
-        const finalTranslateX = panStartX.current + event.translationX;
-        const finalTranslateY = panStartY.current + event.translationY;
-        
-        // Clamp translation based on scale using current dimensions from props
-        const maxTranslateX = (currentScreenWidth.current * (lastScale.current - 1)) / 2;
-        const maxTranslateY = (currentScreenHeight.current * (lastScale.current - 1)) / 2;
-        
-        lastTranslateX.current = Math.max(-maxTranslateX, Math.min(maxTranslateX, finalTranslateX));
-        lastTranslateY.current = Math.max(-maxTranslateY, Math.min(maxTranslateY, finalTranslateY));
-        
-        translateX.setValue(lastTranslateX.current);
-        translateY.setValue(lastTranslateY.current);
-      }
-    })
-    .simultaneousWithExternalGesture(pinchGesture);
-  
-  // Compose gestures
-  const composedGesture = Gesture.Race(
-    doubleTap,
-    Gesture.Simultaneous(pinchGesture, panGesture)
-  );
-  
   return (
-    <GestureDetector gesture={composedGesture}>
-      <Animated.View
-        style={[
-          isLandscape ? {
-            width: '100%',
-            minHeight: screenHeight,
-            alignSelf: 'stretch',
-          } : style,
-          {
-            transform: [
-              { translateX },
-              { translateY },
-              { scale },
-            ],
-            justifyContent: isLandscape ? 'flex-start' : 'center',
-            alignItems: isLandscape ? 'stretch' : 'center',
-            overflow: 'hidden',
-            left: isLandscape ? 0 : undefined,
-            right: isLandscape ? 0 : undefined,
-            width: isLandscape ? '100%' : undefined,
-          },
-        ]}
-      >
-        <Image
-          source={source}
-          style={isLandscape 
-            ? { 
-                width: '100%',
-                height: screenWidth * 1.4,
-                alignSelf: 'stretch',
-              }
-            : { width: '100%', height: '100%' }
-          }
-          resizeMode={isLandscape ? "contain" : "stretch"}
-          onError={onError}
-          onLoad={onLoad}
-          onLoadStart={onLoadStart}
-          fadeDuration={fadeDuration}
-        />
-      </Animated.View>
-    </GestureDetector>
+    <View
+      style={[
+        isLandscape ? {
+          width: '100%',
+          minHeight: screenHeight,
+          alignSelf: 'stretch',
+        } : style,
+        {
+          justifyContent: isLandscape ? 'flex-start' : 'center',
+          alignItems: isLandscape ? 'stretch' : 'center',
+          overflow: 'hidden',
+          left: isLandscape ? 0 : undefined,
+          right: isLandscape ? 0 : undefined,
+          width: isLandscape ? '100%' : undefined,
+        },
+      ]}
+    >
+      <Image
+        source={source}
+        style={isLandscape 
+          ? { 
+              width: '100%',
+              height: screenWidth * 1.4,
+              alignSelf: 'stretch',
+            }
+          : { width: '100%', height: '100%' }
+        }
+        resizeMode={isLandscape ? "contain" : "stretch"}
+        onError={onError}
+        onLoad={onLoad}
+        onLoadStart={onLoadStart}
+        fadeDuration={fadeDuration}
+      />
+    </View>
   );
 };
 
@@ -389,11 +243,7 @@ const QuranReaderScreen = ({ navigation, route }) => {
   
   // Landscape mode refs and state
   const landscapeScrollViewRef = useRef(null);
-  const swipeStartX = useRef(0);
-  const swipeStartY = useRef(0);
-  const isSwiping = useRef(false);
-  const landscapeTranslateX = useRef(new Animated.Value(0)).current;
-  const landscapePageAnim = useRef(new Animated.Value(currentPage)).current;
+  const landscapePagerRef = useRef(null);
   
   // Validate navigation object
   const safeNavigation = navigation || { goBack: () => {} };
@@ -442,13 +292,8 @@ const QuranReaderScreen = ({ navigation, route }) => {
   useEffect(() => {
     loadBookmarks();
     logMemoryUsage();
-    // Sync landscape animation value when page changes externally
-    if (isLandscape) {
-      landscapePageAnim.setValue(currentPage);
-      landscapeTranslateX.setValue(0);
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, isLandscape]);
+  }, [currentPage]);
 
   // Load saved page on component mount and when route params change
   useEffect(() => {
@@ -763,145 +608,26 @@ const QuranReaderScreen = ({ navigation, route }) => {
     }
   }, [screenWidth, screenHeight, currentPage, totalPages, isLandscape]);
 
-  // Handle horizontal swipe for page navigation in landscape mode with smooth animation
-  const handleLandscapeSwipe = useCallback((event) => {
-    const { translationX, translationY, velocityX } = event;
-    
-    // Process horizontal swipes - lower thresholds for better responsiveness
-    if (Math.abs(translationX) > Math.abs(translationY) && Math.abs(translationX) > 30) {
-      if (velocityX < -300 || translationX < -50) {
-        // Swipe left: next page
-        if (currentPage < totalPages) {
-          const newPage = currentPage + 1;
-          // Smooth animation
-          Animated.parallel([
-            Animated.timing(landscapePageAnim, {
-              toValue: newPage,
-              duration: 300,
-              useNativeDriver: false,
-            }),
-            Animated.spring(landscapeTranslateX, {
-              toValue: 0,
-              useNativeDriver: true,
-              tension: 50,
-              friction: 7,
-            }),
-          ]).start(() => {
-            setCurrentPage(newPage);
-            saveCurrentPage(newPage);
-            landscapePageAnim.setValue(newPage);
-          });
-        } else {
-          // Bounce back if at last page
-          Animated.spring(landscapeTranslateX, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 50,
-            friction: 7,
-          }).start();
-        }
-      } else if (velocityX > 300 || translationX > 50) {
-        // Swipe right: previous page
-        if (currentPage > 1) {
-          const newPage = currentPage - 1;
-          // Smooth animation
-          Animated.parallel([
-            Animated.timing(landscapePageAnim, {
-              toValue: newPage,
-              duration: 300,
-              useNativeDriver: false,
-            }),
-            Animated.spring(landscapeTranslateX, {
-              toValue: 0,
-              useNativeDriver: true,
-              tension: 50,
-              friction: 7,
-            }),
-          ]).start(() => {
-            setCurrentPage(newPage);
-            saveCurrentPage(newPage);
-            landscapePageAnim.setValue(newPage);
-          });
-        } else {
-          // Bounce back if at first page
-          Animated.spring(landscapeTranslateX, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 50,
-            friction: 7,
-          }).start();
-        }
-      } else {
-        // Not enough swipe, bounce back
-        Animated.spring(landscapeTranslateX, {
-          toValue: 0,
-          useNativeDriver: true,
-          tension: 50,
-          friction: 7,
-        }).start();
-      }
-    } else {
-      // Not a horizontal swipe, bounce back
-      Animated.spring(landscapeTranslateX, {
-        toValue: 0,
-        useNativeDriver: true,
-        tension: 50,
-        friction: 7,
-      }).start();
+  // Handle page change in landscape mode with PagerView
+  // Reverse: left to right = previous page, right to left = next page
+  const handleLandscapePageChange = useCallback((event) => {
+    const position = event.nativeEvent.position;
+    // Reverse the page order: position 0 = page 134, position 133 = page 1
+    const newPage = totalPages - position; // Reverse mapping
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      saveCurrentPage(newPage);
     }
-  }, [currentPage, totalPages, screenWidth]);
-
-  // Create horizontal swipe gesture for landscape mode with smooth animation
-  // This gesture only works for single-finger horizontal swipes (not zoomed)
-  const landscapeSwipeGesture = Gesture.Pan()
-    .minPointers(1)
-    .maxPointers(1)
-    .activeOffsetX([-3, 3])
-    .failOffsetY([-30, 30]) // Allow more vertical movement before failing
-    .onStart((event) => {
-      swipeStartX.current = event.translationX;
-      swipeStartY.current = event.translationY;
-      isSwiping.current = false;
-      landscapeTranslateX.setOffset(landscapeTranslateX._value || 0);
-      landscapeTranslateX.setValue(0);
-    })
-    .onUpdate((event) => {
-      const deltaX = event.translationX - swipeStartX.current;
-      const deltaY = Math.abs(event.translationY - swipeStartY.current);
-      
-      // Only consider it a swipe if horizontal movement is significantly greater than vertical
-      if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY * 1.2) {
-        isSwiping.current = true;
-        // Update translateX with smooth following
-        const maxTranslate = screenWidth * 0.3; // Limit how far it can drag
-        const clampedX = Math.max(-maxTranslate, Math.min(maxTranslate, deltaX));
-        landscapeTranslateX.setValue(clampedX);
-      }
-    })
-    .onEnd((event) => {
-      landscapeTranslateX.flattenOffset();
-      if (isSwiping.current) {
-        handleLandscapeSwipe(event);
-      } else {
-        // Reset if not a valid swipe
-        Animated.spring(landscapeTranslateX, {
-          toValue: 0,
-          useNativeDriver: true,
-          tension: 50,
-          friction: 7,
-        }).start();
-      }
-      isSwiping.current = false;
-    })
-    .enabled(true);
+  }, [totalPages]);
   
-  // Update landscape animation when screen dimensions change
+  // Sync PagerView when currentPage changes externally
+  // Reverse: page 1 = position 133, page 134 = position 0
   useEffect(() => {
-    if (isLandscape) {
-      landscapePageAnim.setValue(currentPage);
-      landscapeTranslateX.setValue(0);
+    if (isLandscape && landscapePagerRef.current) {
+      const reversedIndex = totalPages - currentPage; // Reverse the index
+      landscapePagerRef.current.setPageWithoutAnimation(reversedIndex);
     }
-  }, [screenWidth, screenHeight, isLandscape]);
+  }, [currentPage, isLandscape, totalPages]);
 
   
   // Memory monitoring
@@ -923,48 +649,53 @@ const QuranReaderScreen = ({ navigation, route }) => {
       
       {/* Conditional Rendering: Landscape vs Portrait */}
       {isLandscape ? (
-        /* Landscape Mode: Single Image with ScrollView and Swipe Gestures */
-        <GestureDetector gesture={landscapeSwipeGesture}>
-          <View style={styles.landscapeContainer}>
-            <Animated.View
-              style={[
-                styles.landscapeAnimatedContainer,
-                {
-                  transform: [{ translateX: landscapeTranslateX }],
-                },
-              ]}
-            >
-              <ScrollView
-                ref={landscapeScrollViewRef}
-                style={styles.landscapeScrollView}
-                contentContainerStyle={styles.landscapeScrollViewContent}
-                showsVerticalScrollIndicator={true}
-                bounces={true}
-                scrollEnabled={true}
-                directionalLockEnabled={false}
-                onScrollBeginDrag={() => {
-                  setShowControls(true);
-                  startHideTimer();
-                }}
-                onTouchStart={toggleControls}
-              >
-                <View style={styles.landscapeImageContainer}>
-                  <MemoizedZoomableImage
-                    source={getImageSource(currentPage)}
-                    style={styles.landscapeImage}
-                    onError={handleImageError}
-                    onLoad={handleImageLoad}
-                    onLoadStart={handleImageLoadStart}
-                    fadeDuration={200}
-                    screenWidth={screenWidth}
-                    screenHeight={screenHeight}
-                    isLandscape={true}
-                  />
-                </View>
-              </ScrollView>
-            </Animated.View>
-          </View>
-        </GestureDetector>
+        /* Landscape Mode: PagerView with ScrollView for vertical scrolling */
+        <View style={styles.landscapeContainer}>
+          <PagerView
+            ref={landscapePagerRef}
+            style={styles.landscapePagerView}
+            initialPage={totalPages - currentPage} // Reverse: start from reversed position
+            onPageSelected={handleLandscapePageChange}
+            pageMargin={0}
+            overdrag={false}
+            scrollEnabled={true}
+            orientation="horizontal"
+          >
+            {pagesArray.slice().reverse().map((pageNumber) => (
+              <View key={`landscape-page-${pageNumber}`} style={styles.landscapePageView}>
+                <ScrollView
+                  ref={landscapeScrollViewRef}
+                  style={styles.landscapeScrollView}
+                  contentContainerStyle={styles.landscapeScrollViewContent}
+                  showsVerticalScrollIndicator={true}
+                  bounces={true}
+                  scrollEnabled={true}
+                  directionalLockEnabled={true}
+                  nestedScrollEnabled={true}
+                  onScrollBeginDrag={() => {
+                    setShowControls(true);
+                    startHideTimer();
+                  }}
+                  onTouchStart={toggleControls}
+                >
+                  <View style={styles.landscapeImageContainer}>
+                    <MemoizedZoomableImage
+                      source={getImageSource(pageNumber)}
+                      style={styles.landscapeImage}
+                      onError={handleImageError}
+                      onLoad={handleImageLoad}
+                      onLoadStart={handleImageLoadStart}
+                      fadeDuration={200}
+                      screenWidth={screenWidth}
+                      screenHeight={screenHeight}
+                      isLandscape={true}
+                    />
+                  </View>
+                </ScrollView>
+              </View>
+            ))}
+          </PagerView>
+        </View>
       ) : (
         /* Portrait Mode: FlatList - Vertical Scroll */
         <View style={styles.pageContainer}>
@@ -1165,6 +896,16 @@ const createStyles = (screenWidth, screenHeight, isLandscape) => StyleSheet.crea
     left: 0,
     top: 0,
     right: 0,
+  },
+  landscapePagerView: {
+    flex: 1,
+    width: '100%',
+    height: screenHeight,
+  },
+  landscapePageView: {
+    flex: 1,
+    width: '100%',
+    height: screenHeight,
   },
   landscapeScrollView: {
     flex: 1,
