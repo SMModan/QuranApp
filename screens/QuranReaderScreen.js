@@ -12,7 +12,8 @@ import {
   Image,
   Animated,
   BackHandler,
-  FlatList
+  FlatList,
+  ScrollView
 } from 'react-native';
 import { 
   GestureHandlerRootView,
@@ -169,24 +170,36 @@ const ZoomableImage = ({ source, style, onError, onLoad, onLoadStart, fadeDurati
     <GestureDetector gesture={composedGesture}>
       <Animated.View
         style={[
-          style,
+          isLandscape ? {
+            width: '100%',
+            minHeight: screenHeight,
+            alignSelf: 'stretch',
+          } : style,
           {
             transform: [
               { translateX },
               { translateY },
               { scale },
             ],
-            // Only center in landscape mode
-            ...(isLandscape && {
-              justifyContent: 'center',
-              alignItems: 'center',
-            }),
+            justifyContent: isLandscape ? 'flex-start' : 'center',
+            alignItems: isLandscape ? 'stretch' : 'center',
+            overflow: 'hidden',
+            left: isLandscape ? 0 : undefined,
+            right: isLandscape ? 0 : undefined,
+            width: isLandscape ? '100%' : undefined,
           },
         ]}
       >
         <Image
           source={source}
-          style={[style, { width: '100%', height: '100%' }]}
+          style={isLandscape 
+            ? { 
+                width: '100%',
+                height: screenWidth * 1.4,
+                alignSelf: 'stretch',
+              }
+            : { width: '100%', height: '100%' }
+          }
           resizeMode={isLandscape ? "contain" : "stretch"}
           onError={onError}
           onLoad={onLoad}
@@ -374,6 +387,14 @@ const QuranReaderScreen = ({ navigation, route }) => {
     minimumViewTime: 100,
   });
   
+  // Landscape mode refs and state
+  const landscapeScrollViewRef = useRef(null);
+  const swipeStartX = useRef(0);
+  const swipeStartY = useRef(0);
+  const isSwiping = useRef(false);
+  const landscapeTranslateX = useRef(new Animated.Value(0)).current;
+  const landscapePageAnim = useRef(new Animated.Value(currentPage)).current;
+  
   // Validate navigation object
   const safeNavigation = navigation || { goBack: () => {} };
   
@@ -421,8 +442,13 @@ const QuranReaderScreen = ({ navigation, route }) => {
   useEffect(() => {
     loadBookmarks();
     logMemoryUsage();
+    // Sync landscape animation value when page changes externally
+    if (isLandscape) {
+      landscapePageAnim.setValue(currentPage);
+      landscapeTranslateX.setValue(0);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage]);
+  }, [currentPage, isLandscape]);
 
   // Load saved page on component mount and when route params change
   useEffect(() => {
@@ -435,36 +461,44 @@ const QuranReaderScreen = ({ navigation, route }) => {
     hasScrolledToInitialPage.current = false;
     
     const scrollToPage = () => {
-      if (flatListRef.current) {
+      if (isLandscape) {
+        // Landscape mode: just set the page, no scrolling needed
         const targetPage = route?.params?.pageNumber || route?.params?.page || initialPage;
-        const pageIndex = Math.max(0, Math.min(totalPages - 1, targetPage - 1));
-        
-        // Use scrollToOffset for vertical scroll - fix: use exact page index
-        // Use current screenHeight from orientation
-        const offset = pageIndex * screenHeight;
-        flatListRef.current.scrollToOffset({
-          offset: offset,
-          animated: false,
-        });
-        
-        // Also try scrollToIndex as backup
-        setTimeout(() => {
-          flatListRef.current?.scrollToIndex({
-            index: pageIndex,
+        setCurrentPage(targetPage);
+        hasScrolledToInitialPage.current = true;
+      } else {
+        // Portrait mode: scroll FlatList
+        if (flatListRef.current) {
+          const targetPage = route?.params?.pageNumber || route?.params?.page || initialPage;
+          const pageIndex = Math.max(0, Math.min(totalPages - 1, targetPage - 1));
+          
+          // Use scrollToOffset for vertical scroll - fix: use exact page index
+          // Use current screenHeight from orientation
+          const offset = pageIndex * screenHeight;
+          flatListRef.current.scrollToOffset({
+            offset: offset,
             animated: false,
-            viewPosition: 0,
           });
-          setCurrentPage(targetPage);
-          hasScrolledToInitialPage.current = true;
-        }, 100);
+          
+          // Also try scrollToIndex as backup
+          setTimeout(() => {
+            flatListRef.current?.scrollToIndex({
+              index: pageIndex,
+              animated: false,
+              viewPosition: 0,
+            });
+            setCurrentPage(targetPage);
+            hasScrolledToInitialPage.current = true;
+          }, 100);
+        }
       }
     };
     
-    // Delay to ensure FlatList is fully mounted
+    // Delay to ensure components are fully mounted
     const timer = setTimeout(scrollToPage, 500);
     
     return () => clearTimeout(timer);
-  }, [route?.params?.pageNumber, route?.params?.page, initialPage, totalPages, screenHeight]);
+  }, [route?.params?.pageNumber, route?.params?.page, initialPage, totalPages, screenHeight, isLandscape]);
 
   // Handle back press - navigate to home screen
   const handleBackPress = () => {
@@ -710,17 +744,163 @@ const QuranReaderScreen = ({ navigation, route }) => {
     const percentage = Math.max(0, Math.min(1, locationX / trackWidth));
     const newPage = Math.round(1 + (percentage * (totalPages - 1)));
     
-    if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages && flatListRef.current) {
-      const pageIndex = newPage - 1; // Convert to 0-based index
-      const offset = pageIndex * screenHeight;
-      flatListRef.current.scrollToOffset({
-        offset: offset,
-        animated: true,
-      });
-      setCurrentPage(newPage);
-      saveCurrentPage(newPage);
+    if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages) {
+      if (isLandscape) {
+        // Landscape mode: just update page
+        setCurrentPage(newPage);
+        saveCurrentPage(newPage);
+      } else if (flatListRef.current) {
+        // Portrait mode: scroll FlatList
+        const pageIndex = newPage - 1; // Convert to 0-based index
+        const offset = pageIndex * screenHeight;
+        flatListRef.current.scrollToOffset({
+          offset: offset,
+          animated: true,
+        });
+        setCurrentPage(newPage);
+        saveCurrentPage(newPage);
+      }
     }
-  }, [screenWidth, screenHeight, currentPage, totalPages]);
+  }, [screenWidth, screenHeight, currentPage, totalPages, isLandscape]);
+
+  // Handle horizontal swipe for page navigation in landscape mode with smooth animation
+  const handleLandscapeSwipe = useCallback((event) => {
+    const { translationX, translationY, velocityX } = event;
+    
+    // Only process horizontal swipes (more horizontal than vertical movement)
+    if (Math.abs(translationX) > Math.abs(translationY) && Math.abs(translationX) > 50) {
+      if (velocityX < -500 || translationX < -100) {
+        // Swipe left: next page
+        if (currentPage < totalPages) {
+          const newPage = currentPage + 1;
+          // Smooth animation
+          Animated.parallel([
+            Animated.timing(landscapePageAnim, {
+              toValue: newPage,
+              duration: 300,
+              useNativeDriver: false,
+            }),
+            Animated.spring(landscapeTranslateX, {
+              toValue: 0,
+              useNativeDriver: true,
+              tension: 50,
+              friction: 7,
+            }),
+          ]).start(() => {
+            setCurrentPage(newPage);
+            saveCurrentPage(newPage);
+            landscapePageAnim.setValue(newPage);
+          });
+        } else {
+          // Bounce back if at last page
+          Animated.spring(landscapeTranslateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 50,
+            friction: 7,
+          }).start();
+        }
+      } else if (velocityX > 500 || translationX > 100) {
+        // Swipe right: previous page
+        if (currentPage > 1) {
+          const newPage = currentPage - 1;
+          // Smooth animation
+          Animated.parallel([
+            Animated.timing(landscapePageAnim, {
+              toValue: newPage,
+              duration: 300,
+              useNativeDriver: false,
+            }),
+            Animated.spring(landscapeTranslateX, {
+              toValue: 0,
+              useNativeDriver: true,
+              tension: 50,
+              friction: 7,
+            }),
+          ]).start(() => {
+            setCurrentPage(newPage);
+            saveCurrentPage(newPage);
+            landscapePageAnim.setValue(newPage);
+          });
+        } else {
+          // Bounce back if at first page
+          Animated.spring(landscapeTranslateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 50,
+            friction: 7,
+          }).start();
+        }
+      } else {
+        // Not enough swipe, bounce back
+        Animated.spring(landscapeTranslateX, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 7,
+        }).start();
+      }
+    } else {
+      // Not a horizontal swipe, bounce back
+      Animated.spring(landscapeTranslateX, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 7,
+      }).start();
+    }
+  }, [currentPage, totalPages, screenWidth]);
+
+  // Create horizontal swipe gesture for landscape mode with smooth animation
+  // This gesture only works for single-finger horizontal swipes (not zoomed)
+  const landscapeSwipeGesture = Gesture.Pan()
+    .minPointers(1)
+    .maxPointers(1)
+    .activeOffsetX([-10, 10])
+    .failOffsetY([-15, 15]) // Fail if vertical movement is too large
+    .onStart((event) => {
+      swipeStartX.current = 0;
+      swipeStartY.current = 0;
+      isSwiping.current = false;
+      landscapeTranslateX.setOffset(landscapeTranslateX._value);
+      landscapeTranslateX.setValue(0);
+    })
+    .onUpdate((event) => {
+      const deltaX = event.translationX;
+      const deltaY = Math.abs(event.translationY);
+      
+      // Only consider it a swipe if horizontal movement is significantly greater than vertical
+      if (Math.abs(deltaX) > 20 && Math.abs(deltaX) > deltaY * 1.2) {
+        isSwiping.current = true;
+        // Update translateX with smooth following
+        const maxTranslate = screenWidth * 0.25; // Limit how far it can drag
+        const clampedX = Math.max(-maxTranslate, Math.min(maxTranslate, deltaX));
+        landscapeTranslateX.setValue(clampedX);
+      }
+    })
+    .onEnd((event) => {
+      landscapeTranslateX.flattenOffset();
+      if (isSwiping.current) {
+        handleLandscapeSwipe(event);
+      } else {
+        // Reset if not a valid swipe
+        Animated.spring(landscapeTranslateX, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 7,
+        }).start();
+      }
+      isSwiping.current = false;
+    });
+  
+  // Update landscape animation when screen dimensions change
+  useEffect(() => {
+    if (isLandscape) {
+      landscapePageAnim.setValue(currentPage);
+      landscapeTranslateX.setValue(0);
+    }
+  }, [screenWidth, screenHeight, isLandscape]);
 
   
   // Memory monitoring
@@ -740,65 +920,110 @@ const QuranReaderScreen = ({ navigation, route }) => {
         barStyle="light-content"
       />
       
-      {/* Continuous Reading FlatList - Vertical Scroll */}
-      <View style={styles.pageContainer}>
-        <FlatList
-          ref={flatListRef}
-          data={pagesArray}
-          renderItem={renderPageItem}
-          keyExtractor={(item) => `page-${item}`}
-          horizontal={false}
-          pagingEnabled={false}
-          showsVerticalScrollIndicator={false}
-          getItemLayout={getItemLayoutVertical}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig.current}
-          onScrollToIndexFailed={(info) => {
-            // Handle scroll to index failure
-            const wait = new Promise(resolve => setTimeout(resolve, 500));
-            wait.then(() => {
-              flatListRef.current?.scrollToIndex({ index: info.index, animated: false });
-            });
-          }}
-          onScroll={(event) => {
-            const offsetY = event.nativeEvent.contentOffset.y;
-            // Fix: Use Math.round instead of Math.floor to get correct page
-            // Use current screenHeight from orientation
-            const pageIndex = Math.round(offsetY / screenHeight);
-            const newPage = Math.max(1, Math.min(totalPages, pageIndex + 1));
-            
-            // Throttle state updates for better performance
-            if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
-              if (scrollThrottleRef.current) {
-                clearTimeout(scrollThrottleRef.current);
+      {/* Conditional Rendering: Landscape vs Portrait */}
+      {isLandscape ? (
+        /* Landscape Mode: Single Image with ScrollView and Swipe Gestures */
+        <GestureDetector gesture={landscapeSwipeGesture}>
+          <View style={styles.landscapeContainer}>
+            <Animated.View
+              style={[
+                styles.landscapeAnimatedContainer,
+                {
+                  transform: [{ translateX: landscapeTranslateX }],
+                },
+              ]}
+            >
+              <ScrollView
+                ref={landscapeScrollViewRef}
+                style={styles.landscapeScrollView}
+                contentContainerStyle={styles.landscapeScrollViewContent}
+                showsVerticalScrollIndicator={true}
+                bounces={true}
+                scrollEnabled={true}
+                onScrollBeginDrag={() => {
+                  setShowControls(true);
+                  startHideTimer();
+                }}
+                onTouchStart={toggleControls}
+              >
+                <View style={styles.landscapeImageContainer}>
+                  <MemoizedZoomableImage
+                    source={getImageSource(currentPage)}
+                    style={styles.landscapeImage}
+                    onError={handleImageError}
+                    onLoad={handleImageLoad}
+                    onLoadStart={handleImageLoadStart}
+                    fadeDuration={200}
+                    screenWidth={screenWidth}
+                    screenHeight={screenHeight}
+                    isLandscape={true}
+                  />
+                </View>
+              </ScrollView>
+            </Animated.View>
+          </View>
+        </GestureDetector>
+      ) : (
+        /* Portrait Mode: FlatList - Vertical Scroll */
+        <View style={styles.pageContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={pagesArray}
+            renderItem={renderPageItem}
+            keyExtractor={(item) => `page-${item}`}
+            horizontal={false}
+            pagingEnabled={false}
+            showsVerticalScrollIndicator={false}
+            getItemLayout={getItemLayoutVertical}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig.current}
+            onScrollToIndexFailed={(info) => {
+              // Handle scroll to index failure
+              const wait = new Promise(resolve => setTimeout(resolve, 500));
+              wait.then(() => {
+                flatListRef.current?.scrollToIndex({ index: info.index, animated: false });
+              });
+            }}
+            onScroll={(event) => {
+              const offsetY = event.nativeEvent.contentOffset.y;
+              // Fix: Use Math.round instead of Math.floor to get correct page
+              // Use current screenHeight from orientation
+              const pageIndex = Math.round(offsetY / screenHeight);
+              const newPage = Math.max(1, Math.min(totalPages, pageIndex + 1));
+              
+              // Throttle state updates for better performance
+              if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
+                if (scrollThrottleRef.current) {
+                  clearTimeout(scrollThrottleRef.current);
+                }
+                scrollThrottleRef.current = setTimeout(() => {
+                  setCurrentPage(newPage);
+                  saveCurrentPage(newPage);
+                  scrollThrottleRef.current = null;
+                }, 150);
               }
-              scrollThrottleRef.current = setTimeout(() => {
-                setCurrentPage(newPage);
-                saveCurrentPage(newPage);
-                scrollThrottleRef.current = null;
-              }, 150);
-            }
-          }}
-          scrollEventThrottle={50}
-          onScrollBeginDrag={() => {
-            // Show controls when user starts scrolling
-            setShowControls(true);
-            startHideTimer();
-          }}
-          onTouchStart={toggleControls}
-          inverted={false}
-          directionalLockEnabled={true}
-          scrollEnabled={true}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={5}
-          windowSize={11}
-          initialNumToRender={3}
-          updateCellsBatchingPeriod={100}
-          style={styles.flatList}
-          contentContainerStyle={styles.flatListContent}
-          nestedScrollEnabled={false}
-        />
-      </View>
+            }}
+            scrollEventThrottle={50}
+            onScrollBeginDrag={() => {
+              // Show controls when user starts scrolling
+              setShowControls(true);
+              startHideTimer();
+            }}
+            onTouchStart={toggleControls}
+            inverted={false}
+            directionalLockEnabled={true}
+            scrollEnabled={true}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={5}
+            windowSize={11}
+            initialNumToRender={3}
+            updateCellsBatchingPeriod={100}
+            style={styles.flatList}
+            contentContainerStyle={styles.flatListContent}
+            nestedScrollEnabled={false}
+          />
+        </View>
+      )}
 
       {/* Floating Back Button */}
       {/* {showControls && (
@@ -910,6 +1135,76 @@ const createStyles = (screenWidth, screenHeight, isLandscape) => StyleSheet.crea
     padding: 0,
     backgroundColor: '#FFFFFF',
     direction: 'rtl',
+  },
+  landscapeContainer: {
+    flex: 1,
+    width: screenWidth,
+    height: screenHeight,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+    direction: 'ltr',
+    overflow: 'hidden',
+    margin: 0,
+    padding: 0,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
+  },
+  landscapeAnimatedContainer: {
+    flex: 1,
+    width: '100%',
+    height: screenHeight,
+    margin: 0,
+    padding: 0,
+    position: 'relative',
+    left: 0,
+    top: 0,
+    right: 0,
+  },
+  landscapeScrollView: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    margin: 0,
+    padding: 0,
+    left: 0,
+    right: 0,
+  },
+  landscapeScrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+    width: '100%',
+    minHeight: screenHeight,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    margin: 0,
+    left: 0,
+    right: 0,
+  },
+  landscapeImageContainer: {
+    width: '100%',
+    minHeight: screenHeight,
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+    backgroundColor: '#FFFFFF',
+    margin: 0,
+    padding: 0,
+    left: 0,
+    right: 0,
+    position: 'relative',
+    alignSelf: 'stretch',
+  },
+  landscapeImage: {
+    width: '100%',
+    height: screenWidth * 1.4,
+    minHeight: screenHeight,
+    margin: 0,
+    padding: 0,
+    alignSelf: 'stretch',
   },
   flatList: {
     flex: 1,
