@@ -120,8 +120,9 @@ const HomeScreen = ({ navigation }) => {
       setTimeout(() => {
         inputContainerRef.current.measure((x, y, width, height, pageX, pageY) => {
           // pageY is absolute position on screen
-          // Scroll to position input 120px from top
-          const scrollPosition = Math.max(0, pageY - 120);
+          // In landscape, use smaller offset due to limited vertical space
+          const topOffset = isLandscape ? 60 : 120;
+          const scrollPosition = Math.max(0, pageY - topOffset);
           scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
         });
       }, 200);
@@ -305,17 +306,22 @@ const HomeScreen = ({ navigation }) => {
           
           inputContainerRef.current.measure((x, y, width, height, pageX, pageY) => {
             // pageY is absolute position on screen
-            // Calculate scroll to position input above keyboard with padding
-            // We want input to be 100px from top of available space
-            const targetPosition = 100;
+            // In landscape, use smaller offset due to limited vertical space
+            const targetPosition = isLandscape ? 50 : 100;
             const inputBottom = pageY + height;
             
-            // If input bottom is below available area, scroll to show it
+            // Always scroll to ensure input is visible above keyboard
+            // Calculate scroll position to show input with proper padding
             if (inputBottom > availableHeight) {
+              // Input is below available area, scroll up
               const scrollPosition = Math.max(0, pageY - targetPosition);
               scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
             } else if (pageY < targetPosition) {
-              // If input is too high, scroll to show it properly
+              // Input is too high, scroll to show it properly
+              const scrollPosition = Math.max(0, pageY - targetPosition);
+              scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
+            } else {
+              // Input might be partially visible, ensure it's fully visible
               const scrollPosition = Math.max(0, pageY - targetPosition);
               scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
             }
@@ -332,7 +338,7 @@ const HomeScreen = ({ navigation }) => {
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
-  }, [orientation.height]);
+  }, [orientation.height, isLandscape]);
 
   return (
     <View style={styles.container}>
@@ -346,7 +352,7 @@ const HomeScreen = ({ navigation }) => {
       <KeyboardAvoidingView 
         style={styles.content}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : (isLandscape ? 0 : 20)}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView 
