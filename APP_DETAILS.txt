@@ -7,7 +7,7 @@ APP INFORMATION
 App Name: Quran Kareem (4-Page Layout)
 Package Name: com.qurankareem.fourpagelayout
 Version: 1.0.0
-Version Code: 1
+Version Code: 2
 
 ================================================================================
 KEYSTORE INFORMATION
@@ -40,9 +40,23 @@ Key Size: 2048 bits
 APK LOCATION
 ================================================================================
 Signed APK: android/app/build/outputs/apk/release/app-release.apk
+File Size: 98 MB
 
 To install on device:
   adb install android/app/build/outputs/apk/release/app-release.apk
+
+================================================================================
+AAB (ANDROID APP BUNDLE) LOCATION - FOR GOOGLE PLAY STORE
+================================================================================
+Signed AAB: android/app/build/outputs/bundle/release/app-release.aab
+File Size: 77 MB
+
+This is the file you need to upload to Google Play Console.
+The AAB format allows Google Play to optimize the app for different devices.
+
+To build a new AAB:
+  cd android
+  ./gradlew bundleRelease
 
 ================================================================================
 KEYSTORE LOCATION
@@ -101,4 +115,6 @@ Signed: Yes
 ================================================================================
 END OF DOCUMENT
 ================================================================================
+
+
 
